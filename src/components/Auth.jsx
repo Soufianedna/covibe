@@ -158,6 +158,24 @@ export const Auth = () => {
             >
               {loading ? '...' : isLogin ? t('connect') : t('createAccount')}
             </button>
+            <div className="flex items-center gap-3 my-2">
+              <div className="flex-1 h-px bg-slate-600"></div>
+              <span className="text-gray-400 text-sm">ou</span>
+              <div className="flex-1 h-px bg-slate-600"></div>
+            </div>
+            <button
+              type="button"
+              onClick={async () => {
+                await supabase.auth.signInWithOAuth({
+                  provider: 'google',
+                  options: { redirectTo: 'https://www.covibe.ca' }
+                });
+              }}
+              className="w-full py-3 bg-white text-gray-800 rounded-xl font-bold text-base hover:bg-gray-100 transition-all flex items-center justify-center gap-3"
+            >
+              <img src="https://www.google.com/favicon.ico" width="20" height="20" alt="Google" />
+              Continuer avec Google
+            </button>
           </form>
 
           {isLogin && (
