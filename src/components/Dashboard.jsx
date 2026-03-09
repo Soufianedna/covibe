@@ -132,8 +132,17 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
     try {
       const { data: conversations, error: convError } = await supabase
         .from('conversations')
-        .select('id')
+        .select('id, user1_id, user2_id')
         .or(`user1_id.eq.${currentUserProfile.user_id},user2_id.eq.${currentUserProfile.user_id}`);
+      if (conversations) {
+        const otherUserIds = conversations.map(c => c.user1_id === currentUserProfile.user_id ? c.user2_id : c.user1_id);
+        const { data: activeProfiles } = await supabase.from('profiles').select('user_id').in('user_id', otherUserIds);
+        const activeIds = new Set((activeProfiles || []).map(p => p.user_id));
+        conversations.splice(0, conversations.length, ...conversations.filter(c => {
+          const otherId = c.user1_id === currentUserProfile.user_id ? c.user2_id : c.user1_id;
+          return activeIds.has(otherId);
+        }));
+      }
 
       if (convError) throw convError;
 
@@ -1184,7 +1193,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
               <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
                 <p className="text-red-400 font-semibold mb-2">{t('warning')}</p>
                 <p className="text-gray-300 text-sm">
-                  {t('irreversibleAction')}. {t('allDataDeleted')}
+                  {t('irreversibleAction_allDataDeleted')}
                 </p>
               </div>
 

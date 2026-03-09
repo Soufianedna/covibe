@@ -162,7 +162,7 @@ export const Auth = () => {
 
           {isLogin && (
             <div className="mt-4 text-center">
-              <a href="#" className="text-sm text-violet-400 hover:text-violet-300">
+              <a href="#" onClick={async (e) => { e.preventDefault(); if (!email) { alert(t('enterEmailFirst') || 'Entre ton email d\'abord'); return; } const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: 'https://www.covibe.ca/reset-password' }); if (!error) { alert(t('resetEmailSent') || 'Email de réinitialisation envoyé !'); } }} className="text-sm text-violet-400 hover:text-violet-300">
                 {t('forgotPassword')}
               </a>
             </div>

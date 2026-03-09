@@ -29,6 +29,8 @@ function AppContent() {
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showAuth, setShowAuth] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -42,6 +44,11 @@ function AppContent() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (_event === 'PASSWORD_RECOVERY') {
+        setShowResetPassword(true);
+        setLoading(false);
+        return;
+      }
       setSession(session);
       if (session) {
         loadUserProfile(session.user.id);
@@ -81,6 +88,37 @@ function AppContent() {
   const handleGetStarted = () => {
     setShowAuth(true);
   };
+
+  if (showResetPassword) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-indigo-950 flex items-center justify-center p-6">
+        <div className="bg-slate-800/50 backdrop-blur-lg border border-violet-500/30 rounded-3xl p-8 w-full max-w-md">
+          <h2 className="text-2xl font-bold text-white mb-6 text-center">Nouveau mot de passe</h2>
+          <input
+            type="password"
+            placeholder="Nouveau mot de passe"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            className="w-full px-4 py-3 bg-slate-700/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 mb-4"
+          />
+          <button
+            onClick={async () => {
+              const { error } = await supabase.auth.updateUser({ password: newPassword });
+              if (!error) {
+                setShowResetPassword(false);
+                alert('Mot de passe mis à jour !');
+              } else {
+                alert('Erreur: ' + error.message);
+              }
+            }}
+            className="w-full py-3 bg-gradient-to-r from-violet-600 to-indigo-500 text-white rounded-xl font-bold hover:shadow-lg transition-all"
+          >
+            Mettre à jour
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const urlParams = new URLSearchParams(window.location.search);
   const verifyToken = urlParams.get('token');
