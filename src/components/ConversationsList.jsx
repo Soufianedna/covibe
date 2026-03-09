@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
+import { LazyLoadImage } from 'react-lazy-load-image-component';
 import { supabase } from '../lib/supabase';
 import { X, MessageCircle } from 'lucide-react';
 import { ProfileView } from './ProfileView';
+import { useTranslation } from 'react-i18next';
 
-export const ConversationsList = ({ currentUser, onClose, onOpenChat }) => {
+export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch }) => {
+  const { t } = useTranslation();
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [conversationData, setConversationData] = useState({});
@@ -135,9 +138,9 @@ export const ConversationsList = ({ currentUser, onClose, onOpenChat }) => {
   return (
     <>
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 z-50">
-        <div className="bg-slate-800 border border-pink-500/30 rounded-3xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-          <div className="sticky top-0 bg-slate-800 border-b border-pink-500/30 p-6 flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-white">💬 Mes Conversations</h2>
+        <div className="bg-slate-800 border border-violet-500/30 rounded-3xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+          <div className="sticky top-0 bg-slate-800 border-b border-violet-500/30 p-6 flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-white">💬 {t('myConversations')}</h2>
             <button onClick={onClose} className="p-2 hover:bg-slate-700 rounded-xl transition-all">
               <X size={24} className="text-gray-300" />
             </button>
@@ -153,7 +156,7 @@ export const ConversationsList = ({ currentUser, onClose, onOpenChat }) => {
               <div className="text-center py-10">
                 <div className="text-6xl mb-4">💔</div>
                 <h3 className="text-xl font-bold text-white mb-2">Aucun match pour l'instant</h3>
-                <p className="text-gray-400">Continue à swiper pour trouver des colocs compatibles !</p>
+                <p className="text-gray-400">{t('keepSwiping')}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -170,7 +173,7 @@ export const ConversationsList = ({ currentUser, onClose, onOpenChat }) => {
                       }}
                       className="w-full flex items-center gap-4 p-4 bg-slate-700/50 hover:bg-slate-700 rounded-xl transition-all relative"
                     >
-                      <button
+                      <div
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedProfile(match);
@@ -178,23 +181,23 @@ export const ConversationsList = ({ currentUser, onClose, onOpenChat }) => {
                         className="relative hover:opacity-80 transition-all"
                       >
                         {match.photo_url ? (
-                          <img src={match.photo_url} alt={match.name} className="w-16 h-16 rounded-full object-cover border-2 border-pink-500" />
+                          <img src={match.photo_url} alt={match.name} className="w-16 h-16 rounded-full object-cover border-2 border-violet-500" />
                         ) : (
                           <div className="w-16 h-16 rounded-full bg-slate-600 flex items-center justify-center text-3xl">👤</div>
                         )}
                         {unreadCount > 0 && (
-                          <span className="absolute -top-1 -right-1 bg-gradient-to-r from-pink-500 to-red-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-lg">
+                          <span className="absolute -top-1 -right-1 bg-gradient-to-r from-violet-600 to-red-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-lg">
                             {unreadCount > 9 ? '9+' : unreadCount}
                           </span>
                         )}
-                      </button>
+                      </div>
                       <div className="flex-1 text-left">
                         <h3 className="text-lg font-bold text-white">{match.name}</h3>
                         <p className="text-sm text-gray-400">
                           {getPreviewText(match.user_id)}
                         </p>
                       </div>
-                      <MessageCircle size={24} className={unreadCount > 0 ? 'text-pink-400' : 'text-gray-400'} />
+                      <MessageCircle size={24} className={unreadCount > 0 ? 'text-violet-400' : 'text-gray-400'} />
                     </button>
                   );
                 })}
@@ -209,6 +212,7 @@ export const ConversationsList = ({ currentUser, onClose, onOpenChat }) => {
           profile={selectedProfile}
           currentUser={currentUser}
           onClose={() => setSelectedProfile(null)}
+          onUnmatch={onUnmatch}
           onOpenChat={(profile) => {
             setSelectedProfile(null);
             onOpenChat(profile);

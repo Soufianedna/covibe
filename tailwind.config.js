@@ -8,9 +8,9 @@ export default {
     extend: {
       colors: {
         covibe: {
-          pink: '#ec4899',
-          purple: '#a855f7',
-          cyan: '#06b6d4',
+          pink: '#7c3aed',
+          purple: '#4f46e5',
+          cyan: '#818cf8',
         }
       }
     },

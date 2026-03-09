@@ -11,17 +11,15 @@ import { LanguageSwitcher } from './LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
 import { Chat } from './Chat';
 import { ConversationsList } from './ConversationsList';
-import { LogOut, User, X, Heart, XCircle, MessageCircle, Star, LayoutGrid, Layers } from 'lucide-react';
+import { LogOut, User, X, Heart, XCircle, MessageCircle, Star } from 'lucide-react';
 import { Filters } from './Filters';
 import { LikesReceived } from './LikesReceived';
 import { Favorites } from './Favorites';
 import { PhotoCarousel } from './PhotoCarousel';
 import { ProfileScore } from './ProfileScore';
-import SwipeView from "./SwipeView";
 export const Dashboard = ({ user, userProfile, onLogout }) => {
   const { t } = useTranslation();
   const [matches, setMatches] = useState([]);
-  const [allProfilesForSwipe, setAllProfilesForSwipe] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [selectedMatchPropertyPhotos, setSelectedMatchPropertyPhotos] = useState([]);
@@ -39,25 +37,10 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
   const [showLikesReceived, setShowLikesReceived] = useState(false);
   const [showFavorites, setShowFavorites] = useState(false);
   const [favoritesCount, setFavoritesCount] = useState(0);
-  const [viewMode, setViewMode] = useState("grid"); // "grid" ou "swipe"
-  const [isMobile, setIsMobile] = useState(false);
   const [unviewedLikesCount, setUnviewedLikesCount] = useState(0);
   const [filters, setFilters] = useState({});
   const [favorites, setFavorites] = useState([]);
 
-
-  // Détection mobile
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  // Forcer swipe sur mobile
-  useEffect(() => {
-    if (isMobile) setViewMode("swipe");
-  }, [isMobile]);
   useEffect(() => {
     loadMatches();
     loadUnreadCount();
@@ -235,7 +218,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
               // Récupérer le nom du sender
               const { data: senderProfile } = await supabase
                 .from('profiles')
-                .select('name, photo_url')
+                .select('name')
                 .eq('user_id', payload.new.sender_id)
                 .single();
               
@@ -243,7 +226,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
                 const notifId = Date.now();
                 setNotifications(prev => [...prev, { 
                   id: notifId, 
-                  sender: senderProfile.name, message: payload.new.content, senderId: payload.new.sender_id, senderPhoto: senderProfile.photo_url 
+                  sender: senderProfile.name, message: payload.new.content, senderId: payload.new.sender_id 
               }]);
               }
               setUnreadCount(prev => prev + 1);
@@ -270,7 +253,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
           if (payload.new.is_like) {
             const { data: likerProfile } = await supabase
               .from('profiles')
-              .select('name, photo_url')
+              .select('name')
               .eq('user_id', payload.new.user_id)
               .single();
             
@@ -365,11 +348,6 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
         
         profile.photos = photos || [];
       }
-      
-      // Pour le mode swipe : tous les profils avec scores
-      const allTopMatches = getTopMatches(currentUserProfile, data);
-      setAllProfilesForSwipe(allTopMatches);
-      console.log("🎯 ALL PROFILES FOR SWIPE:", allTopMatches.length, allTopMatches);
       const topMatches = getTopMatches(currentUserProfile, unswipedProfiles);
       console.log('🎯 TOP MATCHES:', topMatches.length);
       
@@ -398,13 +376,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
         .single();
 
       if (theyLikedMe) {
-        // Récupérer le profil complet depuis la DB au lieu de chercher dans matches
-        const { data: matchedUserData } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("user_id", likedUserId)
-          .single();
-        const matchedUser = matchedUserData;
+        const matchedUser = matches.find(m => m.user_id === likedUserId);
         setMatchModalData({
           currentUser: currentUserProfile,
           matchedUser: matchedUser
@@ -489,8 +461,6 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
       if (match.cleanliness < filters.minCleanliness) return false;
       if (filters.smoking !== null && match.smoking !== filters.smoking) return false;
       if (filters.pets !== null && match.pets !== filters.pets) return false;
-      // Filtre par ville
-      if (filters.city && match.city !== filters.city) return false;
       // Filtre de distance
       if (filters.searchRadius && currentUserProfile?.latitude && match.latitude) {
         const distance = calculateDistance(currentUserProfile.latitude, currentUserProfile.longitude, match.latitude, match.longitude);
@@ -592,32 +562,14 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-indigo-950">
-      <header className="bg-slate-900/80 backdrop-blur-xl border-b border-violet-500/20 shadow-lg shadow-purple-900/20">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <header className="bg-slate-800/50 backdrop-blur-lg border-b border-violet-500/30">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Logo size={40} />
             <h1 className="text-2xl font-black bg-gradient-to-r from-violet-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">CoVibe</h1>
           </div>
           <div className="flex items-center gap-4">
-            {!isMobile && (
-              <div className="flex items-center gap-1 bg-slate-700/50 rounded-xl p-1">
-                <button
-                  onClick={() => setViewMode("grid")}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${viewMode === "grid" ? "bg-violet-600 text-white shadow-md" : "text-gray-400 hover:text-white hover:bg-slate-600"}`}
-                >
-                  <LayoutGrid size={18} />
-                  <span className="hidden md:inline text-sm">{t("gridView")}</span>
-                </button>
-                <button
-                  onClick={() => setViewMode("swipe")}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${viewMode === "swipe" ? "bg-violet-600 text-white shadow-md" : "text-gray-400 hover:text-white hover:bg-slate-600"}`}
-                >
-                  <Layers size={18} />
-                  <span className="hidden md:inline text-sm">{t("swipeView")}</span>
-                </button>
-              </div>
-            )}
             <button onClick={() => setShowLikesReceived(true)} className="relative flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-500 hover:from-violet-600 hover:to-purple-600 text-white rounded-xl transition-all">
               <Heart size={20} />
               <span className="hidden sm:inline">{t('likes')}</span>
@@ -627,7 +579,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
                 </span>
               )}
             </button>
-            <button onClick={() => setShowFavorites(true)} className="relative flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white rounded-xl transition-all">
+            <button onClick={() => setShowFavorites(true)} className="relative flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white rounded-xl transition-all">
               <Star size={20} />
               <span className="hidden sm:inline">{t('favorites')}</span>
               {favoritesCount > 0 && (
@@ -636,7 +588,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
                 </span>
               )}
             </button>
-            <button onClick={() => { setShowConversations(true); setUnreadCount(0); }} className="relative flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl transition-all">
+            <button onClick={() => setShowConversations(true)} className="relative flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl transition-all">
               <MessageCircle size={20} />
               <span className="hidden sm:inline">Messages</span>
               {unreadCount > 0 && (
@@ -717,26 +669,9 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
         ) : filteredMatches.length === 0 ? (
           <div className="text-center py-20 bg-slate-800/50 rounded-3xl border border-violet-500/30">
             <div className="text-6xl mb-4">🎉</div>
-            <h3 className="text-2xl font-bold text-white mb-2">{ t('allProfilesSeen') }</h3>
-            <p className="text-gray-300">{ t('checkBackLater') }</p>
+            <h3 className="text-2xl font-bold text-white mb-2">Tu as tout vu !</h3>
+            <p className="text-gray-300">Tu as swipé tous les profils disponibles. Reviens plus tard pour de nouveaux membres !</p>
           </div>
-        ) : viewMode === "swipe" ? (
-          <SwipeView
-            profiles={filteredMatches}
-            currentUser={currentUserProfile}
-            onSwipe={async (profile, action) => {
-              if (action === "like") {
-                await handleLike(profile.user_id);
-              } else if (action === "favorite") {
-                await toggleFavorite(profile.user_id);
-              }
-            }}
-            onViewProfile={(profile) => {
-              setSelectedMatch(profile);
-              if (profile.has_space) loadPropertyPhotos(profile.user_id);
-            }}
-            onMatch={(profile) => {}}
-          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredMatches.map((match) => {
@@ -745,7 +680,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
               
               return (
                 <div key={match.user_id} onClick={() => { setSelectedMatch(match); if (match.has_space) loadPropertyPhotos(match.user_id); }} className="bg-slate-800/50 backdrop-blur-lg border border-violet-500/30 rounded-2xl p-6 hover:border-violet-500 transition-all cursor-pointer hover:shadow-lg hover:shadow-violet-500/20">
-                  <div className="mb-4 relative text-center">
+                  <div className="mb-4 relative">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -769,28 +704,26 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
                   </div>
                   <div className="text-center mb-4">
                     <h3 className="text-xl font-bold text-white mb-1 flex items-center justify-center gap-2">{match.name} {match.verified && <span className="inline-flex items-center justify-center w-5 h-5 bg-violet-500 rounded-full text-white text-xs font-bold">✓</span>}</h3>
-                    <div className="text-center mb-2">
+                    <p className="text-gray-400 text-sm mb-2">
                     {match.has_space && (
-                      <div className="mb-2">
+                      <div className="mt-2">
                         <span className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-violet-600 to-indigo-500 text-white text-xs font-bold rounded-full">
-                          {t('hasSpace')}
+                          {match.has_creative_space ? "🎨 Espace créatif disponible" : "🏠 A un espace"}
                         </span>
                       </div>
                     )}
                     {!match.has_space && match.open_to_group_search && (
-                      <div className="mb-2">
+                      <div className="mt-2">
                         <span className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-xs font-bold rounded-full">
                           🤝 {t('seekingTogether')}
                         </span>
                       </div>
                     )}
-                    <p className="text-gray-400 text-sm">
                       {match.age} ans • {t(getGenderLabel(match.gender))}
                       {currentUserProfile?.latitude && match.latitude && (
                         <> • 📍 À {formatDistance(calculateDistance(currentUserProfile.latitude, currentUserProfile.longitude, match.latitude, match.longitude))} de toi</>
                       )}
                     </p>
-                    </div>
                     <p className="text-violet-400 font-semibold">{t(getCreativeTypeLabel(match.creative_type))}</p>
                   </div>
                   <div className="bg-slate-700/50 rounded-xl p-4 mb-4">
@@ -814,7 +747,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
                     </div>
                   </div>
                   <button className="w-full mt-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-500 text-white rounded-xl font-bold hover:shadow-lg transition-all">
-                    {mutual ? t('openChat') : t('viewProfile')}
+                    {mutual ? 'Ouvrir le chat 💬' : 'Voir le profil →'}
                   </button>
                 </div>
               );
@@ -901,7 +834,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
                     {selectedMatch.is_furnished !== null && (
                       <div>
                         <p className="text-xs text-gray-400 mb-1">{t('isFurnished')}</p>
-                        <p className="text-white font-semibold">{selectedMatch.is_furnished ? '✅ ' + t('furnished') : t('unfurnished')}</p>
+                        <p className="text-white font-semibold">{selectedMatch.is_furnished ? '✅ ' + t('furnished') : '❌ Non meublé'}</p>
                       </div>
                     )}
                   </div>
@@ -1016,7 +949,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
                 </div>
               ) : (
                 <div className="bg-gradient-to-r from-violet-600/20 to-indigo-500/20 border border-violet-500/50 rounded-xl p-6">
-                  <p className="text-white text-center mb-4">{ t('whatDoYouThink') } {selectedMatch.name.split(' ')[0]} ?</p>
+                  <p className="text-white text-center mb-4">{ t('whatDoYouThink') } de {selectedMatch.name.split(' ')[0]} ?</p>
                   <div className="flex gap-4">
                     <button onClick={() => handlePass(selectedMatch.user_id)} className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold transition-all">
                       <XCircle size={24} />
@@ -1255,7 +1188,6 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
         <ConversationsList
           currentUser={currentUserProfile}
           onClose={() => setShowConversations(false)}
-          onUnmatch={handleUnmatch}
           onOpenChat={openChatWithMatch}
         />
       )}
@@ -1299,7 +1231,6 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
           currentUser={currentUserProfile}
           onClose={() => setShowFavorites(false)}
           mutualMatches={mutualMatches}
-          onUnmatch={handleUnmatch}
           onOpenChat={openChatWithMatch}
           onLike={async (profile) => {
             await handleLike(profile.user_id);
@@ -1318,7 +1249,6 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
             setNotifications(prev => prev.filter(n => n.id !== notif.id));
           }}
           sender={notif.sender}
-          senderPhoto={notif.senderPhoto}
           onClose={() => setNotifications(prev => prev.filter(n => n.id !== notif.id))}
         />
       ))}

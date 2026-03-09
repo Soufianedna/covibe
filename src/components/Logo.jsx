@@ -1,32 +1,20 @@
-export const Logo = ({ size = 40, className = '' }) => (
-  <svg width={size} height={size} viewBox="0 0 400 400" className={className}>
-    <defs>
-      <linearGradient id="lp" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" style={{stopColor:'#ec4899'}} />
-        <stop offset="100%" style={{stopColor:'#dc2626'}} />
-      </linearGradient>
-      <linearGradient id="rp" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" style={{stopColor:'#f97316'}} />
-        <stop offset="100%" style={{stopColor:'#eab308'}} />
-      </linearGradient>
-      <linearGradient id="ig" x1="0%" y1="50%" x2="100%" y2="50%">
-        <stop offset="0%" style={{stopColor:'#3b82f6'}} />
-        <stop offset="50%" style={{stopColor:'#a855f7'}} />
-        <stop offset="100%" style={{stopColor:'#dc2626'}} />
-      </linearGradient>
-    </defs>
-    <circle cx="165" cy="195" r="18" fill="none" stroke="url(#lp)" strokeWidth="6" opacity="0.9"/>
-    <circle cx="235" cy="195" r="18" fill="none" stroke="url(#rp)" strokeWidth="6" opacity="0.9"/>
-    <g transform="translate(200, 245)">
+export const Logo = ({ size = 48 }) => {
+  return (
+    <svg width={size} height={size} viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path 
-        d="M -50 0 C -50 -22, -30 -22, -15 -11 C 0 0, 0 0, 15 -11 C 30 -22, 50 -22, 50 0 C 50 22, 30 22, 15 11 C 0 0, 0 0, -15 11 C -30 22, -50 22, -50 0" 
-        fill="none" 
-        stroke="url(#ig)" 
-        strokeWidth="10" 
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity="0.9"
+        d="M15 20C15 20 20 15 25 20C30 25 30 35 35 40C40 45 45 40 45 40" 
+        stroke="url(#gradient)" 
+        strokeWidth="8" 
+        strokeLinecap="round" 
+        fill="none"
       />
-    </g>
-  </svg>
-);
+      <defs>
+        <linearGradient id="gradient" x1="15" y1="20" x2="45" y2="40" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#EC4899"/>
+          <stop offset="50%" stopColor="#A855F7"/>
+          <stop offset="100%" stopColor="#06B6D4"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+};

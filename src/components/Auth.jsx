@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Logo } from './Logo';
+import { useTranslation } from 'react-i18next';
 
 export const Auth = () => {
+  const { t } = useTranslation();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -38,7 +40,7 @@ export const Auth = () => {
 
         if (error) throw error;
 
-        setSuccess('✅ Compte créé ! Vérifie ton email pour confirmer.');
+        setSuccess(t('accountCreated'));
       }
     } catch (error) {
       setError(error.message);
@@ -48,41 +50,41 @@ export const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-indigo-950 flex items-center justify-center p-6">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
             <Logo size={60} />
-            <h1 className="text-4xl font-black bg-gradient-to-r from-pink-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-black bg-gradient-to-r from-violet-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
               CoVibe
             </h1>
           </div>
           <p className="text-gray-300 text-lg">
-            {isLogin ? 'Matche avec ton futur coloc 💫' : 'Trouve ton coloc par vibe'}
+            {isLogin ? t('welcomeSubtitle') : t('welcomeSubtitle')}
           </p>
         </div>
 
-        <div className="bg-slate-800/50 backdrop-blur-lg border border-pink-500/30 rounded-3xl p-8">
+        <div className="bg-slate-800/50 backdrop-blur-lg border border-violet-500/30 rounded-3xl p-8">
           <div className="flex gap-2 mb-6">
             <button
               onClick={() => setIsLogin(true)}
               className={`flex-1 py-3 rounded-xl font-bold transition-all ${
                 isLogin
-                  ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white'
+                  ? 'bg-gradient-to-r from-violet-600 to-indigo-500 text-white'
                   : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
               }`}
             >
-              Connexion
+              {t('login')}
             </button>
             <button
               onClick={() => setIsLogin(false)}
               className={`flex-1 py-3 rounded-xl font-bold transition-all ${
                 !isLogin
-                  ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white'
+                  ? 'bg-gradient-to-r from-violet-600 to-indigo-500 text-white'
                   : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
               }`}
             >
-              Inscription
+              {t('signup')}
             </button>
           </div>
 
@@ -90,36 +92,36 @@ export const Auth = () => {
             {!isLogin && (
               <div>
                 <label className="block text-sm font-semibold text-gray-300 mb-2">
-                  Nom complet
+                  {t('fullName')}
                 </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required={!isLogin}
-                  className="w-full px-4 py-3 bg-slate-700/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  placeholder="Jean Dupont"
+                  className="w-full px-4 py-3 bg-slate-700/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  placeholder={ t('fullNamePlaceholder') }
                 />
               </div>
             )}
 
             <div>
               <label className="block text-sm font-semibold text-gray-300 mb-2">
-                Email
+                {t('email')}
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 bg-slate-700/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                placeholder="ton@email.com"
+                className="w-full px-4 py-3 bg-slate-700/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                placeholder={ t('emailPlaceholder') }
               />
             </div>
 
             <div>
               <label className="block text-sm font-semibold text-gray-300 mb-2">
-                Mot de passe
+                {t('password')}
               </label>
               <input
                 type="password"
@@ -127,12 +129,12 @@ export const Auth = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
-                className="w-full px-4 py-3 bg-slate-700/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                placeholder="••••••••"
+                className="w-full px-4 py-3 bg-slate-700/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                placeholder={ t('passwordPlaceholder') }
               />
               {!isLogin && (
                 <p className="text-xs text-gray-400 mt-1">
-                  Minimum 6 caractères
+                  {t('passwordPlaceholder')}
                 </p>
               )}
             </div>
@@ -152,28 +154,28 @@ export const Auth = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 text-white rounded-xl font-bold text-lg hover:shadow-2xl hover:shadow-pink-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-4 bg-gradient-to-r from-violet-600 via-purple-500 to-cyan-500 text-white rounded-xl font-bold text-lg hover:shadow-2xl hover:shadow-violet-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? '...' : isLogin ? 'Se connecter →' : 'Créer mon compte →'}
+              {loading ? '...' : isLogin ? t('connect') : t('createAccount')}
             </button>
           </form>
 
           {isLogin && (
             <div className="mt-4 text-center">
-              <a href="#" className="text-sm text-pink-400 hover:text-pink-300">
-                Mot de passe oublié ?
+              <a href="#" className="text-sm text-violet-400 hover:text-violet-300">
+                {t('forgotPassword')}
               </a>
             </div>
           )}
         </div>
 
         <p className="text-center text-gray-400 text-sm mt-6">
-          {isLogin ? "Pas encore de compte ? " : "Déjà un compte ? "}
+          {isLogin ? t('noAccountYet') : t('alreadyHaveAccount')}
           <button
             onClick={() => setIsLogin(!isLogin)}
-            className="text-pink-400 hover:text-pink-300 font-semibold"
+            className="text-violet-400 hover:text-violet-300 font-semibold"
           >
-            {isLogin ? 'Inscris-toi' : 'Connecte-toi'}
+            {isLogin ? t('signUp') : t('signIn')}
           </button>
         </p>
       </div>

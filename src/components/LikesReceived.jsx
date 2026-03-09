@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
+import { LazyLoadImage } from 'react-lazy-load-image-component';
 import { supabase } from '../lib/supabase';
 import { X, Heart } from 'lucide-react';
 import { getCompatibilityLevel } from '../lib/matching';
+import { calculateDistance, formatDistance } from '../lib/distance';
+import { useTranslation } from 'react-i18next';
 
 export const LikesReceived = ({ currentUser, onClose, onLike }) => {
+  const { t } = useTranslation();
   const [likes, setLikes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedProfile, setSelectedProfile] = useState(null);
@@ -148,11 +152,11 @@ export const LikesReceived = ({ currentUser, onClose, onLike }) => {
   return (
     <>
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 z-50">
-        <div className="bg-slate-800 border border-pink-500/30 rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-          <div className="sticky top-0 bg-slate-800 border-b border-pink-500/30 p-6 flex items-center justify-between">
+        <div className="bg-slate-800 border border-violet-500/30 rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 bg-slate-800 border-b border-violet-500/30 p-6 flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-white">💕 Likes Reçus</h2>
-              <p className="text-gray-400 mt-1">{likes.length} {likes.length > 1 ? 'personnes t\'ont liké' : 'personne t\'a liké'}</p>
+              <h2 className="text-2xl font-bold text-white">💕 {t('likesReceived')}</h2>
+              <p className="text-gray-400 mt-1">{likes.length === 0 ? t('noLikes') : likes.length > 1 ? likes.length + ' personnes t\'ont liké' : '1 personne t\'a liké'}</p>
             </div>
             <button onClick={onClose} className="p-2 hover:bg-slate-700 rounded-xl transition-all">
               <X size={24} className="text-gray-300" />
@@ -168,8 +172,8 @@ export const LikesReceived = ({ currentUser, onClose, onLike }) => {
             ) : likes.length === 0 ? (
               <div className="text-center py-20">
                 <div className="text-6xl mb-4">💔</div>
-                <h3 className="text-2xl font-bold text-white mb-2">Aucun like pour l'instant</h3>
-                <p className="text-gray-400">Continue à swiper pour trouver ton match parfait !</p>
+                <h3 className="text-2xl font-bold text-white mb-2">{t('noLikes')}</h3>
+                <p className="text-gray-400">{t('noLikesSub')}</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -181,13 +185,18 @@ export const LikesReceived = ({ currentUser, onClose, onLike }) => {
                   >
                     <div className="text-center mb-4">
                       {profile.photo_url ? (
-                        <img src={profile.photo_url} alt={profile.name} className="w-24 h-24 rounded-full mx-auto object-cover border-4 border-pink-500 mb-3" />
+                        <img src={profile.photo_url} alt={profile.name} className="w-24 h-24 rounded-full mx-auto object-cover border-4 border-violet-500 mb-3" />
                       ) : (
                         <div className="w-24 h-24 rounded-full mx-auto bg-slate-600 flex items-center justify-center text-4xl mb-3">👤</div>
                       )}
                       <h3 className="text-xl font-bold text-white mb-1">{profile.name}</h3>
-                      <p className="text-gray-400 text-sm mb-2">{profile.age} ans • {getGenderLabel(profile.gender)}</p>
-                      <p className="text-pink-400 font-semibold">{getCreativeTypeLabel(profile.creative_type)}</p>
+                      <p className="text-gray-400 text-sm mb-2">
+                        {profile.age} ans • {getGenderLabel(profile.gender)}
+                        {currentUser?.latitude && profile.latitude && (
+                          <> • 📍 À {formatDistance(calculateDistance(currentUser.latitude, currentUser.longitude, profile.latitude, profile.longitude))} de toi</>
+                        )}
+                      </p>
+                      <p className="text-violet-400 font-semibold">{getCreativeTypeLabel(profile.creative_type)}</p>
                     </div>
                     
                     <button
@@ -195,10 +204,10 @@ export const LikesReceived = ({ currentUser, onClose, onLike }) => {
                         e.stopPropagation();
                         onLike(profile);
                       }}
-                      className="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                      className="w-full py-3 bg-gradient-to-r from-violet-600 to-indigo-500 text-white rounded-xl font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2"
                     >
                       <Heart size={20} />
-                      Like en retour !
+                      {t('likeBack')}
                     </button>
                     
                     <button
@@ -221,48 +230,137 @@ export const LikesReceived = ({ currentUser, onClose, onLike }) => {
 
       {selectedProfile && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-6 z-[60]">
-          <div className="bg-slate-800 border border-pink-500/30 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-slate-800 border-b border-pink-500/30 p-6 flex items-center justify-between z-10">
-              <h2 className="text-2xl font-bold text-white">Profil Détaillé</h2>
+          <div className="bg-slate-800 border border-violet-500/30 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-slate-800 border-b border-violet-500/30 p-6 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-white">{t('detailedProfile')}</h2>
               <button onClick={() => setSelectedProfile(null)} className="p-2 hover:bg-slate-700 rounded-xl transition-all">
                 <X size={24} className="text-gray-300" />
               </button>
             </div>
-
             <div className="p-6 space-y-6">
-              {/* Photo + Infos principales */}
               <div className="text-center">
                 {selectedProfile.photo_url ? (
-                  <img src={selectedProfile.photo_url} alt={selectedProfile.name} className="w-32 h-32 rounded-full mx-auto object-cover border-4 border-pink-500 mb-4" />
+                  <img src={selectedProfile.photo_url} alt={selectedProfile.name} className="w-32 h-32 rounded-full mx-auto object-cover border-4 border-violet-500 mb-4" />
                 ) : (
                   <div className="w-32 h-32 rounded-full mx-auto bg-slate-700 flex items-center justify-center text-6xl mb-4">👤</div>
                 )}
-                <h2 className="text-3xl font-bold text-white mb-2">{selectedProfile.name}</h2>
-                <p className="text-gray-300 text-lg mb-4">
-                  {selectedProfile.age} ans • {getGenderLabel(selectedProfile.gender)} • {getCityLabel(selectedProfile.city)}
+                <h3 className="text-3xl font-bold text-white mb-2">{selectedProfile.name}</h3>
+                <p className="text-gray-400 mb-2">
+                  {selectedProfile.age} ans • {t(getGenderLabel(selectedProfile.gender))} • {getCityLabel(selectedProfile.city)}
+                  {currentUser?.latitude && selectedProfile.latitude && (
+                    <> • 📍 À {formatDistance(calculateDistance(currentUser.latitude, currentUser.longitude, selectedProfile.latitude, selectedProfile.longitude))} de toi</>
+                  )}
                 </p>
-                <p className="text-pink-400 font-bold text-xl">{getCreativeTypeLabel(selectedProfile.creative_type)}</p>
+                <p className="text-violet-400 font-semibold text-lg">{t(getCreativeTypeLabel(selectedProfile.creative_type))}</p>
               </div>
 
-              {/* Bio */}
-              {selectedProfile.bio && (
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-3">Bio</h3>
-                  <p className="text-gray-300 bg-slate-700/50 rounded-xl p-4">{selectedProfile.bio}</p>
+              <div>
+                <h4 className="text-lg font-bold text-white mb-2">{t('bio')}</h4>
+                <p className="text-gray-300 bg-slate-700/50 rounded-xl p-4">{selectedProfile.bio}</p>
+              </div>
+
+              {selectedProfile.has_space && (
+                <div className="border-t border-violet-500/30 pt-6">
+                  <h4 className="text-lg font-bold text-white mb-4">🏠 {t("availableSpace")}</h4>
+                  
+                  <div className="bg-gradient-to-r from-violet-600/20 to-indigo-500/20 border border-violet-500/30 rounded-xl p-4 mb-4">
+                    <p className="text-2xl font-bold text-white text-center">
+                      {selectedProfile.room_price}$ {t("perMonth")}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    {selectedProfile.property_type && (
+                      <div>
+                        <p className="text-xs text-gray-400 mb-1">{t("propertyType")}</p>
+                        <p className="text-white font-semibold">{t(selectedProfile.property_type)}</p>
+                      </div>
+                    )}
+                    {selectedProfile.is_furnished !== null && (
+                      <div>
+                        <p className="text-xs text-gray-400 mb-1">{t("isFurnished")}</p>
+                        <p className="text-white font-semibold">{selectedProfile.is_furnished ? "✅ " + t("furnished") : "❌ Non meublé"}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {selectedProfile.property_description && (
+                    <div className="mb-4">
+                      <p className="text-xs text-gray-400 mb-1">{t("propertyDescription")}</p>
+                      <p className="text-gray-300 bg-slate-700/50 rounded-xl p-3 text-sm">{selectedProfile.property_description}</p>
+                    </div>
+                  )}
+
+                  {selectedProfile.amenities && Array.isArray(selectedProfile.amenities) && selectedProfile.amenities.length > 0 && (
+                    <div>
+                      <p className="text-xs text-gray-400 mb-2">{t("amenities")}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedProfile.amenities.map(amenity => (
+                          <span key={amenity} className="px-3 py-1 bg-cyan-500/20 border border-cyan-500/50 rounded-full text-cyan-400 text-xs">
+                            ✓ {t(amenity)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* Boutons Like / Pas intéressé */}
+              <div>
+                <h4 className="text-lg font-bold text-white mb-3">💰 {t('budget')}</h4>
+                <p className="text-gray-300 bg-slate-700/50 rounded-xl p-4">
+                  {selectedProfile.has_space ? `${t('roomPriceLabel')} ${selectedProfile.room_price}$/mois` : `${selectedProfile.budget_min}$ - ${selectedProfile.budget_max}$ CAD ${t('perMonth')}`}
+                </p>
+              </div>
+
+              <div>
+                <h4 className="text-lg font-bold text-white mb-3">{t('preferences')}</h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="bg-slate-700/50 rounded-xl p-4">
+                    <p className="text-gray-400 mb-1">{t('tobacco')}</p>
+                    <p className="text-white font-semibold">{selectedProfile.smoking ? '🚬 ' + t('yes') : '🚭 ' + t('no')}</p>
+                  </div>
+                  <div className="bg-slate-700/50 rounded-xl p-4">
+                    <p className="text-gray-400 mb-1">{t('animals')}</p>
+                    <p className="text-white font-semibold">{selectedProfile.pets ? '✅ ' + t('yes') : '❌ ' + t('no')}</p>
+                  </div>
+                  <div className="bg-slate-700/50 rounded-xl p-4">
+                    <p className="text-gray-400 mb-1">{t('cleanliness')}</p>
+                    <p className="text-white font-semibold">{selectedProfile.cleanliness}/5</p>
+                  </div>
+                  <div className="bg-slate-700/50 rounded-xl p-4">
+                    <p className="text-gray-400 mb-1">{t('noiseTolerance')}</p>
+                    <p className="text-white font-semibold">{selectedProfile.noise_tolerance}/10</p>
+                  </div>
+                  <div className="bg-slate-700/50 rounded-xl p-4">
+                    <p className="text-gray-400 mb-1">{t('guestsFrequency')}</p>
+                    <p className="text-white font-semibold">{selectedProfile.guest_frequency}/5</p>
+                  </div>
+                  <div className="bg-slate-700/50 rounded-xl p-4">
+                    <p className="text-gray-400 mb-1">{t('schedule')}</p>
+                    <p className="text-white font-semibold">{selectedProfile.productive_time}</p>
+                  </div>
+                  <div className="bg-slate-700/50 rounded-xl p-4 col-span-2">
+                    <p className="text-gray-400 mb-1">{t('practices')}</p>
+                    <p className="text-white font-semibold">{selectedProfile.religious_practice || t('notSpecified')}</p>
+                  </div>
+                  <div className="bg-slate-700/50 rounded-xl p-4 col-span-2">
+                    <p className="text-gray-400 mb-1">{t('substances')}</p>
+                    <p className="text-white font-semibold">{selectedProfile.substances || t('notSpecified')}</p>
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-3">
                 <button
                   onClick={() => {
                     onLike(selectedProfile);
                     setSelectedProfile(null);
                   }}
-                  className="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                  className="w-full py-3 bg-gradient-to-r from-violet-600 to-indigo-500 text-white rounded-xl font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2"
                 >
                   <Heart size={20} />
-                  Like en retour !
+                  {t('likeBack')}
                 </button>
                 
                 <button

@@ -1,7 +1,7 @@
 import { X } from 'lucide-react';
 import { getCompatibilityLevel } from '../lib/matching';
 
-export const ProfileView = ({ profile, currentUser, onClose, onOpenChat }) => {
+export const ProfileView = ({ profile, currentUser, onClose, onOpenChat, onUnmatch }) => {
   // Calculer la compatibilité (score fixe 70% pour l'instant)
   const compatibility = 70;
   const { level, color, emoji } = getCompatibilityLevel(compatibility);
@@ -29,8 +29,8 @@ export const ProfileView = ({ profile, currentUser, onClose, onOpenChat }) => {
 
   return (
     <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-6 z-[110]">
-      <div className="bg-slate-800 border border-pink-500/30 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-slate-800 border-b border-pink-500/30 p-6 flex items-center justify-between z-10">
+      <div className="bg-slate-800 border border-violet-500/30 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-slate-800 border-b border-violet-500/30 p-6 flex items-center justify-between z-10">
           <h2 className="text-2xl font-bold text-white">Profil Détaillé</h2>
           <button onClick={onClose} className="p-2 hover:bg-slate-700 rounded-xl transition-all">
             <X size={24} className="text-gray-300" />
@@ -41,7 +41,7 @@ export const ProfileView = ({ profile, currentUser, onClose, onOpenChat }) => {
           {/* Photo + Infos principales */}
           <div className="text-center">
             {profile.photo_url ? (
-              <img src={profile.photo_url} alt={profile.name} className="w-32 h-32 rounded-full mx-auto object-cover border-4 border-pink-500 mb-4" />
+              <img src={profile.photo_url} alt={profile.name} className="w-32 h-32 rounded-full mx-auto object-cover border-4 border-violet-500 mb-4" />
             ) : (
               <div className="w-32 h-32 rounded-full mx-auto bg-slate-700 flex items-center justify-center text-6xl mb-4">👤</div>
             )}
@@ -49,7 +49,7 @@ export const ProfileView = ({ profile, currentUser, onClose, onOpenChat }) => {
             <p className="text-gray-300 text-lg mb-4">
               {profile.age} ans • {getGenderLabel(profile.gender)} • {getCityLabel(profile.city)}
             </p>
-            <p className="text-pink-400 font-bold text-xl">{getCreativeTypeLabel(profile.creative_type)}</p>
+            <p className="text-violet-400 font-bold text-xl">{getCreativeTypeLabel(profile.creative_type)}</p>
           </div>
 
           {/* Compatibilité */}
@@ -72,7 +72,7 @@ export const ProfileView = ({ profile, currentUser, onClose, onOpenChat }) => {
             <h3 className="text-xl font-bold text-white mb-3">Recherche</h3>
             <div className="flex flex-wrap gap-2">
               {profile.seeking_roommate && (
-                <span className="px-4 py-2 bg-pink-500/20 text-pink-400 rounded-xl border border-pink-500/30">
+                <span className="px-4 py-2 bg-violet-500/20 text-violet-400 rounded-xl border border-violet-500/30">
                   🏠 Cherche coloc
                 </span>
               )}
@@ -124,10 +124,18 @@ export const ProfileView = ({ profile, currentUser, onClose, onOpenChat }) => {
               onClose();
               onOpenChat(profile);
             }}
-            className="w-full py-4 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-bold text-lg hover:shadow-lg transition-all"
+            className="w-full py-4 bg-gradient-to-r from-violet-600 to-indigo-500 text-white rounded-xl font-bold text-lg hover:shadow-lg transition-all"
           >
             💬 Envoyer un message
           </button>
+          {onUnmatch && (
+            <button
+              onClick={() => onUnmatch(profile.user_id)}
+              className="w-full py-3 mt-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/50 rounded-xl font-bold transition-all flex items-center justify-center gap-2"
+            >
+              ❌ Unmatch
+            </button>
+          )}
         </div>
       </div>
     </div>

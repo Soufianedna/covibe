@@ -1,3 +1,5 @@
+import { calculateDistance } from './distance';
+
 /**
  * 🎯 ALGORITHME DE COMPATIBILITÉ INTELLIGENT - CoVibe
  * 
@@ -50,30 +52,53 @@ export const calculateCompatibility = (user1, user2) => {
  * Calcule la compatibilité budgétaire (30 points max)
  */
 const calculateBudgetCompatibility = (user1, user2) => {
+  // CAS A : user1 a un espace, user2 cherche une chambre
+  if (user1.has_space && user1.room_price && !user2.has_space) {
+    const budget2Min = user2.budget_min || 0;
+    const budget2Max = user2.budget_max || 5000;
+    
+    // Le room_price doit être dans le budget de user2
+    if (user1.room_price >= budget2Min && user1.room_price <= budget2Max) {
+      // Bonus si seeking_studio ET has_creative_space
+      const bonus = (user2.seeking_studio && user1.has_creative_space) ? 5 : 0;
+      return 30 + bonus; // Score parfait + bonus éventuel
+    }
+    return 0; // Prix incompatible
+  }
+  
+  // CAS B : user2 a un espace, user1 cherche une chambre
+  if (user2.has_space && user2.room_price && !user1.has_space) {
+    const budget1Min = user1.budget_min || 0;
+    const budget1Max = user1.budget_max || 5000;
+    
+    // Le room_price doit être dans le budget de user1
+    if (user2.room_price >= budget1Min && user2.room_price <= budget1Max) {
+      // Bonus si seeking_studio ET has_creative_space
+      const bonus = (user1.seeking_studio && user2.has_creative_space) ? 5 : 0;
+      return 30 + bonus;
+    }
+    return 0;
+  }
+  
+  // CAS C : Les deux cherchent une chambre (logique originale)
   const budget1Min = user1.budget_min || 0;
   const budget1Max = user1.budget_max || 5000;
   const budget2Min = user2.budget_min || 0;
   const budget2Max = user2.budget_max || 5000;
   
-  // Chevauchement des budgets
   const overlapMin = Math.max(budget1Min, budget2Min);
   const overlapMax = Math.min(budget1Max, budget2Max);
   
   if (overlapMin > overlapMax) {
-    // Aucun chevauchement = 0 points
     return 0;
   }
   
-  // Calcul de la zone de chevauchement
   const overlap = overlapMax - overlapMin;
   const range1 = budget1Max - budget1Min;
   const range2 = budget2Max - budget2Min;
   const avgRange = (range1 + range2) / 2;
-  
-  // Plus le chevauchement est grand, meilleur le score
   const overlapRatio = overlap / avgRange;
   
-  // Score de 0 à 30 points
   return Math.min(30, Math.round(overlapRatio * 30));
 };
 
@@ -268,11 +293,29 @@ export const filterMatches = (currentUser, allUsers) => {
       console.log("❌ Skipping self:", user.name);
       return false;
     }
-    
-    // Vérifier la ville seulement si elle existe
-    if (currentUser.city && user.city && user.city !== currentUser.city) {
-      console.log("❌ Different city:", user.name, user.city, "vs", currentUser.city);
-      return false;
+//     
+//     // Vérifier la ville seulement si elle existe
+//     if (currentUser.city && user.city && user.city !== currentUser.city) {
+//       console.log("❌ Different city:", user.name, user.city, "vs", currentUser.city);
+//       return false;
+
+    // RÈGLE : has_space doit matcher avec !has_space
+    // EXCEPTION : deux chercheurs peuvent matcher si open_to_group_search
+    if (currentUser.has_space === user.has_space) {
+      if (!currentUser.has_space && !user.has_space && currentUser.open_to_group_search && user.open_to_group_search) {
+        console.log("✅ Group search match:", user.name, "both seeking together");
+      } else {
+        console.log("❌ Same space status:", user.name);
+        return false;
+      }
+    }
+    // Vérifier la distance si les coordonnées GPS sont disponibles
+    if (currentUser.latitude && currentUser.longitude && user.latitude && user.longitude && currentUser.search_radius) {
+      const distance = calculateDistance(currentUser.latitude, currentUser.longitude, user.latitude, user.longitude);
+      if (distance > currentUser.search_radius) {
+        console.log("❌ Too far:", user.name, distance + "km vs max", currentUser.search_radius + "km");
+        return false;
+      }
     }
     
     console.log("✅ Keeping:", user.name, "city:", user.city);
@@ -310,10 +353,10 @@ export const getTopMatches = (currentUser, allUsers, limit = 20) => {
  * Retourne le niveau de compatibilité avec couleur et emoji
  */
 export const getCompatibilityLevel = (score) => {
-  if (score >= 90) return { level: 'Excellent Match', color: 'text-green-400', emoji: '🔥' };
-  if (score >= 80) return { level: 'Très Compatible', color: 'text-cyan-400', emoji: '✨' };
-  if (score >= 70) return { level: 'Bon Match', color: 'text-blue-400', emoji: '👍' };
-  if (score >= 60) return { level: 'Compatible', color: 'text-purple-400', emoji: '🤝' };
-  if (score >= 50) return { level: 'Moyennement Compatible', color: 'text-yellow-400', emoji: '😊' };
-  return { level: 'Peu Compatible', color: 'text-gray-400', emoji: '🤔' };
+  if (score >= 90) return { levelKey: 'excellentMatch', color: 'text-green-400', emoji: '🔥' };
+  if (score >= 80) return { levelKey: 'veryCompatible', color: 'text-cyan-400', emoji: '✨' };
+  if (score >= 70) return { levelKey: 'goodMatch', color: 'text-blue-400', emoji: '👍' };
+  if (score >= 60) return { levelKey: 'compatible', color: 'text-purple-400', emoji: '🤝' };
+  if (score >= 50) return { levelKey: 'average', color: 'text-yellow-400', emoji: '😊' };
+  return { levelKey: 'low', color: 'text-gray-400', emoji: '🤔' };
 };

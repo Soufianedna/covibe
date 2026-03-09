@@ -196,7 +196,7 @@ export const PhotoUploader = ({ userId, existingPhotos = [], onPhotosChange }) =
               }}
             />
             {index === 0 && (
-              <div className="absolute top-2 left-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+              <div className="absolute top-2 left-2 bg-gradient-to-r from-violet-600 to-indigo-500 text-white text-xs font-bold px-2 py-1 rounded-full">
                 Photo principale
               </div>
             )}
@@ -228,7 +228,7 @@ export const PhotoUploader = ({ userId, existingPhotos = [], onPhotosChange }) =
         ))}
 
         {photos.length < MAX_PHOTOS && (
-          <label className="aspect-square rounded-xl border-2 border-dashed border-gray-500 hover:border-pink-500 transition-all cursor-pointer flex flex-col items-center justify-center gap-2 bg-slate-700/50 hover:bg-slate-700">
+          <label className="aspect-square rounded-xl border-2 border-dashed border-gray-500 hover:border-violet-500 transition-all cursor-pointer flex flex-col items-center justify-center gap-2 bg-slate-700/50 hover:bg-slate-700">
             <input
               type="file"
               accept="image/*"
@@ -238,7 +238,7 @@ export const PhotoUploader = ({ userId, existingPhotos = [], onPhotosChange }) =
             />
             {uploading ? (
               <div className="text-center">
-                <div className="animate-spin text-pink-500 mb-2">⏳</div>
+                <div className="animate-spin text-violet-500 mb-2">⏳</div>
                 <p className="text-sm text-gray-400">Upload...</p>
               </div>
             ) : (

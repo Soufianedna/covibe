@@ -1,13 +1,34 @@
+import { Routes, Route } from 'react-router-dom';
+import { Privacy } from './components/legal/Privacy';
+import { Terms } from './components/legal/Terms';
+import { Cookies } from './components/legal/Cookies';
+import { Mentions } from './components/legal/Mentions';
 import { useState, useEffect } from 'react';
+import 'react-lazy-load-image-component/src/effects/blur.css';
 import { supabase } from './lib/supabase';
+import { Landing } from './components/Landing';
 import { Auth } from './components/Auth';
 import { Onboarding } from './components/Onboarding';
-import { Dashboard } from './components/Dashboard';
+import { Dashboard } from "./components/Dashboard";
+import { Verify } from './components/Verify';
 
 function App() {
+  return (
+    <Routes>
+      <Route path="/privacy" element={<Privacy />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/cookies" element={<Cookies />} />
+      <Route path="/mentions" element={<Mentions />} />
+      <Route path="*" element={<AppContent />} />
+    </Routes>
+  );
+}
+
+function AppContent() {
   const [session, setSession] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showAuth, setShowAuth] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -18,7 +39,6 @@ function App() {
         setLoading(false);
       }
     });
-
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -30,7 +50,6 @@ function App() {
         setLoading(false);
       }
     });
-
     return () => subscription.unsubscribe();
   }, []);
 
@@ -41,11 +60,7 @@ function App() {
         .select('*')
         .eq('user_id', userId)
         .single();
-
-      if (error && error.code !== 'PGRST116') {
-        throw error;
-      }
-
+      if (error && error.code !== 'PGRST116') throw error;
       setUserProfile(data);
     } catch (error) {
       console.error('Error loading profile:', error);
@@ -60,7 +75,18 @@ function App() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    setShowAuth(false);
   };
+
+  const handleGetStarted = () => {
+    setShowAuth(true);
+  };
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const verifyToken = urlParams.get('token');
+  if (verifyToken) {
+    return <Verify token={verifyToken} />;
+  }
 
   if (loading) {
     return (
@@ -73,14 +99,18 @@ function App() {
     );
   }
 
+  if (!session && !showAuth) {
+    return <Landing onGetStarted={handleGetStarted} />;
+  }
+
   if (!session) {
     return <Auth />;
   }
 
   if (!userProfile || !userProfile.onboarding_complete) {
     return (
-      <Onboarding 
-        user={session.user} 
+      <Onboarding
+        user={session.user}
         onComplete={handleOnboardingComplete}
       />
     );

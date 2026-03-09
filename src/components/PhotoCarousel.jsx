@@ -22,11 +22,11 @@ export const PhotoCarousel = ({ photos = [], name = 'Profil' }) => {
 
   if (photos.length === 1) {
     return (
-      <div className="relative mx-auto mb-4">
+      <div className="relative mx-auto mb-4 w-48">
         <img
           src={photos[0].photo_url || photos[0]}
           alt={name}
-          className="w-48 h-48 rounded-full object-cover border-4 border-pink-500"
+          className="w-48 h-48 rounded-full object-cover border-4 border-violet-500"
         />
       </div>
     );
@@ -38,7 +38,7 @@ export const PhotoCarousel = ({ photos = [], name = 'Profil' }) => {
       <img
         src={photos[currentIndex].photo_url || photos[currentIndex]}
         alt={`${name} - Photo ${currentIndex + 1}`}
-        className="w-48 h-48 rounded-full object-cover border-4 border-pink-500"
+        className="w-48 h-48 rounded-full object-cover border-4 border-violet-500"
       />
 
       {/* Boutons de navigation */}
@@ -65,7 +65,7 @@ export const PhotoCarousel = ({ photos = [], name = 'Profil' }) => {
                 onClick={() => setCurrentIndex(index)}
                 className={`w-2 h-2 rounded-full transition-all ${
                   index === currentIndex
-                    ? 'bg-pink-500 w-6'
+                    ? 'bg-violet-500 w-6'
                     : 'bg-white/50 hover:bg-white/80'
                 }`}
               />

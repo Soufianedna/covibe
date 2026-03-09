@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
+import { LazyLoadImage } from 'react-lazy-load-image-component';
 import { supabase } from '../lib/supabase';
 import { X, Star, Heart, MessageCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { getCompatibilityLevel } from '../lib/matching';
 
-export const Favorites = ({ currentUser, onClose, onOpenChat, onLike }) => {
+export const Favorites = ({ currentUser, onClose, onOpenChat, onLike, mutualMatches }) => {
+  const { t } = useTranslation();
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -73,11 +76,11 @@ export const Favorites = ({ currentUser, onClose, onOpenChat, onLike }) => {
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 z-50">
-      <div className="bg-slate-800 border border-pink-500/30 rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="sticky top-0 bg-slate-800 border-b border-pink-500/30 p-6 flex items-center justify-between">
+      <div className="bg-slate-800 border border-violet-500/30 rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="sticky top-0 bg-slate-800 border-b border-violet-500/30 p-6 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-white flex items-center gap-2">
             <Star className="text-yellow-400" size={28} />
-            Mes Favoris
+            {t('myFavorites')}
           </h2>
           <button onClick={onClose} className="p-2 hover:bg-slate-700 rounded-xl transition-all">
             <X size={24} className="text-gray-300" />
@@ -93,8 +96,8 @@ export const Favorites = ({ currentUser, onClose, onOpenChat, onLike }) => {
           ) : favorites.length === 0 ? (
             <div className="text-center py-20">
               <Star className="mx-auto mb-4 text-gray-600" size={64} />
-              <h3 className="text-2xl font-bold text-white mb-2">Aucun favori</h3>
-              <p className="text-gray-400">Ajoute des profils à tes favoris en cliquant sur l'étoile ⭐</p>
+              <h3 className="text-2xl font-bold text-white mb-2">{t('noFavorites')}</h3>
+              <p className="text-gray-400">{t('noFavoritesSub')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -102,7 +105,7 @@ export const Favorites = ({ currentUser, onClose, onOpenChat, onLike }) => {
                 const { level, color, emoji } = getCompatibilityLevel(profile.compatibility || 70);
                 
                 return (
-                  <div key={profile.user_id} className="bg-slate-700/50 border border-pink-500/30 rounded-2xl p-6 hover:border-pink-500 transition-all relative">
+                  <div key={profile.user_id} className="bg-slate-700/50 border border-violet-500/30 rounded-2xl p-6 hover:border-violet-500 transition-all relative">
                     <button
                       onClick={() => handleRemoveFavorite(profile.user_id)}
                       className="absolute top-4 right-4 p-2 bg-yellow-500/20 hover:bg-red-500/20 rounded-full transition-all"
@@ -112,7 +115,7 @@ export const Favorites = ({ currentUser, onClose, onOpenChat, onLike }) => {
 
                     <div className="mb-4">
                       {profile.photo_url ? (
-                        <img src={profile.photo_url} alt={profile.name} className="w-24 h-24 rounded-full mx-auto object-cover border-4 border-pink-500" />
+                        <img src={profile.photo_url} alt={profile.name} className="w-24 h-24 rounded-full mx-auto object-cover border-4 border-violet-500" />
                       ) : (
                         <div className="w-24 h-24 rounded-full mx-auto bg-slate-600 flex items-center justify-center text-4xl">👤</div>
                       )}
@@ -121,24 +124,21 @@ export const Favorites = ({ currentUser, onClose, onOpenChat, onLike }) => {
                     <div className="text-center mb-4">
                       <h3 className="text-xl font-bold text-white mb-1">{profile.name}</h3>
                       <p className="text-gray-400 text-sm mb-2">{profile.age} ans • {getGenderLabel(profile.gender)} • {getCityLabel(profile.city)}</p>
-                      <p className="text-pink-400 font-semibold">{getCreativeTypeLabel(profile.creative_type)}</p>
+                      <p className="text-violet-400 font-semibold">{getCreativeTypeLabel(profile.creative_type)}</p>
                     </div>
-
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => onLike(profile)}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-bold hover:shadow-lg transition-all"
-                      >
-                        <Heart size={18} />
-                        Like
-                      </button>
+                    {mutualMatches && mutualMatches.includes(profile.user_id) ? (
                       <button
                         onClick={() => onOpenChat(profile)}
-                        className="flex items-center justify-center px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-xl transition-all"
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-violet-600 to-indigo-500 text-white rounded-xl font-bold hover:shadow-lg transition-all"
                       >
                         <MessageCircle size={18} />
+                        {t("send")}
                       </button>
-                    </div>
+                    ) : (
+                      <div className="text-center py-3 text-gray-400 text-sm">
+                        💔 Pas encore de match mutuel
+                      </div>
+                    )}
                   </div>
                 );
               })}
