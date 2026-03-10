@@ -89,6 +89,60 @@ export const ProfileView = ({ profile, currentUser, onClose, onOpenChat, onUnmat
             </div>
           </div>
 
+          {/* Espace disponible */}
+          {profile.has_space && (
+            <div className="border border-violet-500/30 rounded-2xl p-4 bg-slate-700/30">
+              <h3 className="text-xl font-bold text-white mb-3">🏠 Espace disponible</h3>
+              {profile.room_price && (
+                <div className="bg-violet-600/20 rounded-xl p-3 mb-3 text-center">
+                  <p className="text-2xl font-bold text-white">{profile.room_price}$ /mois</p>
+                  {profile.utilities_included && <p className="text-green-400 text-sm">✅ Charges comprises</p>}
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                {profile.property_type && (
+                  <div className="bg-slate-700/50 rounded-xl p-3">
+                    <p className="text-gray-400 text-sm">Type</p>
+                    <p className="text-white font-semibold">{profile.property_type}</p>
+                  </div>
+                )}
+                {profile.lease_duration && (
+                  <div className="bg-slate-700/50 rounded-xl p-3">
+                    <p className="text-gray-400 text-sm">Durée</p>
+                    <p className="text-white font-semibold">{profile.lease_duration}</p>
+                  </div>
+                )}
+                {profile.is_furnished !== undefined && (
+                  <div className="bg-slate-700/50 rounded-xl p-3">
+                    <p className="text-gray-400 text-sm">Meublé</p>
+                    <p className="text-white font-semibold">{profile.is_furnished ? '✅ Oui' : '❌ Non'}</p>
+                  </div>
+                )}
+                {profile.has_existing_roommates !== undefined && (
+                  <div className="bg-slate-700/50 rounded-xl p-3">
+                    <p className="text-gray-400 text-sm">Colocataires présents</p>
+                    <p className="text-white font-semibold">{profile.has_existing_roommates ? '✅ Oui' : '❌ Non'}</p>
+                  </div>
+                )}
+              </div>
+              {profile.amenities && profile.amenities.length > 0 && (
+                <div>
+                  <p className="text-gray-400 text-sm mb-2">Équipements</p>
+                  <div className="flex flex-wrap gap-2">
+                    {profile.amenities.map(a => (
+                      <span key={a} className="px-3 py-1 bg-slate-600/50 text-gray-300 rounded-lg text-sm">{a}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {profile.property_description && (
+                <div className="mt-3">
+                  <p className="text-gray-400 text-sm mb-1">Description</p>
+                  <p className="text-gray-300 text-sm">{profile.property_description}</p>
+                </div>
+              )}
+            </div>
+          )}
           {/* Budget */}
           <div>
             <h3 className="text-xl font-bold text-white mb-3">💰 Budget</h3>
