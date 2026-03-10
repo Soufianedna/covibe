@@ -57,7 +57,7 @@ export default function SwipeView({
 
   return (
     <div className="relative w-full max-w-lg mx-auto">
-      <div className="relative h-[600px] mb-6">
+      <div className="relative h-[680px] mb-6">
         {profiles.map((profile, index) => {
           const { levelKey, color, emoji } = getCompatibilityLevel(profile.compatibility);
           
@@ -121,8 +121,25 @@ export default function SwipeView({
                     </p>
                   </div>
 
+                  {profile.has_space && (
+                    <div className="flex gap-3 mb-2">
+                      {profile.room_price && (
+                        <div className="flex-1 bg-slate-700/50 rounded-xl p-2 text-center">
+                          <p className="text-xs text-gray-400">💰 Prix</p>
+                          <p className="text-white font-bold">{profile.room_price}$/mois</p>
+                        </div>
+                      )}
+                      {profile.property_type && (
+                        <div className="flex-1 bg-slate-700/50 rounded-xl p-2 text-center">
+                          <p className="text-xs text-gray-400">🏠 Logement</p>
+                          <p className="text-white font-bold">{t(profile.property_type)}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <button
-                    onClick={() => onViewProfile(profile)}
+                    onClick={(e) => { e.stopPropagation(); onViewProfile(profile); }}
+                    onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); onViewProfile(profile); }}
                     className="w-full bg-gradient-to-r from-violet-600 to-indigo-500 hover:from-violet-600 hover:to-purple-600 text-white py-4 rounded-xl font-bold text-lg transition-all shadow-lg"
                   >
                     {t('viewProfile')}

@@ -894,7 +894,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
                       <p className="text-sm font-semibold text-gray-300 mb-2">{t('propertyPhotos')}</p>
                       <div className="grid grid-cols-2 gap-2">
                         {selectedMatchPropertyPhotos.map((photo) => (
-                          <img key={photo.id} src={photo.photo_url} alt="Property" onClick={() => setLightboxPhoto(photo.photo_url)} className="w-full h-32 object-cover rounded-xl cursor-pointer hover:opacity-90 transition-all" />
+                          <img key={photo.id} src={photo.url} alt="Property" onClick={() => setLightboxPhoto(photo.url)} className="w-full h-32 object-cover rounded-xl cursor-pointer hover:opacity-90 transition-all" />
                         ))}
                       </div>
                     </div>
@@ -1332,6 +1332,12 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
           onClose={() => setNotifications(prev => prev.filter(n => n.id !== notif.id))}
         />
       ))}
+      {lightboxPhoto && (
+        <div onClick={() => setLightboxPhoto(null)} className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 cursor-pointer">
+          <img src={lightboxPhoto} alt="Photo" className="max-w-full max-h-screen object-contain rounded-2xl" />
+          <button onClick={() => setLightboxPhoto(null)} className="absolute top-4 right-4 text-white text-3xl font-bold">✕</button>
+        </div>
+      )}
     </div>
   );
 };
