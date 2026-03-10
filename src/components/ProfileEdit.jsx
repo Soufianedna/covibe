@@ -64,7 +64,27 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
       .order('position');
     
     console.log("🔍 LOADED PHOTOS:", data);
-    setExistingPhotos(data || []);
+    
+    // Si aucune photo dans profile_photos, vérifier la vraie valeur en base
+    if (!data || data.length === 0) {
+      const { data: freshProfile } = await supabase
+        .from('profiles')
+        .select('photo_url')
+        .eq('user_id', userProfile.user_id)
+        .single();
+      if (freshProfile && freshProfile.photo_url) {
+        await supabase.from('profile_photos').insert({
+          user_id: userProfile.user_id,
+          photo_url: freshProfile.photo_url,
+          position: 0
+        });
+        setExistingPhotos([{ photo_url: freshProfile.photo_url, position: 0 }]);
+      } else {
+        setExistingPhotos([]);
+      }
+    } else {
+      setExistingPhotos(data || []);
+    }
 
     const { data: propPhotos } = await supabase
       .from('property_photos')
@@ -100,6 +120,10 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
   const handleSave = async () => {
     if (!profile.name || !profile.age || !profile.bio || (!profile.has_space && (!profile.budget_min || !profile.budget_max))) {
       alert('⚠️ Les champs obligatoires sont : nom, âge, bio, budget');
+      return;
+    }
+    if (profile.has_space && propertyPhotos.length === 0) {
+      alert('⚠️ Tu dois ajouter au moins une photo de ton espace !');
       return;
     }
 
@@ -189,7 +213,7 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-300 mb-2">{t('city')}</label>
+              <label className="block text-sm font-semibold text-gray-300 mb-2">{profile.has_space ? t('whereIsYourPlace') : t('city')}</label>
               <select
                 value={profile.city}
                 onChange={(e) => setProfile({ ...profile, city: e.target.value })}
@@ -305,7 +329,7 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
 
           {/* LOCALISATION */}
           <div>
-            <label className="block text-sm font-semibold text-gray-300 mb-3">{t('whereAreYouSearching')}</label>
+            <label className="block text-sm font-semibold text-gray-300 mb-3">{profile.has_space ? t('whereIsYourPlace') : t('whereAreYouSearching')}</label>
             <div className="space-y-4">
               {/* Radio buttons pour choisir le mode */}
               <div className="space-y-3">
@@ -526,7 +550,7 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
               <div className="mt-4">
                 <label className="block text-sm font-semibold text-gray-300 mb-3">{t('amenities')}</label>
                 <div className="grid grid-cols-2 gap-3">
-                  {['wifi', 'laundry', 'parking', 'balcony', 'dishwasher', 'airConditioning', 'heating'].map(amenity => (
+                  {['wifi', 'laundry', 'parking', 'balcony', 'dishwasher', 'airConditioning', 'heating', 'pool', 'privateBathroom'].map(amenity => (
                     <label key={amenity} className="flex items-center gap-3 cursor-pointer">
                       <input
                         type="checkbox"
@@ -544,6 +568,35 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
                     </label>
                   ))}
                 </div>
+              </div>
+
+              {/* Charges comprises */}
+              <div className="mt-4">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={profile.utilities_included || false}
+                    onChange={(e) => setProfile({ ...profile, utilities_included: e.target.checked })}
+                    className="w-5 h-5 rounded bg-slate-700 border-gray-600 text-violet-500 focus:ring-2 focus:ring-violet-500"
+                  />
+                  <span className="text-gray-300">{t('utilitiesIncluded')}</span>
+                </label>
+              </div>
+
+              {/* Colocataires présents */}
+              <div className="mt-4">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={profile.has_existing_roommates || false}
+                    onChange={(e) => setProfile({ ...profile, has_existing_roommates: e.target.checked })}
+                    className="w-5 h-5 rounded bg-slate-700 border-gray-600 text-violet-500 focus:ring-2 focus:ring-violet-500"
+                  />
+                  <span className="text-gray-300">{t('hasExistingRoommates')}</span>
+                </label>
+                {profile.has_existing_roommates && (
+                  <p className="text-xs text-violet-400 mt-2">💡 {t('mentionRoommatesInBio')}</p>
+                )}
               </div>
             </div>
           )}

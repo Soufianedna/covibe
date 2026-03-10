@@ -25,6 +25,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
   const [loading, setLoading] = useState(true);
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [selectedMatchPropertyPhotos, setSelectedMatchPropertyPhotos] = useState([]);
+  const [lightboxPhoto, setLightboxPhoto] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -675,7 +676,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
           </p>
         </div>
         {/* {t('filters')} */}
-        <Filters onFilterChange={setFilters} />
+        <Filters onFilterChange={setFilters} hasSpace={currentUserProfile?.has_space} />
         {/* Rangée de bulles photos */}
         {mutualMatchProfiles.length > 0 && (
           <div className="mb-8 overflow-x-auto">
@@ -893,7 +894,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
                       <p className="text-sm font-semibold text-gray-300 mb-2">{t('propertyPhotos')}</p>
                       <div className="grid grid-cols-2 gap-2">
                         {selectedMatchPropertyPhotos.map((photo) => (
-                          <img key={photo.id} src={photo.url} alt="Property" className="w-full h-32 object-cover rounded-xl" />
+                          <img key={photo.id} src={photo.photo_url} alt="Property" onClick={() => setLightboxPhoto(photo.photo_url)} className="w-full h-32 object-cover rounded-xl cursor-pointer hover:opacity-90 transition-all" />
                         ))}
                       </div>
                     </div>

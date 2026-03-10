@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
 
-export const Filters = ({ onFilterChange }) => {
+export const Filters = ({ onFilterChange, hasSpace }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [filters, setFilters] = useState({
@@ -103,7 +103,7 @@ export const Filters = ({ onFilterChange }) => {
         <div className="mt-4 p-6 bg-slate-800/50 rounded-xl border border-violet-500/30 space-y-6">
           {/* Ville */}
           <div>
-            <h3 className="text-white font-semibold mb-3">🏙️ {t('city')}</h3>
+            <h3 className="text-white font-semibold mb-3">🏙️ {hasSpace ? t('whereIsYourPlace') : t('whereAreYouLooking')}</h3>
             <select
               value={filters.city}
               onChange={(e) => handleFilterChange('city', e.target.value)}
