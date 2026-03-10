@@ -47,7 +47,7 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
     property_type: userProfile.property_type || null,
     property_description: userProfile.property_description || null,
     is_furnished: userProfile.is_furnished || false,
-    amenities: userProfile.amenities || [],
+    amenities: Array.isArray(userProfile.amenities) ? userProfile.amenities : (typeof userProfile.amenities === "string" ? JSON.parse(userProfile.amenities || "[]") : []),
     has_creative_space: userProfile.has_creative_space || false,
     open_to_group_search: userProfile.open_to_group_search || false,
   });

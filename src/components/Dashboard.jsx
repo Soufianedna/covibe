@@ -741,8 +741,9 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
                 await toggleFavorite(profile.user_id);
               }
             }}
-            onViewProfile={(profile) => {
-              setSelectedMatch(profile);
+            onViewProfile={async (profile) => {
+              const { data: fullProfile } = await supabase.from('profiles').select('*').eq('user_id', profile.user_id).single();
+              setSelectedMatch(fullProfile || profile);
               if (profile.has_space) loadPropertyPhotos(profile.user_id);
             }}
             onMatch={(profile) => {}}
@@ -925,11 +926,11 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
                   )}
 
                   {/* Équipements */}
-                  {selectedMatch.amenities && Array.isArray(selectedMatch.amenities) && selectedMatch.amenities.length > 0 && (
+                  {selectedMatch.amenities && (Array.isArray(selectedMatch.amenities) ? selectedMatch.amenities : JSON.parse(selectedMatch.amenities || "[]")).length > 0 && (
                     <div>
                       <p className="text-xs text-gray-400 mb-2">{t('amenities')}</p>
                       <div className="flex flex-wrap gap-2">
-                        {selectedMatch.amenities.map(amenity => (
+                        {(Array.isArray(selectedMatch.amenities) ? selectedMatch.amenities : JSON.parse(selectedMatch.amenities || "[]")).map(amenity => (
                           <span key={amenity} className="px-3 py-1 bg-cyan-500/20 border border-cyan-500/50 rounded-full text-cyan-400 text-xs">
                             ✓ {t(amenity)}
                           </span>
