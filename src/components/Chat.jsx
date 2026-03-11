@@ -89,7 +89,12 @@ export const Chat = ({ currentUser, matchedUser, onClose, onUnmatch, onMessagesR
       setConversationId(conversation.id);
     } catch (error) {
       console.error('Error loading conversation:', error);
-      alert('Erreur lors du chargement de la conversation: ' + error.message);
+      if (error.message && error.message.includes('row-level security')) {
+        alert(`💔 ${matchedUser.name} t'a unmatch.`);
+        onClose();
+      } else {
+        alert('Erreur lors du chargement de la conversation: ' + error.message);
+      }
     }
   };
 
