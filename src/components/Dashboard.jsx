@@ -67,7 +67,8 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
     loadFavorites();
     const unsubscribe = subscribeToNewMessages();
     const unsubscribeLikes = subscribeToNewLikes();
-  return () => { if (unsubscribe) unsubscribe(); if (unsubscribeLikes) unsubscribeLikes(); };
+    const unsubscribeConvDelete = subscribeToConversationDeletes();
+  return () => { if (unsubscribe) unsubscribe(); if (unsubscribeLikes) unsubscribeLikes(); if (unsubscribeConvDelete) unsubscribeConvDelete(); };
   }, []);
 
   // Charger les photos du user actuel
@@ -241,22 +242,35 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
               .single();
 
             if (conversation) {
-              
-              // Récupérer le nom du sender
               const { data: senderProfile } = await supabase
                 .from('profiles')
                 .select('name, photo_url')
                 .eq('user_id', payload.new.sender_id)
                 .single();
               
-              if (senderProfile) {
-                const notifId = Date.now();
-                setNotifications(prev => [...prev, { 
-                  id: notifId, 
-                  sender: senderProfile.name, message: payload.new.content, senderId: payload.new.sender_id, senderPhoto: senderProfile.photo_url 
-              }]);
-              }
-              setUnreadCount(prev => prev + 1);
+              // Vérifier si le match existe encore (pas unmatch)
+              const { data: matchSwipe } = await supabase
+                .from('swipes')
+                .select('id')
+                .eq('user_id', currentUserProfile.user_id)
+                .eq('swiped_user_id', payload.new.sender_id)
+                .eq('is_like', true)
+                .maybeSingle();
+              
+              if (!matchSwipe) return; // Unmatch détecté, ignorer
+
+              setChatUser(prev => {
+                const chatIsOpen = prev && prev.user_id === payload.new.sender_id;
+                if (!chatIsOpen && senderProfile) {
+                  const notifId = Date.now();
+                  setNotifications(p => [...p, { 
+                    id: notifId, 
+                    sender: senderProfile.name, message: payload.new.content, senderId: payload.new.sender_id, senderPhoto: senderProfile.photo_url 
+                  }]);
+                  setUnreadCount(p => p + 1);
+                }
+                return prev;
+              });
             }
           }
         }
@@ -266,6 +280,19 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
     return () => channel.unsubscribe();
   };
 
+  const subscribeToConversationDeletes = () => {
+    const channel = supabase
+      .channel('conversation-deletes')
+      .on('postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'conversations' },
+        () => {
+          loadUnreadCount();
+          setChatUser(null);
+        }
+      )
+      .subscribe();
+    return () => channel.unsubscribe();
+  };
   const subscribeToNewLikes = () => {
     const channel = supabase
       .channel('new-likes')
@@ -548,8 +575,12 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
         await supabase.from('conversations').delete().eq('id', conversation.id);
       }
 
-      console.log('🎉 UNMATCH TERMINÉ - Reload...');
-      window.location.reload();
+      console.log('🎉 UNMATCH TERMINÉ');
+      setChatUser(null);
+      setSelectedMatch(null);
+      setUnreadCount(0);
+      await loadUnreadCount();
+      await loadMatches();
     } catch (error) {
       console.error('💥 Error:', error);
       alert('Erreur: ' + error.message);

@@ -130,6 +130,18 @@ export const Chat = ({ currentUser, matchedUser, onClose, onUnmatch, onMessagesR
           }
         }
       )
+      .on('postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'conversations',
+          filter: `id=eq.${conversationId}`
+        },
+        () => {
+          console.log('💔 Conversation supprimée - fermeture chat');
+          onClose();
+        }
+      )
       .subscribe((status) => {
         console.log('📡 Status subscription:', status);
       });
