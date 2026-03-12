@@ -897,10 +897,30 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
                 <p className="text-violet-400 font-semibold text-lg">{t(getCreativeTypeLabel(selectedMatch.creative_type))}</p>
               </div>
               <div className="bg-slate-700/50 rounded-xl p-6">
-                <div className="text-center">
+                <div className="text-center mb-4">
                   <p className="text-gray-300 mb-2">{t('compatibility')}</p>
                   <div className="text-5xl font-bold bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent mb-2">{selectedMatch.compatibility}%</div>
                   <p className={`text-xl font-semibold ${getCompatibilityLevel(selectedMatch.compatibility).color}`}>{getCompatibilityLevel(selectedMatch.compatibility).emoji} {t(getCompatibilityLevel(selectedMatch.compatibility).levelKey)}</p>
+                </div>
+                <div className="space-y-3 mt-4 border-t border-slate-600 pt-4">
+                  <p className="text-xs text-gray-400 uppercase font-semibold mb-2">{t('whyThisScore')}</p>
+                  {[
+                    { label: '💰 ' + t('budget'), value: currentUserProfile && selectedMatch ? (() => { const b1min = currentUserProfile.budget_min||0; const b1max = currentUserProfile.budget_max||9999; const b2min = selectedMatch.budget_min||0; const b2max = selectedMatch.budget_max||9999; const overlap = Math.min(b1max,b2max)-Math.max(b1min,b2min); return overlap>0 ? Math.round((overlap/(Math.max(b1max,b2max)-Math.min(b1min,b2min)))*30) : 0; })() : 0, max: 30 },
+                    { label: '🌅 ' + t('scheduleLabel'), value: currentUserProfile?.schedule === selectedMatch?.schedule ? 20 : (currentUserProfile?.schedule && selectedMatch?.schedule ? 5 : 10), max: 20 },
+                    { label: '🏠 ' + t('habits'), value: (() => { let s=0; if(currentUserProfile?.smoking === selectedMatch?.smoking) s+=8; if(currentUserProfile?.pets === selectedMatch?.pets || currentUserProfile?.pets_ok || selectedMatch?.pets_ok) s+=8; if(Math.abs((currentUserProfile?.cleanliness||3)-(selectedMatch?.cleanliness||3))<=1) s+=9; return s; })(), max: 25 },
+                    { label: '🙏 ' + t('practices'), value: currentUserProfile?.religious_practice === selectedMatch?.religious_practice ? 15 : ((!currentUserProfile?.religious_practice||currentUserProfile?.religious_practice==='none') || (!selectedMatch?.religious_practice||selectedMatch?.religious_practice==='none') ? 10 : 5), max: 15 },
+                    { label: '✨ ' + t('lifestyle'), value: (() => { let s=0; if(Math.abs((currentUserProfile?.noise_tolerance||5)-(selectedMatch?.noise_tolerance||5))<=2) s+=5; if(Math.abs((currentUserProfile?.guests_frequency||2)-(selectedMatch?.guests_frequency||2))<=1) s+=5; return s; })(), max: 10 },
+                  ].map(({ label, value, max }) => (
+                    <div key={label}>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="text-gray-300">{label}</span>
+                        
+                      </div>
+                      <div className="w-full bg-slate-600 rounded-full h-2">
+                        <div className="bg-gradient-to-r from-violet-500 to-indigo-400 h-2 rounded-full transition-all" style={{width: `${(value/max)*100}%`}}></div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
               <div>
