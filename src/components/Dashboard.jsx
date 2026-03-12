@@ -768,6 +768,8 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
             onSwipe={async (profile, action) => {
               if (action === "like") {
                 await handleLike(profile.user_id);
+              } else if (action === "pass") {
+                await handlePass(profile.user_id);
               } else if (action === "favorite") {
                 await toggleFavorite(profile.user_id);
               }
