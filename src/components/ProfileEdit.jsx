@@ -38,6 +38,8 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
     safe_space_preferences: userProfile.safe_space_preferences || [],
     move_in_date: userProfile.move_in_date || '',
     work_location: userProfile.work_location || 'hybrid',
+    productive_time: userProfile.productive_time || 'day',
+    religious_practice: userProfile.religious_practice || 'none',
     latitude: userProfile.latitude || null,
     longitude: userProfile.longitude || null,
     search_radius: userProfile.search_radius || 25,
@@ -273,6 +275,22 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
             </select>
           </div>
 
+          {/* Pratiques religieuses/alimentaires */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-300 mb-2">{t('religiousDietaryPractices')}</label>
+            <select
+              value={profile.religious_practice || 'none'}
+              onChange={(e) => setProfile({ ...profile, religious_practice: e.target.value })}
+              className="w-full px-4 py-3 bg-slate-700/50 border border-gray-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+            >
+              <option value="none">🤷 {t('noPreference')}</option>
+              <option value="muslim">☪️ Halal</option>
+              <option value="jewish">✡️ Kasher</option>
+              <option value="vegetarian_vegan">🌱 {t('vegetarianVegan')}</option>
+              <option value="spiritual">🕉️ {t('spiritual')}</option>
+              <option value="secular">🔬 {t('secular')}</option>
+            </select>
+          </div>
           {/* QUE CHERCHES-TU */}
           <div>
             <label className="block text-sm font-semibold text-gray-300 mb-3">{t('whatAreYouLookingFor')}</label>
