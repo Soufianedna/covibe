@@ -116,14 +116,18 @@ export default function SwipeView({ profiles, onSwipe, onViewProfile, currentUse
                       )}
                     </div>
                   )}
-                  <button
+                  <div
+                    style={{touchAction: 'manipulation', position: 'relative', zIndex: 10}}
                     onPointerDown={(e) => e.stopPropagation()}
-                    onClick={(e) => { e.stopPropagation(); onViewProfile(profile); }}
-                    className="w-full bg-gradient-to-r from-violet-600 to-indigo-500 text-white py-4 rounded-xl font-bold text-lg transition-all shadow-lg"
-                    style={{touchAction: 'manipulation'}}
+                    onTouchStart={(e) => e.stopPropagation()}
                   >
-                    {t('viewProfile')}
-                  </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onViewProfile(profile); }}
+                      className="w-full bg-gradient-to-r from-violet-600 to-indigo-500 text-white py-4 rounded-xl font-bold text-lg transition-all shadow-lg"
+                    >
+                      {t('viewProfile')}
+                    </button>
+                  </div>
                 </div>
               </div>
             </TinderCard>
