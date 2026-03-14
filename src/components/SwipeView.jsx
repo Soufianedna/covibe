@@ -59,9 +59,9 @@ export default function SwipeView({ profiles, onSwipe, onViewProfile, currentUse
             >
               <div
                 className="relative w-full h-full bg-slate-800/50 backdrop-blur-lg border-2 border-violet-500/30 rounded-2xl overflow-hidden shadow-2xl"
-                style={{touchAction: 'none', userSelect: 'none'}}
+                style={{userSelect: 'none'}}
               >
-                <div className="relative h-[450px] overflow-hidden pointer-events-none">
+                <div className="relative h-[450px] overflow-hidden pointer-events-none" style={{touchAction: 'none'}}>
                   {profile.photo_url ? (
                     <img
                       src={profile.photo_url}
@@ -96,7 +96,7 @@ export default function SwipeView({ profiles, onSwipe, onViewProfile, currentUse
                     </div>
                   </div>
                 </div>
-                <div className="p-4 space-y-3" style={{touchAction: 'none'}}>
+                <div className="p-4 space-y-3">
                   <div className={`${color === 'text-green-500' ? 'bg-green-500/20 border-green-500/50' : color === 'text-blue-500' ? 'bg-blue-500/20 border-blue-500/50' : 'bg-yellow-500/20 border-yellow-500/50'} p-3 rounded-lg border`}>
                     <p className="text-white font-bold text-center">{emoji} {t(levelKey)}</p>
                   </div>
