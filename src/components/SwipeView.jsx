@@ -116,24 +116,31 @@ export default function SwipeView({ profiles, onSwipe, onViewProfile, currentUse
                       )}
                     </div>
                   )}
-                  <div
-                    style={{touchAction: 'manipulation', position: 'relative', zIndex: 10}}
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onTouchStart={(e) => e.stopPropagation()}
-                  >
-                    <button
-                      onClick={(e) => { e.stopPropagation(); onViewProfile(profile); }}
-                      className="w-full bg-gradient-to-r from-violet-600 to-indigo-500 text-white py-4 rounded-xl font-bold text-lg transition-all shadow-lg"
-                    >
-                      {t('viewProfile')}
-                    </button>
-                  </div>
+
                 </div>
               </div>
             </TinderCard>
           );
         })}
       </div>
+
+      {canSwipe && currentIndex >= 0 && (
+        <button
+          onClick={() => onViewProfile(profiles[currentIndex])}
+          className="w-full max-w-lg mx-auto block mb-4 bg-gradient-to-r from-violet-600 to-indigo-500 text-white py-4 rounded-xl font-bold text-lg transition-all shadow-lg"
+        >
+          {t('viewProfile')}
+        </button>
+      )}
+
+      {canSwipe && currentIndex >= 0 && (
+        <button
+          onClick={() => onViewProfile(profiles[currentIndex])}
+          className="w-full max-w-lg mx-auto block mb-4 bg-gradient-to-r from-violet-600 to-indigo-500 text-white py-4 rounded-xl font-bold text-lg transition-all shadow-lg"
+        >
+          {t('viewProfile')}
+        </button>
+      )}
 
       {canSwipe && (
         <div className="flex justify-center items-center gap-12 mb-4">
