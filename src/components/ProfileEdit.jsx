@@ -38,8 +38,6 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
     safe_space_preferences: userProfile.safe_space_preferences || [],
     move_in_date: userProfile.move_in_date || '',
     work_location: userProfile.work_location || 'hybrid',
-    productive_time: userProfile.productive_time || 'day',
-    religious_practice: userProfile.religious_practice || 'none',
     latitude: userProfile.latitude || null,
     longitude: userProfile.longitude || null,
     search_radius: userProfile.search_radius || 25,
@@ -49,7 +47,7 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
     property_type: userProfile.property_type || null,
     property_description: userProfile.property_description || null,
     is_furnished: userProfile.is_furnished || false,
-    amenities: Array.isArray(userProfile.amenities) ? userProfile.amenities : (typeof userProfile.amenities === "string" ? JSON.parse(userProfile.amenities || "[]") : []),
+    amenities: userProfile.amenities || [],
     has_creative_space: userProfile.has_creative_space || false,
     open_to_group_search: userProfile.open_to_group_search || false,
   });
@@ -67,26 +65,17 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
     
     console.log("🔍 LOADED PHOTOS:", data);
     
-    // Si aucune photo dans profile_photos, vérifier la vraie valeur en base
-    if (!data || data.length === 0) {
-      const { data: freshProfile } = await supabase
-        .from('profiles')
-        .select('photo_url')
-        .eq('user_id', userProfile.user_id)
-        .single();
-      if (freshProfile && freshProfile.photo_url) {
-        await supabase.from('profile_photos').insert({
-          user_id: userProfile.user_id,
-          photo_url: freshProfile.photo_url,
-          position: 0
-        });
-        setExistingPhotos([{ photo_url: freshProfile.photo_url, position: 0 }]);
-      } else {
-        setExistingPhotos([]);
+    // Si profile_photos vide mais photo_url existe dans profiles → on la migre
+    if ((!data || data.length === 0) && userProfile.photo_url) {
+      const { error } = await supabase
+        .from('profile_photos')
+        .insert({ user_id: userProfile.user_id, photo_url: userProfile.photo_url, position: 0 });
+      if (!error) {
+        setExistingPhotos([{ photo_url: userProfile.photo_url, position: 0 }]);
+        return;
       }
-    } else {
-      setExistingPhotos(data || []);
     }
+    setExistingPhotos(data || []);
 
     const { data: propPhotos } = await supabase
       .from('property_photos')
@@ -122,10 +111,6 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
   const handleSave = async () => {
     if (!profile.name || !profile.age || !profile.bio || (!profile.has_space && (!profile.budget_min || !profile.budget_max))) {
       alert('⚠️ Les champs obligatoires sont : nom, âge, bio, budget');
-      return;
-    }
-    if (profile.has_space && propertyPhotos.length === 0) {
-      alert('⚠️ Tu dois ajouter au moins une photo de ton espace !');
       return;
     }
 
@@ -215,7 +200,7 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-300 mb-2">{profile.has_space ? t('whereIsYourPlace') : t('city')}</label>
+              <label className="block text-sm font-semibold text-gray-300 mb-2">{t('city')}</label>
               <select
                 value={profile.city}
                 onChange={(e) => setProfile({ ...profile, city: e.target.value })}
@@ -275,22 +260,6 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
             </select>
           </div>
 
-          {/* Pratiques religieuses/alimentaires */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-300 mb-2">{t('religiousDietaryPractices')}</label>
-            <select
-              value={profile.religious_practice || 'none'}
-              onChange={(e) => setProfile({ ...profile, religious_practice: e.target.value })}
-              className="w-full px-4 py-3 bg-slate-700/50 border border-gray-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
-            >
-              <option value="none">🤷 {t('noPreference')}</option>
-              <option value="muslim">☪️ Halal</option>
-              <option value="jewish">✡️ Kasher</option>
-              <option value="vegetarian_vegan">🌱 {t('vegetarianVegan')}</option>
-              <option value="spiritual">🕉️ {t('spiritual')}</option>
-              <option value="secular">🔬 {t('secular')}</option>
-            </select>
-          </div>
           {/* QUE CHERCHES-TU */}
           <div>
             <label className="block text-sm font-semibold text-gray-300 mb-3">{t('whatAreYouLookingFor')}</label>
@@ -347,7 +316,7 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
 
           {/* LOCALISATION */}
           <div>
-            <label className="block text-sm font-semibold text-gray-300 mb-3">{profile.has_space ? t('whereIsYourPlace') : t('whereAreYouSearching')}</label>
+            <label className="block text-sm font-semibold text-gray-300 mb-3">{t('whereAreYouSearching')}</label>
             <div className="space-y-4">
               {/* Radio buttons pour choisir le mode */}
               <div className="space-y-3">
@@ -568,7 +537,7 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
               <div className="mt-4">
                 <label className="block text-sm font-semibold text-gray-300 mb-3">{t('amenities')}</label>
                 <div className="grid grid-cols-2 gap-3">
-                  {['wifi', 'laundry', 'parking', 'balcony', 'dishwasher', 'airConditioning', 'heating', 'pool', 'privateBathroom'].map(amenity => (
+                  {['wifi', 'laundry', 'parking', 'balcony', 'dishwasher', 'airConditioning', 'heating'].map(amenity => (
                     <label key={amenity} className="flex items-center gap-3 cursor-pointer">
                       <input
                         type="checkbox"
@@ -586,35 +555,6 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
                     </label>
                   ))}
                 </div>
-              </div>
-
-              {/* Charges comprises */}
-              <div className="mt-4">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={profile.utilities_included || false}
-                    onChange={(e) => setProfile({ ...profile, utilities_included: e.target.checked })}
-                    className="w-5 h-5 rounded bg-slate-700 border-gray-600 text-violet-500 focus:ring-2 focus:ring-violet-500"
-                  />
-                  <span className="text-gray-300">{t('utilitiesIncluded')}</span>
-                </label>
-              </div>
-
-              {/* Colocataires présents */}
-              <div className="mt-4">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={profile.has_existing_roommates || false}
-                    onChange={(e) => setProfile({ ...profile, has_existing_roommates: e.target.checked })}
-                    className="w-5 h-5 rounded bg-slate-700 border-gray-600 text-violet-500 focus:ring-2 focus:ring-violet-500"
-                  />
-                  <span className="text-gray-300">{t('hasExistingRoommates')}</span>
-                </label>
-                {profile.has_existing_roommates && (
-                  <p className="text-xs text-violet-400 mt-2">💡 {t('mentionRoommatesInBio')}</p>
-                )}
               </div>
             </div>
           )}

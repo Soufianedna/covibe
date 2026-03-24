@@ -504,7 +504,14 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
   const getCityLabel = (city) => city;
   const getCreativeTypeLabel = (type) => type;
   const getProductiveTimeLabel = (time) => time;
-  const getReligionLabel = (religion) => religion;
+  const getReligionLabel = (religion) => {
+    const labels = {
+      muslim: 'muslim', christian: 'christian', jewish: 'jewish',
+      buddhist: 'buddhist', hindu: 'hindu', atheist: 'atheist',
+      vegetarian_vegan: 'vegetarian_vegan', none: 'none', other: 'other'
+    };
+    return labels[religion] || religion;
+  };
 
   const isMutualMatch = (matchId) => mutualMatches.includes(matchId);
 
@@ -636,9 +643,8 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-indigo-950">
       <header className="bg-slate-900/80 backdrop-blur-xl border-b border-violet-500/20 shadow-lg shadow-purple-900/20">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Logo size={40} />
-            <h1 className="text-2xl font-black bg-gradient-to-r from-violet-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">CoVibe</h1>
+          <div className="flex items-center">
+            <Logo size={36} />
           </div>
           <div className="flex items-center gap-4">
             {!isMobile && (
@@ -659,41 +665,35 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
                 </button>
               </div>
             )}
-            <button onClick={() => setShowLikesReceived(true)} className="relative flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-500 hover:from-violet-600 hover:to-purple-600 text-white rounded-xl transition-all">
+            <button onClick={() => setShowLikesReceived(true)} className="relative flex items-center justify-center w-10 h-10 bg-gradient-to-r from-violet-600 to-indigo-500 hover:from-violet-600 hover:to-purple-600 text-white rounded-xl transition-all">
               <Heart size={20} />
-              <span className="hidden sm:inline">{t('likes')}</span>
               {unviewedLikesCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-gradient-to-r from-violet-600 to-red-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-lg">
                   {unviewedLikesCount > 9 ? '9+' : unviewedLikesCount}
                 </span>
               )}
             </button>
-            <button onClick={() => setShowFavorites(true)} className="relative flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white rounded-xl transition-all">
+            <button onClick={() => setShowFavorites(true)} className="relative flex items-center justify-center w-10 h-10 bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white rounded-xl transition-all">
               <Star size={20} />
-              <span className="hidden sm:inline">{t('favorites')}</span>
               {favoritesCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-lg">
                   {favoritesCount > 9 ? '9+' : favoritesCount}
                 </span>
               )}
             </button>
-            <button onClick={() => { setShowConversations(true); setUnreadCount(0); }} className="relative flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl transition-all">
+            <button onClick={() => { setShowConversations(true); setUnreadCount(0); }} className="relative flex items-center justify-center w-10 h-10 bg-slate-700 hover:bg-slate-600 text-white rounded-xl transition-all">
               <MessageCircle size={20} />
-              <span className="hidden sm:inline">Messages</span>
               {unreadCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-gradient-to-r from-violet-600 to-red-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-lg">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
             </button>
-            <button onClick={() => setShowProfile(true)} className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl transition-all">
+            <button onClick={() => setShowProfile(true)} className="flex items-center justify-center w-10 h-10 bg-slate-700 hover:bg-slate-600 text-white rounded-xl transition-all">
               <User size={20} />
-              <span className="hidden sm:inline">{t('myProfile')}</span>
             </button>
-            <LanguageSwitcher />
-            <button onClick={onLogout} className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl transition-all">
+            <button onClick={onLogout} className="flex items-center justify-center w-10 h-10 bg-slate-700 hover:bg-slate-600 text-white rounded-xl transition-all">
               <LogOut size={20} />
-              <span className="hidden sm:inline">{t('logout')}</span>
             </button>
           </div>
         </div>
@@ -1055,7 +1055,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
                   </div>
                   <div className="bg-slate-700/50 rounded-xl p-4 col-span-2">
                     <p className="text-gray-400 mb-1">{ t('practices') }</p>
-                    <p className="text-white font-semibold">{t(getReligionLabel(selectedMatch.religious_practice))}</p>
+                    <p className="text-white font-semibold break-words">{t(getReligionLabel(selectedMatch.religious_practice))}</p>
                   </div>
                   <div className="bg-slate-700/50 rounded-xl p-4 col-span-2">
                     <p className="text-gray-400 mb-1">{ t('substances') }</p>
