@@ -28,7 +28,7 @@ serve(async (req) => {
       expires_at: expiresAt.toISOString()
     })
 
-    const verificationUrl = `${Deno.env.get('APP_URL') || 'http://localhost:3000'}/verify?token=${token}`
+    const verificationUrl = `covibe://verify?token=${token}`
     
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',

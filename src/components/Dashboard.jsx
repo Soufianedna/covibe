@@ -1157,8 +1157,12 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
                         return;
                       }
                       
-                      const { data: { session } } = await supabase.auth.getSession();
-                      console.log("SESSION:", JSON.stringify(session));
+                      let { data: { session } } = await supabase.auth.getSession();
+                      if (!session) {
+                        const { data: refreshed } = await supabase.auth.refreshSession();
+                        session = refreshed.session;
+                      }
+                      if (!session) { showToast('❌ Session expirée, reconnecte-toi', 'error'); return; }
                       const res = await fetch(import.meta.env.VITE_SUPABASE_URL + '/functions/v1/send-verification-email', {
                         method: 'POST',
                         headers: {
@@ -1175,7 +1179,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
                       alert('📧 Email de vérification envoyé ! Vérifie ta boîte mail.');
                     } catch (error) {
                       console.error(error);
-                      alert('Erreur lors de l envoi: ' + error.message);
+                      alert('Erreur: ' + JSON.stringify(error));
                     }
                   }}
                 

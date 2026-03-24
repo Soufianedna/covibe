@@ -1,4 +1,5 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useNavigate } from 'react-router-dom';
+import { App as CapApp } from '@capacitor/app';
 import { Privacy } from './components/legal/Privacy';
 import { Terms } from './components/legal/Terms';
 import { Cookies } from './components/legal/Cookies';
@@ -31,6 +32,19 @@ function AppContent() {
   const [showAuth, setShowAuth] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
+
+  useEffect(() => {
+    CapApp.addListener('appUrlOpen', ({ url }) => {
+      if (url.includes('covibe://verify')) {
+        const token = new URL(url.replace('covibe://', 'https://covibe.ca/')).searchParams.get('token');
+        if (token) window.location.href = '/verify?token=' + token;
+      }
+      if (url.includes('covibe://reset-password')) {
+        setShowResetPassword(true);
+      }
+    });
+    return () => CapApp.removeAllListeners();
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
