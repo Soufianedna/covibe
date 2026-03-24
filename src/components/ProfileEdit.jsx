@@ -2,6 +2,7 @@ import { PhotoUploader } from './PhotoUploader';
 import { PropertyPhotosUploader } from './PropertyPhotosUploader';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { Geolocation } from '@capacitor/geolocation';
 import { Camera, X } from 'lucide-react';
 import { getNeighborhoodsForCity, getNeighborhoodCoordinates, neighborhoodGroups } from '../lib/neighborhoods';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +10,8 @@ import { useTranslation } from 'react-i18next';
 export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState(null);
+  const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3000); };
   const [existingPhotos, setExistingPhotos] = useState([]);
   const [propertyPhotos, setPropertyPhotos] = useState([]);
   const [profile, setProfile] = useState({
@@ -100,7 +103,7 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
       newProfile.seeking_roommate = !newProfile.seeking_roommate;
     } else if (field === 'seeking_studio') {
       if (!newProfile.seeking_studio && newProfile.has_space) {
-        alert('⚠️ Tu ne peux pas chercher un studio si tu as déjà un espace à partager !');
+        showToast('⚠️ Tu ne peux pas chercher un studio si tu as déjà un espace', 'warning');
         return;
       }
       newProfile.seeking_studio = !newProfile.seeking_studio;
@@ -111,7 +114,7 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
 
   const handleSave = async () => {
     if (!profile.name || !profile.age || !profile.bio || (!profile.has_space && (!profile.budget_min || !profile.budget_max))) {
-      alert('⚠️ Les champs obligatoires sont : nom, âge, bio, budget');
+      showToast('⚠️ Champs obligatoires manquants', 'warning'); return;
       return;
     }
 
@@ -136,11 +139,11 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
 
       if (error) throw error;
 
-      alert('✅ Profil mis à jour !');
+      showToast('✅ Profil mis à jour !', 'success');
       onSave(data);
     } catch (error) {
       console.error('Error saving profile:', error);
-      alert('Erreur lors de la sauvegarde. Réessaie.');
+      showToast('❌ Erreur lors de la sauvegarde. Réessaie.', 'error');
     } finally {
       setLoading(false);
     }
@@ -358,10 +361,10 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
                             latitude: position.coords.latitude,
                             longitude: position.coords.longitude,
                           });
-                          alert(t('locationSaved'));
+                          showToast('📍 Position sauvegardée', 'success');
                         },
                         (error) => {
-                          alert('Impossible d\'obtenir ta position. Vérifie tes permissions.');
+                          showToast('❌ Impossible d\'obtenir ta position', 'error');
                         }
                       );
                     }
@@ -665,7 +668,7 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
                   onChange={(e) => setProfile({ ...profile, pets_ok: e.target.checked })}
                   className="w-5 h-5 rounded bg-slate-700 border-gray-600 text-violet-500 focus:ring-2 focus:ring-violet-500"
                 />
-                <span className="text-gray-300">✅ {t('acceptsPets')}</span>
+                <span className="text-gray-300">🐾 {t('acceptsPets')}</span>
               </label>
 
               <label className="flex items-center gap-3 cursor-pointer bg-slate-700/50 p-3 rounded-xl hover:bg-slate-700 transition-all">
@@ -785,6 +788,15 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
           </div>
 
           {/* BOUTONS */}
+          {/* Toast notification */}
+          {toast && (
+            <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 rounded-2xl font-semibold text-white shadow-lg transition-all ${
+              toast.type === 'success' ? 'bg-gradient-to-r from-violet-600 to-indigo-500' :
+              toast.type === 'error' ? 'bg-red-500' : 'bg-orange-500'
+            }`}>
+              {toast.msg}
+            </div>
+          )}
           <div className="flex gap-4 pt-4 sticky bottom-0 bg-slate-800 pb-4 border-t border-violet-500/30 mt-6">
             <button
               onClick={onCancel}
@@ -798,7 +810,7 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
               disabled={loading}
               className="flex-1 px-6 py-3 bg-gradient-to-r from-violet-600 to-indigo-500 text-white rounded-xl font-bold hover:shadow-lg transition-all disabled:opacity-50"
             >
-              {loading ? t('saving') : t('save') + ' 💾'}
+              {loading ? '⏳ Sauvegarde...' : '💾 Sauvegarder'}
             </button>
           </div>
         </div>
