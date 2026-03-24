@@ -209,15 +209,16 @@ export const Filters = ({ onFilterChange, hasSpace }) => {
             <h3 className="text-white font-semibold mb-3">🌍 { t('languages') }</h3>
             <div className="grid grid-cols-3 gap-2">
               {[
-                { value: 'french', label: '🇫🇷 Français' },
-                { value: 'english', label: '🇬🇧 Anglais' },
-                { value: 'spanish', label: '🇪🇸 Espagnol' },
-                { value: 'mandarin', label: '🇨🇳 Mandarin' },
-                { value: 'arabic', label: '🇸🇦 Arabe' },
-                { value: 'portuguese', label: '🇵🇹 Portugais' },
-                { value: 'german', label: '🇩🇪 Allemand' },
-                { value: 'japanese', label: '🇯🇵 Japonais' },
-                { value: 'korean', label: '🇰🇷 Coréen' }
+                { value: 'french', label: 'Français' },
+                { value: 'english', label: 'Anglais' },
+                { value: 'spanish', label: 'Espagnol' },
+                { value: 'arabic', label: 'Arabe' },
+                { value: 'portuguese', label: 'Portugais' },
+                { value: 'mandarin', label: 'Mandarin' },
+                { value: 'cantonese', label: 'Cantonais' },
+                { value: 'hindi', label: 'Hindi' },
+                { value: 'farsi', label: 'Farsi' },
+                { value: 'other', label: 'Autre' }
               ].map(({ value, label }) => (
                 <button
                   key={value}

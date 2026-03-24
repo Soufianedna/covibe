@@ -35,6 +35,7 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
     guests_frequency: userProfile.guests_frequency || 3,
     cleanliness: userProfile.cleanliness || 3,
     religious_practice: userProfile.religious_practice || 'none',
+    languages: userProfile.languages || [],
     safe_space_preferences: userProfile.safe_space_preferences || [],
     move_in_date: userProfile.move_in_date || '',
     work_location: userProfile.work_location || 'hybrid',
@@ -558,6 +559,39 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
               </div>
             </div>
           )}
+          {/* LANGUES */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-300 mb-3">🌍 Langues parlées</label>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { value: 'french', label: 'Français' },
+                { value: 'english', label: 'Anglais' },
+                { value: 'spanish', label: 'Espagnol' },
+                { value: 'arabic', label: 'Arabe' },
+                { value: 'portuguese', label: 'Portugais' },
+                { value: 'mandarin', label: 'Mandarin' },
+                { value: 'hindi', label: 'Hindi' },
+                { value: 'other', label: 'Autre' },
+              ].map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => {
+                    const langs = profile.languages || [];
+                    setProfile({ ...profile, languages: langs.includes(value) ? langs.filter(l => l !== value) : [...langs, value] });
+                  }}
+                  className={`px-3 py-2 rounded-xl font-semibold text-sm transition-all ${
+                    (profile.languages || []).includes(value)
+                      ? 'bg-violet-600 text-white'
+                      : 'bg-slate-700/50 text-gray-300 hover:bg-slate-700'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* BIO */}
           <div>
             <label className="block text-sm font-semibold text-gray-300 mb-2">Bio</label>
