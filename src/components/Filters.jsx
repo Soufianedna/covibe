@@ -354,7 +354,7 @@ export const Filters = ({ onFilterChange, hasSpace }) => {
                 <button
                   key={value}
                   onClick={() => toggleArrayFilter('religion', value)}
-                  className={`px-4 py-2 rounded-xl font-semibold transition-all ${
+                  className={`px-2 py-2 rounded-xl font-semibold transition-all text-xs text-center break-words leading-tight ${
                     filters.religion.includes(value)
                       ? 'bg-purple-500 text-white'
                       : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
