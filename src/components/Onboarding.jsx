@@ -23,6 +23,7 @@ export const Onboarding = ({ user, onComplete }) => {
     productive_time: '',
     work_location: 'hybrid',
     seeking_roommate: false,
+    languages: [],
     seeking_studio: false,
     has_space: false,
     open_to_group_search: false,
@@ -73,6 +74,18 @@ export const Onboarding = ({ user, onComplete }) => {
         { value: 'writer', label: '✍️ Écrivain·e' },
         { value: 'entrepreneur', label: '🚀 Entrepreneur·e' },
         { value: 'other', label: '✨ Autre' },
+      ]}
+    },
+    { id: 'languages', title: 'Langues parlées', subtitle: 'Sélectionne toutes les langues que tu parles', type: 'buttons',
+      field: { name: 'languages', multi: true, options: [
+        { value: 'french', label: '🇫🇷 Français' },
+        { value: 'english', label: '🇨🇦 Anglais' },
+        { value: 'spanish', label: '🇪🇸 Espagnol' },
+        { value: 'arabic', label: '🇲🇦 Arabe' },
+        { value: 'portuguese', label: '🇧🇷 Portugais' },
+        { value: 'mandarin', label: '🇨🇳 Mandarin' },
+        { value: 'hindi', label: '🇮🇳 Hindi' },
+        { value: 'other', label: '🌍 Autre' },
       ]}
     },
     { id: 'seeking', title: 'Que cherches-tu ?', subtitle: 'Coche toutes les options qui te correspondent', type: 'seeking' },
