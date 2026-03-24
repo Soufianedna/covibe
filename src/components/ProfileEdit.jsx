@@ -571,6 +571,8 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
                 { value: 'portuguese', label: 'Portugais' },
                 { value: 'mandarin', label: 'Mandarin' },
                 { value: 'hindi', label: 'Hindi' },
+                { value: 'farsi', label: 'Farsi' },
+                { value: 'cantonese', label: 'Cantonais' },
                 { value: 'other', label: 'Autre' },
               ].map(({ value, label }) => (
                 <button
