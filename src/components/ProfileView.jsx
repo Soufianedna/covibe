@@ -22,7 +22,8 @@ export const ProfileView = ({ profile, currentUser, onClose, onOpenChat, onUnmat
       developer: 'Développeur·se', 
       writer: 'Écrivain·e', 
       entrepreneur: 'Entrepreneur·e', 
-      other: 'Autre' 
+      other: 'Autre',
+      language_exchange: '🗣️ Coloc linguistique'
     };
     return labels[type] || type;
   };
@@ -72,17 +73,17 @@ export const ProfileView = ({ profile, currentUser, onClose, onOpenChat, onUnmat
             <h3 className="text-xl font-bold text-white mb-3">Recherche</h3>
             <div className="flex flex-wrap gap-2">
               {profile.seeking_roommate && (
-                <span className="px-4 py-2 bg-violet-500/20 text-violet-400 rounded-xl border border-violet-500/30">
+                <span className="px-3 py-2 bg-violet-500/20 text-violet-400 rounded-xl border border-violet-500/30 text-sm text-center">
                   🏠 Cherche coloc
                 </span>
               )}
               {profile.seeking_studio && (
-                <span className="px-4 py-2 bg-purple-500/20 text-purple-400 rounded-xl border border-purple-500/30">
-                  🎨 Cherche studio
+                <span className="px-3 py-2 bg-purple-500/20 text-purple-400 rounded-xl border border-purple-500/30 text-sm text-center">
+                  🎨 Ouvert à un espace de création partagé
                 </span>
               )}
               {profile.has_space && (
-                <span className="px-4 py-2 bg-cyan-500/20 text-cyan-400 rounded-xl border border-cyan-500/30">
+                <span className="px-3 py-2 bg-cyan-500/20 text-cyan-400 rounded-xl border border-cyan-500/30 text-sm text-center">
                   ✨ A un espace
                 </span>
               )}

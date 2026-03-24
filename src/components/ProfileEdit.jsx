@@ -64,6 +64,17 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
       .order('position');
     
     console.log("🔍 LOADED PHOTOS:", data);
+    
+    // Si profile_photos vide mais photo_url existe dans profiles → on la migre
+    if ((!data || data.length === 0) && userProfile.photo_url) {
+      const { error } = await supabase
+        .from('profile_photos')
+        .insert({ user_id: userProfile.user_id, photo_url: userProfile.photo_url, position: 0 });
+      if (!error) {
+        setExistingPhotos([{ photo_url: userProfile.photo_url, position: 0 }]);
+        return;
+      }
+    }
     setExistingPhotos(data || []);
 
     const { data: propPhotos } = await supabase

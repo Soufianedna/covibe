@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CoVibe</string>
+    <string name="title_activity_main">CoVibe</string>
+    <string name="package_name">ca.covibe.app</string>
+    <string name="custom_url_scheme">ca.covibe.app</string>
+</resources>

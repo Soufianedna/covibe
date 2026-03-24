@@ -1,4 +1,10 @@
 {
   "outputDirectory": "dist",
-  "buildCommand": ""
+  "buildCommand": "",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }
