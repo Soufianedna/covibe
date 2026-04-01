@@ -96,6 +96,8 @@ function AppContent() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    setSession(null);
+    setUserProfile(null);
     setShowAuth(false);
   };
 
