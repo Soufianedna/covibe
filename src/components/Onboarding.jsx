@@ -183,6 +183,11 @@ export const Onboarding = ({ user, onComplete }) => {
         guests_frequency: parseInt(profile.guests_frequency) || 3,
         onboarding_complete: true,
       };
+      // Refresh session avant upsert
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Session expirée, reconnecte-toi');
+      await supabase.auth.refreshSession();
+      
       const { error } = await supabase.from('profiles').upsert(cleanProfile, { onConflict: 'user_id' });
       if (error) throw error;
       onComplete(cleanProfile);
