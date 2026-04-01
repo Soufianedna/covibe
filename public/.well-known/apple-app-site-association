@@ -1,0 +1,14 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "F34H3S7753.ca.covibe.app",
+        "paths": [
+          "/verify*",
+          "/reset-password*"
+        ]
+      }
+    ]
+  }
+}

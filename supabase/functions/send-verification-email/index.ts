@@ -28,7 +28,7 @@ serve(async (req) => {
       expires_at: expiresAt.toISOString()
     })
 
-    const verificationUrl = `covibe://verify?token=${token}`
+    const verificationUrl = `https://www.covibe.ca/verify?token=${token}`
     
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -56,7 +56,7 @@ serve(async (req) => {
               </p>
             </div>
             <div style="text-align: center; margin: 32px 0;">
-              <a href="${verificationUrl}" style="background: linear-gradient(to right, #7c3aed, #4f46e5); color: white; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 16px;">✓ Vérifier mon profil / Verify my profile</a>
+              <a href="${verificationUrl}" style="background: linear-gradient(to right, #7c3aed, #4f46e5); color: white; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: bold; font-size: 16px;">✓ Vérifier mon profil</a>
             </div>
             <p style="color: #94a3b8; text-align: center; font-size: 14px;">
               🇫🇷 Ce lien expire dans 24 heures. Si tu n'as pas demandé cette vérification, ignore cet email.<br><br>
