@@ -1,9 +1,8 @@
 import { X } from 'lucide-react';
-import { getCompatibilityLevel } from '../lib/matching';
+import { getCompatibilityLevel, calculateCompatibility } from '../lib/matching';
 
-export const ProfileView = ({ profile, currentUser, onClose, onOpenChat, onUnmatch }) => {
-  // Calculer la compatibilité (score fixe 70% pour l'instant)
-  const compatibility = 70;
+export const ProfileView = ({ profile, currentUser, onClose, onOpenChat, onUnmatch, extraActions }) => {
+  const compatibility = currentUser ? calculateCompatibility(currentUser, profile) : 0;
   const { level, color, emoji } = getCompatibilityLevel(compatibility);
 
   const getGenderLabel = (gender) => {
@@ -60,6 +59,26 @@ export const ProfileView = ({ profile, currentUser, onClose, onOpenChat, onUnmat
             <p className={`text-xl ${color}`}>{emoji} {level}</p>
           </div>
 
+
+          <div className="space-y-3 mt-4 border-t border-slate-600 pt-4">
+            <p className="text-xs text-gray-400 uppercase font-semibold mb-2">POURQUOI CE SCORE ?</p>
+            {[
+              { label: '💰 Budget', value: currentUser && profile ? (() => { const b1min = currentUser.budget_min||0; const b1max = currentUser.budget_max||9999; const b2min = profile.budget_min||0; const b2max = profile.budget_max||9999; const overlap = Math.min(b1max,b2max)-Math.max(b1min,b2min); return overlap>0 ? Math.round((overlap/(Math.max(b1max,b2max)-Math.min(b1min,b2min)))*30) : 0; })() : 0, max: 30 },
+              { label: '🌅 Rythme de vie', value: currentUser?.productive_time === profile?.productive_time ? 20 : 5, max: 20 },
+              { label: '🏠 Habitudes', value: (() => { let s=0; if(currentUser?.smoking === profile?.smoking) s+=8; if(currentUser?.pets === profile?.pets || currentUser?.pets_ok || profile?.pets_ok) s+=8; if(Math.abs((currentUser?.cleanliness||3)-(profile?.cleanliness||3))<=1) s+=9; return s; })(), max: 25 },
+              { label: '🙏 Pratiques', value: currentUser?.religious_practice === profile?.religious_practice ? 15 : 5, max: 15 },
+              { label: '✨ Style de vie', value: (() => { let s=0; if(Math.abs((currentUser?.noise_tolerance||5)-(profile?.noise_tolerance||5))<=2) s+=5; if(Math.abs((currentUser?.guests_frequency||2)-(profile?.guests_frequency||2))<=1) s+=5; return s; })(), max: 10 },
+            ].map(({ label, value, max }) => (
+              <div key={label}>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-gray-300">{label}</span>
+                </div>
+                <div className="w-full bg-slate-600 rounded-full h-2">
+                  <div className="bg-gradient-to-r from-violet-500 to-indigo-400 h-2 rounded-full transition-all" style={{width: `${(value/max)*100}%`}}></div>
+                </div>
+              </div>
+            ))}
+          </div>
           {/* Bio */}
           {profile.bio && (
             <div>

@@ -776,7 +776,8 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
             }}
             onViewProfile={async (profile) => {
               const { data: fullProfile } = await supabase.from('profiles').select('*').eq('user_id', profile.user_id).single();
-              setSelectedMatch(fullProfile || profile);
+              const profileWithScore = { ...(fullProfile || profile), compatibility: profile.compatibility || calculateCompatibility(currentUserProfile, fullProfile || profile) };
+              setSelectedMatch(profileWithScore);
               if (profile.has_space) loadPropertyPhotos(profile.user_id);
             }}
             onMatch={(profile) => {}}
