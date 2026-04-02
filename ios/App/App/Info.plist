@@ -60,5 +60,11 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>CoVibe a besoin d'accéder à ta caméra pour prendre une photo de profil.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>CoVibe a besoin d'accéder à ta galerie pour choisir une photo de profil.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>CoVibe a besoin d'accéder à ta galerie pour sauvegarder des photos.</string>
 </dict>
 </plist>

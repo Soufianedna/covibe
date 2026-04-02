@@ -34,13 +34,22 @@ function AppContent() {
   const [newPassword, setNewPassword] = useState('');
 
   useEffect(() => {
-    CapApp.addListener('appUrlOpen', ({ url }) => {
+    CapApp.addListener('appUrlOpen', async ({ url }) => {
       if (url.includes('covibe://verify')) {
         const token = new URL(url.replace('covibe://', 'https://covibe.ca/')).searchParams.get('token');
         if (token) window.location.href = '/verify?token=' + token;
       }
       if (url.includes('covibe://reset-password')) {
         setShowResetPassword(true);
+      }
+      if (url.includes('covibe://login-callback')) {
+        alert('URL reçue: ' + url);
+        const urlObj = new URL(url.replace('covibe://', 'https://covibe.ca/'));
+        const access_token = urlObj.searchParams.get('access_token');
+        const refresh_token = urlObj.searchParams.get('refresh_token');
+        if (access_token && refresh_token) {
+          await supabase.auth.setSession({ access_token, refresh_token });
+        }
       }
     });
     return () => CapApp.removeAllListeners();

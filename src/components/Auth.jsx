@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { Plugins } from '@capacitor/core';
 import { Logo } from './Logo';
 import { useTranslation } from 'react-i18next';
 
@@ -175,6 +176,24 @@ export const Auth = () => {
             >
               <img src="https://www.google.com/favicon.ico" width="20" height="20" alt="Google" />
               Continuer avec Google
+            </button>
+            <div className="flex items-center gap-3 my-2">
+              <div className="flex-1 h-px bg-slate-600"></div>
+              <span className="text-gray-400 text-sm">ou</span>
+              <div className="flex-1 h-px bg-slate-600"></div>
+            </div>
+            <button
+              type="button"
+              onClick={async () => {
+                await supabase.auth.signInWithOAuth({
+                  provider: 'apple',
+                  options: { redirectTo: 'https://www.covibe.ca' }
+                });
+              }}
+              className="w-full py-3 bg-black text-white rounded-xl font-bold text-base hover:bg-gray-900 transition-all flex items-center justify-center gap-3"
+            >
+              <svg width="20" height="20" viewBox="0 0 814 1000" fill="white"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-37.5-155.5-127.4C46 790.1 0 663.5 0 541.8c0-207.1 135.4-316.6 268.5-316.6 71 0 130.3 46.9 174.7 46.9 42.8 0 109.9-49.5 188.6-49.5 30.1 0 108.2 2.6 168.5 80.1zm-80.7-160.8c-33.4 39.5-95.7 70.1-148.3 70.1-6.4 0-12.8-.6-19.2-1.9-1.9-8.3-2.6-16.6-2.6-25.6 0-36.8 19.2-75.6 47.6-103 28.1-27.5 73.1-48.1 113-49.5 1.3 7 1.9 14 1.9 20.4 0 37.4-15.3 74.9-42.4 109.5z"/></svg>
+              Continuer avec Apple
             </button>
           </form>
 
