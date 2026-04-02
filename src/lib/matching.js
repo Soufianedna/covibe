@@ -357,6 +357,6 @@ export const getCompatibilityLevel = (score) => {
   if (score >= 80) return { levelKey: 'veryCompatible', color: 'text-cyan-400', emoji: '✨' };
   if (score >= 70) return { levelKey: 'goodMatch', color: 'text-blue-400', emoji: '👍' };
   if (score >= 60) return { levelKey: 'compatible', color: 'text-purple-400', emoji: '🤝' };
-  if (score >= 50) return { levelKey: 'average', color: 'text-yellow-400', emoji: '😊' };
-  return { levelKey: 'low', color: 'text-gray-400', emoji: '🤔' };
+  if (score >= 50) return { levelKey: 'compatible', color: 'text-yellow-400', emoji: '😊' };
+  return { levelKey: 'lowCompatibility', color: 'text-gray-400', emoji: '🤔' };
 };

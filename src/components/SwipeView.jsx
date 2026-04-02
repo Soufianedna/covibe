@@ -1,7 +1,5 @@
-import React from "react";
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import TinderCard from 'react-tinder-card';
 import { Heart, X, MapPin } from 'lucide-react';
 import { getCompatibilityLevel } from '../lib/matching';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
@@ -9,24 +7,61 @@ import { LazyLoadImage } from 'react-lazy-load-image-component';
 export default function SwipeView({ profiles, onSwipe, onViewProfile, currentUser }) {
   const { t } = useTranslation();
   const [currentIndex, setCurrentIndex] = useState(profiles.length - 1);
-  const currentIndexRef = useRef(currentIndex);
+  const [dragX, setDragX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const startX = useRef(0);
+  const startY = useRef(0);
+  const isHorizontal = useRef(false);
+
   const canSwipe = currentIndex >= 0;
-  const childRefs = useRef(Array(profiles.length).fill(0).map(() => React.createRef()));
 
-  useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
-
-  const updateCurrentIndex = (val) => { setCurrentIndex(val); currentIndexRef.current = val; };
-
-  const swiped = async (direction, profile, index) => {
-    updateCurrentIndex(index - 1);
-    if (direction === 'right') await onSwipe(profile, 'like');
-    else if (direction === 'left') await onSwipe(profile, 'pass');
+  const handleSwipe = async (dir) => {
+    if (currentIndex < 0) return;
+    const profile = profiles[currentIndex];
+    setDragX(dir === 'right' ? 400 : -400);
+    setTimeout(() => {
+      setCurrentIndex(prev => prev - 1);
+      setDragX(0);
+    }, 200);
+    if (dir === 'right') await onSwipe(profile, 'like');
+    else await onSwipe(profile, 'pass');
   };
 
-  const swipe = async (dir) => {
-    const index = currentIndexRef.current;
-    if (index >= 0 && index < profiles.length && childRefs.current[index]?.current)
-      childRefs.current[index].current.swipe(dir);
+  const onTouchStart = (e) => {
+    startX.current = e.touches[0].clientX;
+    startY.current = e.touches[0].clientY;
+    isHorizontal.current = false;
+    setIsDragging(false);
+  };
+
+  const onTouchMove = (e) => {
+    const dx = e.touches[0].clientX - startX.current;
+    const dy = e.touches[0].clientY - startY.current;
+
+    if (!isDragging) {
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8) {
+        isHorizontal.current = true;
+        setIsDragging(true);
+      } else if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 8) {
+        isHorizontal.current = false;
+        return;
+      }
+    }
+
+    if (isHorizontal.current) {
+      e.preventDefault();
+      setDragX(dx);
+    }
+  };
+
+  const onTouchEnd = () => {
+    if (isHorizontal.current && Math.abs(dragX) > 100) {
+      handleSwipe(dragX > 0 ? 'right' : 'left');
+    } else {
+      setDragX(0);
+    }
+    setIsDragging(false);
+    isHorizontal.current = false;
   };
 
   if (profiles.length === 0) return (
@@ -39,15 +74,45 @@ export default function SwipeView({ profiles, onSwipe, onViewProfile, currentUse
 
   return (
     <div className="relative w-full max-w-lg mx-auto select-none">
-      <div className="relative h-[540px] mb-4" style={{touchAction:'none'}}>
+      <div className="relative h-[540px] mb-4">
         {profiles.map((profile, index) => {
           const { levelKey, color, emoji } = getCompatibilityLevel(profile.compatibility);
+          const isTop = index === currentIndex;
+          const isNext = index === currentIndex - 1;
+          if (!isTop && !isNext) return null;
+
+          const rotation = isTop ? dragX * 0.05 : 0;
+          const scale = isTop ? 1 : 0.95;
+          const translateX = isTop ? dragX : 0;
+          const opacity = isTop ? 1 : 0.7;
+          const likeOpacity = isTop && dragX > 30 ? Math.min(dragX / 100, 1) : 0;
+          const passOpacity = isTop && dragX < -30 ? Math.min(-dragX / 100, 1) : 0;
+
           return (
-            <TinderCard ref={childRefs.current[index]} key={profile.user_id}
-              onSwipe={(dir) => swiped(dir, profile, index)}
-              preventSwipe={['down','up']} swipeRequirementType="position" swipeThreshold={80}
-              className="absolute w-full h-full">
-              <div className="relative w-full h-full bg-slate-800/50 backdrop-blur-lg border-2 border-violet-500/30 rounded-2xl overflow-hidden shadow-2xl" style={{userSelect:'none'}}>
+            <div
+              key={profile.user_id}
+              className="absolute w-full h-full"
+              style={{
+                transform: `translateX(${translateX}px) rotate(${rotation}deg) scale(${scale})`,
+                opacity,
+                transition: isDragging ? 'none' : 'all 0.2s ease',
+                zIndex: isTop ? 10 : 5,
+              }}
+              onTouchStart={isTop ? onTouchStart : undefined}
+              onTouchMove={isTop ? onTouchMove : undefined}
+              onTouchEnd={isTop ? onTouchEnd : undefined}
+            >
+              <div className="relative w-full h-full bg-slate-800/50 backdrop-blur-lg border-2 border-violet-500/30 rounded-2xl overflow-hidden shadow-2xl">
+                {likeOpacity > 0 && (
+                  <div className="absolute top-8 left-8 z-20 border-4 border-green-400 rounded-xl px-4 py-2" style={{opacity: likeOpacity}}>
+                    <span className="text-green-400 text-3xl font-black">LIKE</span>
+                  </div>
+                )}
+                {passOpacity > 0 && (
+                  <div className="absolute top-8 right-8 z-20 border-4 border-red-400 rounded-xl px-4 py-2" style={{opacity: passOpacity}}>
+                    <span className="text-red-400 text-3xl font-black">PASS</span>
+                  </div>
+                )}
                 <div className="relative h-[380px] overflow-hidden">
                   {profile.photo_url ? (
                     <LazyLoadImage effect="blur" src={profile.photo_url} alt={profile.name} className="w-full h-full object-cover" />
@@ -79,7 +144,7 @@ export default function SwipeView({ profiles, onSwipe, onViewProfile, currentUse
                   )}
                 </div>
               </div>
-            </TinderCard>
+            </div>
           );
         })}
       </div>
@@ -94,8 +159,8 @@ export default function SwipeView({ profiles, onSwipe, onViewProfile, currentUse
 
       {canSwipe && (
         <div className="flex justify-center items-center gap-12 mb-4">
-          <button onClick={() => swipe('left')} style={{touchAction:'manipulation'}} className="w-24 h-24 rounded-full bg-gradient-to-br from-red-500 to-indigo-500 text-white shadow-2xl flex items-center justify-center hover:scale-110 transition-all"><X className="w-14 h-14"/></button>
-          <button onClick={() => swipe('right')} style={{touchAction:'manipulation'}} className="w-24 h-24 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 text-white shadow-2xl flex items-center justify-center hover:scale-110 transition-all"><Heart className="w-14 h-14"/></button>
+          <button onClick={() => handleSwipe('left')} style={{touchAction:'manipulation'}} className="w-24 h-24 rounded-full bg-gradient-to-br from-red-500 to-indigo-500 text-white shadow-2xl flex items-center justify-center hover:scale-110 transition-all"><X className="w-14 h-14"/></button>
+          <button onClick={() => handleSwipe('right')} style={{touchAction:'manipulation'}} className="w-24 h-24 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 text-white shadow-2xl flex items-center justify-center hover:scale-110 transition-all"><Heart className="w-14 h-14"/></button>
         </div>
       )}
 

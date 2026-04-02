@@ -1,9 +1,11 @@
 import { X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { getCompatibilityLevel, calculateCompatibility } from '../lib/matching';
 
 export const ProfileView = ({ profile, currentUser, onClose, onOpenChat, onUnmatch, extraActions }) => {
+  const { t } = useTranslation();
   const compatibility = currentUser ? calculateCompatibility(currentUser, profile) : 0;
-  const { level, color, emoji } = getCompatibilityLevel(compatibility);
+  const { levelKey, color, emoji } = getCompatibilityLevel(compatibility);
 
   const getGenderLabel = (gender) => {
     const labels = { man: 'Homme', woman: 'Femme', non_binary: 'Non-binaire', prefer_not_to_say: 'Non précisé' };
@@ -56,7 +58,7 @@ export const ProfileView = ({ profile, currentUser, onClose, onOpenChat, onUnmat
           <div className="bg-slate-700/50 rounded-2xl p-6 text-center">
             <p className="text-gray-300 mb-2">Compatibilité</p>
             <p className={`text-5xl font-bold ${color} mb-2`}>{compatibility}%</p>
-            <p className={`text-xl ${color}`}>{emoji} {level}</p>
+            <p className={`text-xl font-semibold ${color}`}>{emoji} {t(levelKey)}</p>
           </div>
 
 

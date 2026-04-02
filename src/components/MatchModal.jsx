@@ -16,7 +16,7 @@ export const MatchModal = ({ currentUser, matchedUser, onClose, onOpenChat }) =>
         <div className="text-center mb-8">
           <h1 className="text-6xl md:text-8xl font-black mb-4">
             <span className="bg-gradient-to-r from-violet-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
-              IT'S A MATCH!
+              IT'S A VIBE!
             </span>
           </h1>
           <p className="text-2xl text-white font-semibold">{ t('youLikedEachOther') } 🎉</p>

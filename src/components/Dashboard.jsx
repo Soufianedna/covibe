@@ -1383,7 +1383,10 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
           message={notif.message}
           onClick={async () => {
             const { data: senderProfile } = await supabase.from('profiles').select('*').eq('user_id', notif.senderId).single();
-            if (senderProfile) openChatWithMatch(senderProfile);
+            if (senderProfile) {
+              setSelectedMatch(senderProfile);
+              if (senderProfile.has_space) loadPropertyPhotos(senderProfile.user_id);
+            }
             setNotifications(prev => prev.filter(n => n.id !== notif.id));
           }}
           sender={notif.sender}
