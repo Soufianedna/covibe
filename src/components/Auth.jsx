@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Plugins } from '@capacitor/core';
+import { Capacitor } from '@capacitor/core';
 import { Logo } from './Logo';
 import { useTranslation } from 'react-i18next';
 
@@ -185,10 +185,21 @@ export const Auth = () => {
             <button
               type="button"
               onClick={async () => {
-                await supabase.auth.signInWithOAuth({
-                  provider: 'apple',
-                  options: { redirectTo: 'https://www.covibe.ca' }
-                });
+                try {
+                  const AppleAuth = Capacitor.Plugins.SignInWithApple;
+                  if (!AppleAuth) throw new Error('Plugin non trouvé');
+                  const result = await AppleAuth.authorize({ clientId: 'ca.covibe.app', redirectURI: 'https://www.covibe.ca', scopes: 'email name' });
+                  if (result.response?.identityToken) {
+                    const { error } = await supabase.auth.signInWithIdToken({
+                      provider: 'apple',
+                      token: result.response.identityToken,
+                    });
+                    if (error) throw error;
+                  }
+                } catch(e) {
+                  console.error('Apple error:', e);
+                  alert('Erreur: ' + (e.message || e.code || e.toString() || JSON.stringify(e)));
+                }
               }}
               className="w-full py-3 bg-black text-white rounded-xl font-bold text-base hover:bg-gray-900 transition-all flex items-center justify-center gap-3"
             >

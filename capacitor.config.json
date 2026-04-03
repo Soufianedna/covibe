@@ -14,5 +14,14 @@
     "App": {
       "appUrlOpen": "covibe://"
     }
+  },
+  "packageClassList": [
+    "AppleAuthPlugin",
+    "AppPlugin",
+    "GeolocationPlugin",
+    "SplashScreenPlugin"
+  ],
+  "ios": {
+    "handleApplicationNotifications": false
   }
 }
