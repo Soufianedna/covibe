@@ -60,7 +60,12 @@ const calculateBudgetCompatibility = (user1, user2) => {
     // Le room_price doit être dans le budget de user2
     if (user1.room_price >= budget2Min && user1.room_price <= budget2Max) {
       // Bonus si seeking_studio ET has_creative_space
-      const bonus = (user2.seeking_studio && user1.has_creative_space) ? 5 : 0;
+      let bonus = (user2.seeking_studio && user1.has_creative_space) ? 5 : 0;
+      // Bonus supplémentaire si les types d'espace correspondent
+      if (user2.seeking_creative_space_type?.length > 0 && user1.creative_space_type?.length > 0) {
+        const match = user2.seeking_creative_space_type.some(t => user1.creative_space_type.includes(t));
+        if (match) bonus += 5;
+      }
       return 30 + bonus; // Score parfait + bonus éventuel
     }
     return 0; // Prix incompatible
@@ -74,7 +79,12 @@ const calculateBudgetCompatibility = (user1, user2) => {
     // Le room_price doit être dans le budget de user1
     if (user2.room_price >= budget1Min && user2.room_price <= budget1Max) {
       // Bonus si seeking_studio ET has_creative_space
-      const bonus = (user1.seeking_studio && user2.has_creative_space) ? 5 : 0;
+      let bonus = (user1.seeking_studio && user2.has_creative_space) ? 5 : 0;
+      // Bonus supplémentaire si les types d'espace correspondent
+      if (user1.seeking_creative_space_type?.length > 0 && user2.creative_space_type?.length > 0) {
+        const match = user1.seeking_creative_space_type.some(t => user2.creative_space_type.includes(t));
+        if (match) bonus += 5;
+      }
       return 30 + bonus;
     }
     return 0;

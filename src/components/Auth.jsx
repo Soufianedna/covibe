@@ -176,6 +176,35 @@ export const Auth = () => {
               <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
               Continuer avec Google
             </button>
+            <div className="flex items-center gap-3 my-4">
+              <div className="flex-1 h-px bg-slate-600"></div>
+              <span className="text-gray-400 text-sm">ou</span>
+              <div className="flex-1 h-px bg-slate-600"></div>
+            </div>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const result = await window.Capacitor.nativePromise('AppleAuth', 'signIn', {});
+                  if (result.identityToken) {
+                    const { error } = await supabase.auth.signInWithIdToken({
+                      provider: 'apple',
+                      token: result.identityToken,
+                    });
+                    if (error) throw error;
+                  }
+                } catch(e) {
+                  const msg = e.message || e.toString();
+                  if (!msg.includes('1001') && !msg.includes('cancel') && !msg.includes('Cancel')) {
+                    alert('Erreur: ' + msg);
+                  }
+                }
+              }}
+              className="w-full py-3 bg-black text-white rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-gray-900 transition-all"
+            >
+              <svg width="20" height="20" viewBox="0 0 814 1000" fill="white"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-37.5-155.5-127.4C46 790.1 0 663.5 0 541.8c0-207.1 135.4-316.6 268.5-316.6 71 0 130.3 46.9 174.7 46.9 42.8 0 109.9-49.5 188.6-49.5 30.1 0 108.2 2.6 168.5 80.1zm-80.7-160.8c-33.4 39.5-95.7 70.1-148.3 70.1-6.4 0-12.8-.6-19.2-1.9-1.9-8.3-2.6-16.6-2.6-25.6 0-36.8 19.2-75.6 47.6-103 28.1-27.5 73.1-48.1 113-49.5 1.3 7 1.9 14 1.9 20.4 0 37.4-15.3 74.9-42.4 109.5z"/></svg>
+              Continuer avec Apple
+            </button>
           </div>
           {isLogin && (
             <div className="mt-4 text-center">
