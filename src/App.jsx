@@ -1,4 +1,5 @@
 import { Routes, Route, useNavigate } from 'react-router-dom';
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { App as CapApp } from '@capacitor/app';
 import { Privacy } from './components/legal/Privacy';
 import { Terms } from './components/legal/Terms';
@@ -34,6 +35,13 @@ function AppContent() {
   const [newPassword, setNewPassword] = useState('');
 
   useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      GoogleAuth.initialize({
+        clientId: '964731003706-ms57la8em2lb8dq6ambu6llc7h53g7sq.apps.googleusercontent.com',
+        scopes: ['profile', 'email'],
+        grantOfflineAccess: true,
+      });
+    }
     CapApp.addListener('appUrlOpen', async ({ url }) => {
       if (url.includes('covibe://verify')) {
         const token = new URL(url.replace('covibe://', 'https://covibe.ca/')).searchParams.get('token');
@@ -43,10 +51,10 @@ function AppContent() {
         setShowResetPassword(true);
       }
       if (url.includes('covibe://login-callback')) {
-        alert('URL reçue: ' + url);
-        const urlObj = new URL(url.replace('covibe://', 'https://covibe.ca/'));
-        const access_token = urlObj.searchParams.get('access_token');
-        const refresh_token = urlObj.searchParams.get('refresh_token');
+        const hashPart = url.includes('#') ? url.split('#')[1] : url.split('?')[1];
+        const params = new URLSearchParams(hashPart);
+        const access_token = params.get('access_token');
+        const refresh_token = params.get('refresh_token');
         if (access_token && refresh_token) {
           await supabase.auth.setSession({ access_token, refresh_token });
         }

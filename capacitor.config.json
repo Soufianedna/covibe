@@ -13,6 +13,14 @@
     },
     "App": {
       "appUrlOpen": "covibe://"
+    },
+    "GoogleAuth": {
+      "scopes": [
+        "profile",
+        "email"
+      ],
+      "serverClientId": "964731003706-ms57la8em2lb8dq6ambu6llc7h53g7sq.apps.googleusercontent.com",
+      "forceCodeForRefreshToken": true
     }
   },
   "packageClassList": [

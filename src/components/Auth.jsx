@@ -169,7 +169,15 @@ export const Auth = () => {
             <button
               type="button"
               onClick={async () => {
-                await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: 'https://www.covibe.ca' } });
+                try {
+                  const { error } = await supabase.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: { redirectTo: 'covibe://login-callback' }
+                  });
+                  if (error) throw error;
+                } catch(e) {
+                  alert('Google error: ' + (e.message || JSON.stringify(e)));
+                }
               }}
               className="w-full py-3 bg-white text-gray-800 rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-gray-100 transition-all"
             >
