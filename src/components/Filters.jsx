@@ -22,6 +22,7 @@ export const Filters = ({ onFilterChange, hasSpace }) => {
     substances: null,
     searchRadius: 25,
     religion: [],
+    creative_space_type: [],
     city: ''
   });
 
@@ -55,6 +56,7 @@ export const Filters = ({ onFilterChange, hasSpace }) => {
       pets: null,
       substances: null,
       religion: [],
+      creative_space_type: [],
       city: ''
     };
     setFilters(emptyFilters);
@@ -76,6 +78,7 @@ export const Filters = ({ onFilterChange, hasSpace }) => {
     if (filters.pets !== null) count++;
     if (filters.substances !== null) count++;
     if (filters.religion.length > 0) count++;
+    if (filters.creative_space_type.length > 0) count++;
     return count;
   };
 
@@ -270,9 +273,9 @@ export const Filters = ({ onFilterChange, hasSpace }) => {
             <h3 className="text-white font-semibold mb-3">🏠 { t('whatAreYouLookingFor') }</h3>
             <div className="grid grid-cols-3 gap-2">
               {[
-                { value: 'seeking_roommate', label: '🏠 Coloc' },
-                { value: 'seeking_studio', label: '🎨 Studio' },
-                { value: 'has_space', label: '✨ A un espace' }
+                { value: 'seeking_roommate', label: '🏠 Cherche coloc·ine' },
+                { value: 'seeking_studio', label: '🎨 Cherche espace créatif' },
+                { value: 'has_space', label: "✨ A un espace" }
               ].map(({ value, label }) => (
                 <button
                   key={value}
@@ -367,6 +370,32 @@ export const Filters = ({ onFilterChange, hasSpace }) => {
             </div>
           </div>
 
+          {/* Espace créatif */}
+          <div>
+            <h3 className="text-white font-semibold mb-3">🎨 Bonus espace créatif</h3>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { value: 'youtube_studio', label: '🎬 Studio YouTube' },
+                { value: 'photo_studio', label: '📸 Espace photo' },
+                { value: 'music_studio', label: '🎵 Studio musique' },
+                { value: 'yoga_gym', label: '🧘 Yoga / Gym' },
+                { value: 'nail_makeup', label: '💅 Nail / Makeup' },
+                { value: 'art_studio', label: '🎨 Atelier art' },
+              ].map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => toggleArrayFilter('creative_space_type', value)}
+                  className={`px-2 py-2 rounded-xl font-semibold text-xs transition-all ${
+                    filters.creative_space_type.includes(value)
+                      ? 'bg-violet-500 text-white'
+                      : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
           {/* { t('minCleanliness') } */}
           <div>
             <h3 className="text-white font-semibold mb-3">🧹 { t('minCleanliness') } : {filters.minCleanliness}/5</h3>

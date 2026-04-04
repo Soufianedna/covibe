@@ -53,6 +53,7 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
     is_furnished: userProfile.is_furnished || false,
     amenities: userProfile.amenities || [],
     has_creative_space: userProfile.has_creative_space || false,
+    creative_space_type: userProfile.creative_space_type || [],
     open_to_group_search: userProfile.open_to_group_search || false,
   });
 
@@ -535,6 +536,33 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
                   />
                   <span className="text-gray-300">{t('hasCreativeSpace')}</span>
                 </label>
+                {profile.has_creative_space && (
+                  <div className="mt-3 ml-8">
+                    <p className="text-sm font-semibold text-gray-300 mb-2">Type d'espace :</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { value: 'youtube_studio', label: '🎬 Studio YouTube' },
+                        { value: 'photo_studio', label: '📸 Espace photo' },
+                        { value: 'music_studio', label: '🎵 Studio musique' },
+                        { value: 'yoga_gym', label: '🧘 Yoga / Gym' },
+                        { value: 'nail_makeup', label: '💅 Nail / Makeup' },
+                        { value: 'art_studio', label: '🎨 Atelier art' },
+                      ].map(({ value, label }) => (
+                        <label key={value} className="flex items-center gap-2 cursor-pointer">
+                          <input type="checkbox"
+                            checked={(profile.creative_space_type || []).includes(value)}
+                            onChange={(e) => {
+                              const current = profile.creative_space_type || [];
+                              setProfile({ ...profile, creative_space_type: e.target.checked ? [...current, value] : current.filter(t => t !== value) });
+                            }}
+                            className="w-4 h-4 rounded bg-slate-700 border-gray-600 text-violet-500"
+                          />
+                          <span className="text-gray-300 text-sm">{label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Équipements */}

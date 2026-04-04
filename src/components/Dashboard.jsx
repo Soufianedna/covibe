@@ -530,6 +530,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
       if (filters.productiveTimes?.length > 0 && !filters.productiveTimes.includes(match.productive_time)) return false;
       if (filters.workLocation?.length > 0 && !filters.workLocation.includes(match.work_location)) return false;
       if (filters.religion?.length > 0 && !filters.religion.includes(match.religious_practice)) return false;
+      if (filters.creative_space_type?.length > 0 && !filters.creative_space_type.some(t => match.creative_space_type?.includes(t))) return false;
       if (match.cleanliness < filters.minCleanliness) return false;
       if (filters.smoking !== null && match.smoking !== filters.smoking) return false;
       if (filters.pets !== null && match.pets !== filters.pets) return false;

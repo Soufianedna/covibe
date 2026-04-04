@@ -2,9 +2,9 @@ import Foundation
 import Capacitor
 import AuthenticationServices
 
-@objc(AppleAuthPlugin)
+@objc(AppleAuth)
 public class AppleAuthPlugin: CAPPlugin, CAPBridgedPlugin, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
-    public let identifier = "AppleAuthPlugin"
+    public let identifier = "AppleAuth"
     public let jsName = "AppleAuth"
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "signIn", returnType: CAPPluginReturnPromise)
