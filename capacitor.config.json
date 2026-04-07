@@ -31,5 +31,9 @@
   ],
   "ios": {
     "handleApplicationNotifications": false
+  },
+  "server": {
+    "hostname": "covibe.ca",
+    "androidScheme": "https"
   }
 }

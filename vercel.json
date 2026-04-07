@@ -3,6 +3,14 @@
   "buildCommand": "",
   "rewrites": [
     {
+      "source": "/reset-password.html",
+      "destination": "/reset-password.html"
+    },
+    {
+      "source": "/verify.html",
+      "destination": "/verify.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

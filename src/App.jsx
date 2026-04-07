@@ -50,6 +50,23 @@ function AppContent() {
       if (url.includes('covibe://reset-password')) {
         setShowResetPassword(true);
       }
+      if (url.includes('/verify') && url.includes('token_hash')) {
+        const params = new URLSearchParams(url.split('?')[1]);
+        const tokenHash = params.get('token_hash');
+        const type = params.get('type');
+        if (tokenHash && type) {
+          const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
+          if (!error) setSession(await supabase.auth.getSession().then(r => r.data.session));
+        }
+      }
+      if (url.includes('/reset-password') && url.includes('token_hash')) {
+        const params = new URLSearchParams(url.split('?')[1]);
+        const tokenHash = params.get('token_hash');
+        if (tokenHash) {
+          await supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' });
+          setShowResetPassword(true);
+        }
+      }
       if (url.includes('covibe://login-callback')) {
         const hashPart = url.includes('#') ? url.split('#')[1] : url.split('?')[1];
         const params = new URLSearchParams(hashPart);

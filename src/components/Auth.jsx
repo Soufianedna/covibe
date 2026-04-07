@@ -32,6 +32,7 @@ export const Auth = () => {
           email,
           password,
           options: {
+            emailRedirectTo: 'covibe://login-callback',
             data: {
               name: name,
             }
