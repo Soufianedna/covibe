@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Upload, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 
 export const PhotoUploader = ({ userId, existingPhotos = [], onPhotosChange }) => {
   const [photos, setPhotos] = useState([]);
@@ -66,6 +68,26 @@ export const PhotoUploader = ({ userId, existingPhotos = [], onPhotosChange }) =
       alert('Erreur lors de l\'upload de la photo');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleNativeCamera = async () => {
+    if (!Capacitor.isNativePlatform()) return;
+    try {
+      const image = await Camera.getPhoto({
+        quality: 90,
+        allowEditing: false,
+        resultType: CameraResultType.DataUrl,
+        source: CameraSource.Prompt,
+      });
+      const res = await fetch(image.dataUrl);
+      const blob = await res.blob();
+      const file = new File([blob], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+      uploadPhoto(file);
+    } catch (e) {
+      if (!e.message?.includes('cancel') && !e.message?.includes('Cancel')) {
+        console.error('Camera error:', e);
+      }
     }
   };
 
@@ -228,12 +250,12 @@ export const PhotoUploader = ({ userId, existingPhotos = [], onPhotosChange }) =
         ))}
 
         {photos.length < MAX_PHOTOS && (
-          <label className="aspect-square rounded-xl border-2 border-dashed border-gray-500 hover:border-violet-500 transition-all cursor-pointer flex flex-col items-center justify-center gap-2 bg-slate-700/50 hover:bg-slate-700">
+          <label className="aspect-square rounded-xl border-2 border-dashed border-gray-500 hover:border-violet-500 transition-all cursor-pointer flex flex-col items-center justify-center gap-2 bg-slate-700/50 hover:bg-slate-700" onClick={Capacitor.isNativePlatform() ? (e) => { e.preventDefault(); handleNativeCamera(); } : undefined}>
             <input
               type="file"
               accept="image/*"
               onChange={handleFileSelect}
-              disabled={uploading}
+              disabled={uploading || Capacitor.isNativePlatform()}
               className="hidden"
             />
             {uploading ? (
