@@ -356,13 +356,25 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
                   onClick={async () => {
                     if (navigator.geolocation) {
                       navigator.geolocation.getCurrentPosition(
-                        (position) => {
+                        async (position) => {
+                          const lat = position.coords.latitude;
+                          const lng = position.coords.longitude;
+                          let cityName = profile.city || '';
+                          try {
+                            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+                            const data = await res.json();
+                            const rawCity = data.address?.city || data.address?.town || data.address?.village || data.address?.state || '';
+                            if (rawCity.toLowerCase().includes('vancouver')) cityName = 'vancouver';
+                            else if (rawCity.toLowerCase().includes('montreal') || rawCity.toLowerCase().includes('montréal')) cityName = 'montreal';
+                            else cityName = rawCity.toLowerCase();
+                          } catch(e) {}
                           setProfile({
                             ...profile,
-                            latitude: position.coords.latitude,
-                            longitude: position.coords.longitude,
+                            latitude: lat,
+                            longitude: lng,
+                            city: cityName,
                           });
-                          showToast('📍 Position sauvegardée', 'success');
+                          showToast('📍 ' + cityName, 'success');
                         },
                         (error) => {
                           showToast('❌ Impossible d\'obtenir ta position', 'error');

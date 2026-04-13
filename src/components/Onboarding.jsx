@@ -445,7 +445,20 @@ export const Onboarding = ({ user, onComplete }) => {
                 <button type="button" onClick={() => {
                   if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(
-                      (pos) => setProfile({ ...profile, latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+                      async (pos) => {
+                        const lat = pos.coords.latitude;
+                        const lng = pos.coords.longitude;
+                        let cityName = '';
+                        try {
+                          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+                          const data = await res.json();
+                          const rawCity = data.address?.city || data.address?.town || data.address?.village || data.address?.state || '';
+                          if (rawCity.toLowerCase().includes('vancouver')) cityName = 'vancouver';
+                          else if (rawCity.toLowerCase().includes('montreal') || rawCity.toLowerCase().includes('montréal')) cityName = 'montreal';
+                          else cityName = rawCity.toLowerCase();
+                        } catch(e) {}
+                        setProfile({ ...profile, latitude: lat, longitude: lng, city: cityName });
+                      },
                       () => alert("Impossible d'obtenir ta position. Vérifie tes permissions.")
                     );
                   }
@@ -495,7 +508,7 @@ export const Onboarding = ({ user, onComplete }) => {
               {profile.latitude && profile.longitude && (
                 <div className="text-center p-4 bg-green-500/20 border border-green-500/30 rounded-xl">
                   <p className="text-green-400 font-semibold">✅ Position enregistrée !</p>
-                  <p className="text-sm text-gray-400 mt-1">📍 {profile.latitude.toFixed(4)}, {profile.longitude.toFixed(4)}</p>
+                  <p className="text-sm text-gray-400 mt-1">📍 {profile.city || 'Localisation détectée'}</p>
                 </div>
               )}
             </div>
