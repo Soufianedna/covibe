@@ -41,7 +41,7 @@ export const ProfileView = ({ profile, currentUser, onClose, onOpenChat, onUnmat
 
         <div className="p-6 space-y-6">
           {/* Photo + Infos principales */}
-          <div className="text-center">
+          {!fullPage && <div className="text-center">
             {profile.photo_url ? (
               <img src={profile.photo_url} alt={profile.name} className="w-32 h-32 rounded-full mx-auto object-cover border-4 border-violet-500 mb-4" />
             ) : (
@@ -52,7 +52,7 @@ export const ProfileView = ({ profile, currentUser, onClose, onOpenChat, onUnmat
               {profile.age} ans • {getGenderLabel(profile.gender)} • {getCityLabel(profile.city)}
             </p>
             <p className="text-violet-400 font-bold text-xl">{getCreativeTypeLabel(profile.creative_type)}</p>
-          </div>
+          </div>}
 
           {/* Compatibilité */}
           <div className="bg-slate-700/50 rounded-2xl p-6 text-center">

@@ -1,263 +1,155 @@
 import { useState, useEffect } from 'react';
-import { LazyLoadImage } from 'react-lazy-load-image-component';
 import { supabase } from '../lib/supabase';
-import { X, Heart } from 'lucide-react';
+import { Heart, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { calculateCompatibility, getCompatibilityLevel } from '../lib/matching';
 import { ProfileView } from './ProfileView';
-import { getCompatibilityLevel, calculateCompatibility } from '../lib/matching';
-import { calculateDistance, formatDistance } from '../lib/distance';
 import { useTranslation } from 'react-i18next';
 
-export const LikesReceived = ({ currentUser, onClose, onLike }) => {
+export const LikesReceived = ({ currentUser, onClose, onLike, onViewLikes }) => {
   const { t } = useTranslation();
   const [likes, setLikes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedProfile, setSelectedProfile] = useState(null);
-  useEffect(() => {
-    window._openLikerProfile = (userId) => {
-      const profile = likes.find(p => p.user_id === userId);
-      if (profile) setSelectedProfile(profile);
-    };
-    return () => { window._openLikerProfile = null; };
-  }, [likes]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [photoIndex, setPhotoIndex] = useState(0);
 
   useEffect(() => {
     loadLikes();
   }, []);
 
+  useEffect(() => {
+    setPhotoIndex(0);
+  }, [currentIndex]);
+
   const loadLikes = async () => {
     try {
-      // Récupère les user_id qui t'ont liké ET que tu n'as pas encore vu
-      const { data: receivedLikes, error: likesError } = await supabase
+      const { data: receivedLikes } = await supabase
         .from('swipes')
         .select('user_id')
         .eq('swiped_user_id', currentUser.user_id)
         .eq('is_like', true)
-        .eq('viewed', false);  // ✅ AJOUTER CETTE LIGNE
+        .eq('viewed', false);
 
-      if (likesError) throw likesError;
+      if (!receivedLikes || receivedLikes.length === 0) { setLoading(false); return; }
 
-      const likerIds = receivedLikes.map(like => like.user_id);
-
-      if (likerIds.length === 0) {
-        setLikes([]);
-        setLoading(false);
-        return;
-      }
-
-      // Récupère TOUS les swipes que tu as fait (like ET pass)
-      const { data: mySwipes, error: mySwipesError } = await supabase
+      const { data: myLikes } = await supabase
         .from('swipes')
         .select('swiped_user_id')
         .eq('user_id', currentUser.user_id);
 
-      if (mySwipesError) throw mySwipesError;
+      const myLikedIds = (myLikes || []).map(l => l.swiped_user_id);
+      const pending = receivedLikes.filter(l => !myLikedIds.includes(l.user_id)).map(l => l.user_id);
 
-      const mySwipedIds = mySwipes.map(s => s.swiped_user_id);
+      if (pending.length === 0) { setLoading(false); return; }
 
-      // Filtre pour garder seulement ceux que tu n'as PAS ENCORE swipé (ni like ni pass)
-      const pendingLikerIds = likerIds.filter(id => !mySwipedIds.includes(id));
-
-      if (pendingLikerIds.length === 0) {
-        setLikes([]);
-        setLoading(false);
-        return;
-      }
-
-      // Récupère les profils
-      const { data: profiles, error: profilesError } = await supabase
+      const { data: profiles } = await supabase
         .from('profiles')
         .select('*')
-        .in('user_id', pendingLikerIds);
+        .in('user_id', pending);
 
-      if (profilesError) throw profilesError;
-      setLikes(profiles || []);
-      
-      // Marquer SEULEMENT ces likes comme vus (ceux qu'on affiche vraiment)
-      if (pendingLikerIds.length > 0) {
-        await supabase
-          .from('swipes')
-          .update({ viewed: true })
-          .in('user_id', pendingLikerIds)
-          .eq('swiped_user_id', currentUser.user_id)
-          .eq('is_like', true);
-      }
-    } catch (error) {
-      console.error('Error loading likes:', error);
+      const withPhotos = await Promise.all((profiles || []).map(async (p) => {
+        const { data: photos } = await supabase.from('profile_photos').select('photo_url').eq('user_id', p.user_id).order('position');
+        return { ...p, photos: photos || [] };
+      }));
+
+      setLikes(withPhotos);
+    } catch (e) {
+      console.error(e);
     } finally {
       setLoading(false);
     }
   };
 
-  const getGenderLabel = (gender) => {
-    const labels = { man: 'Homme', woman: 'Femme', non_binary: 'Non-binaire', prefer_not_to_say: 'Non précisé' };
-    return labels[gender] || gender;
-  };
-
-  const getCityLabel = (city) => city === 'vancouver' ? 'Vancouver' : 'Montréal';
-
-  const getCreativeTypeLabel = (type) => {
-    const labels = { musician: 'Musicien·ne', artist: 'Artiste visuel·le', content_creator: 'Créateur·rice de contenu', photographer: 'Photographe', developer: 'Développeur·se', writer: 'Écrivain·e', entrepreneur: 'Entrepreneur·e', other: 'Autre' };
-    return labels[type] || type;
-  };
-
   const handlePass = async (profile) => {
-    try {
-      console.log('🚫 Passing profile:', profile.name);
-      
-      // Vérifie si tu as déjà un swipe vers cette personne
-      const { data: existingSwipe } = await supabase
-        .from('swipes')
-        .select('id')
-        .eq('user_id', currentUser.user_id)
-        .eq('swiped_user_id', profile.user_id)
-        .maybeSingle();
-      
-      if (existingSwipe) {
-        // Update le swipe existant
-        console.log('📝 Updating existing swipe to pass');
-        const { error } = await supabase
-          .from('swipes')
-          .update({ is_like: false })
-          .eq('id', existingSwipe.id);
-        
-        if (error) throw error;
-      } else {
-        // Crée un nouveau swipe "pass"
-        console.log('➕ Creating new pass swipe');
-        const { error } = await supabase
-          .from('swipes')
-          .insert({
-            user_id: currentUser.user_id,
-            swiped_user_id: profile.user_id,
-            is_like: false
-          });
-        
-        if (error) throw error;
-      }
-
-      // IMPORTANT: Marque le like de l'autre personne comme "vu"
-      await supabase
-        .from('swipes')
-        .update({ viewed: true })
-        .eq('user_id', profile.user_id)
-        .eq('swiped_user_id', currentUser.user_id);
-
-      console.log('✅ Profile passed successfully');
-
-      // Retire le profil de la liste
-      setLikes(likes.filter(p => p.user_id !== profile.user_id));
-      
-      // Ferme le profil détaillé s'il est ouvert
-      if (selectedProfile?.user_id === profile.user_id) {
-        setSelectedProfile(null);
-      }
-    } catch (error) {
-      console.error('❌ Error passing profile:', error);
-      alert('Erreur lors du pass. Réessaie.');
-    }
+    await supabase.from('swipes').upsert({ user_id: currentUser.user_id, swiped_user_id: profile.user_id, is_like: false });
+    const next = likes.filter(l => l.user_id !== profile.user_id);
+    setLikes(next);
+    setCurrentIndex(Math.min(currentIndex, next.length - 1));
   };
+
+  const current = likes[currentIndex];
+  const photos = current ? (current.photos?.length > 0 ? current.photos.map(p => p.photo_url) : [current.photo_url]) : [];
+  const compatibility = current && currentUser ? calculateCompatibility(currentUser, current) : 0;
+  const { color, emoji } = getCompatibilityLevel(compatibility);
+
+  if (loading) return (
+    <div className="fixed inset-0 z-40 bg-slate-900 flex items-center justify-center pb-24">
+      <p className="text-white text-xl">⏳ Chargement...</p>
+    </div>
+  );
+
+  if (likes.length === 0) return (
+    <div className="fixed inset-0 z-40 bg-slate-900 flex flex-col items-center justify-center pb-24">
+      <div className="text-6xl mb-4">💔</div>
+      <h3 className="text-2xl font-bold text-white mb-2">Aucun like pour l'instant</h3>
+      <p className="text-gray-400">Continue à swiper !</p>
+    </div>
+  );
 
   return (
-      <div className="fixed inset-0 z-40 overflow-y-auto bg-slate-900 pb-24">
-        <div className="p-6 pt-16">
-          <h2 className="text-2xl font-bold text-white mb-2">💕 Likes reçus</h2>
-          <div>
-
-          <div className="p-6">
-            {loading ? (
-              <div className="text-center py-20">
-                <div className="text-6xl mb-4">⏳</div>
-                <p className="text-white text-xl">Chargement...</p>
-              </div>
-            ) : likes.length === 0 ? (
-              <div className="text-center py-20">
-                <div className="text-6xl mb-4">💔</div>
-                <h3 className="text-2xl font-bold text-white mb-2">{t('noLikes')}</h3>
-                <p className="text-gray-400">{t('noLikesSub')}</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {likes.map((profile) => (
-                  <div 
-                    key={profile.user_id} 
-                    className="bg-slate-700/50 rounded-2xl p-6 hover:bg-slate-700 transition-all cursor-pointer"
-                    onClick={() => setSelectedProfile(profile)}
-                  >
-                    <div className="text-center mb-4">
-                      {profile.photo_url ? (
-                        <img src={profile.photo_url} alt={profile.name} className="w-24 h-24 rounded-full mx-auto object-cover border-4 border-violet-500 mb-3" />
-                      ) : (
-                        <div className="w-24 h-24 rounded-full mx-auto bg-slate-600 flex items-center justify-center text-4xl mb-3">👤</div>
-                      )}
-                      <h3 className="text-xl font-bold text-white mb-1">{profile.name}</h3>
-                      <p className="text-gray-400 text-sm mb-2">
-                        {profile.age} ans • {getGenderLabel(profile.gender)}
-                        {currentUser?.latitude && profile.latitude && (
-                          <> • 📍 À {formatDistance(calculateDistance(currentUser.latitude, currentUser.longitude, profile.latitude, profile.longitude))} de toi</>
-                        )}
-                      </p>
-                      <p className="text-violet-400 font-semibold">{getCreativeTypeLabel(profile.creative_type)}</p>
-                    </div>
-                    
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onLike(profile);
-                      }}
-                      className="w-full py-3 bg-gradient-to-r from-violet-600 to-indigo-500 text-white rounded-xl font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2"
-                    >
-                      <Heart size={20} />
-                      {t('likeBack')}
-                    </button>
-                    
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handlePass(profile);
-                      }}
-                      className="w-full mt-2 py-3 bg-slate-600 hover:bg-slate-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2"
-                    >
-                      <X size={20} />
-                      Pas intéressé
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+    <div className="fixed inset-0 z-40 bg-slate-900 flex flex-col">
+      {/* Header fixe */}
+      <div className="flex-shrink-0 flex items-center justify-between px-6 pt-16 pb-4">
+        <h2 className="text-xl font-bold text-white">💕 {likes.length} like{likes.length > 1 ? "s" : ""} reçu{likes.length > 1 ? "s" : ""}</h2>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))} disabled={currentIndex === 0} className="p-2 bg-slate-700 rounded-full disabled:opacity-30">
+            <ChevronLeft size={20} className="text-white" />
+          </button>
+          <span className="text-gray-400 text-sm">{currentIndex + 1}/{likes.length}</span>
+          <button onClick={() => setCurrentIndex(Math.min(likes.length - 1, currentIndex + 1))} disabled={currentIndex === likes.length - 1} className="p-2 bg-slate-700 rounded-full disabled:opacity-30">
+            <ChevronRight size={20} className="text-white" />
+          </button>
         </div>
       </div>
 
-      {selectedProfile && (
-        <div className="fixed inset-0 z-50 bg-slate-900 overflow-y-auto pb-24">
-        <ProfileView
-          profile={selectedProfile}
-          currentUser={currentUser}
-          fullPage={true}
-          onClose={() => setSelectedProfile(null)}
-          onOpenChat={null}
-          onUnmatch={null}
-          extraActions={
-            <div className="space-y-3 mt-4">
-              <button
-                onClick={() => { onLike(selectedProfile); setSelectedProfile(null); }}
-                className="w-full py-3 bg-gradient-to-r from-violet-600 to-indigo-500 text-white rounded-xl font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2"
-              >
-                <Heart size={20} />
-                {t('likeBack')}
-              </button>
-              <button
-                onClick={() => { handlePass(selectedProfile); setSelectedProfile(null); }}
-                className="w-full py-3 bg-slate-600 hover:bg-slate-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2"
-              >
-                <X size={20} />
-                Pas intéressé
-              </button>
-            </div>
-          }
-        />
+      {/* Zone scrollable */}
+      <div className="flex-1 overflow-y-auto pb-4">
+      {/* Photo principale */}
+      <div className="relative mx-4 rounded-3xl overflow-hidden" style={{height: '55vh'}}
+        onTouchStart={(e) => { window._touchStartX = e.touches[0].clientX; }}
+        onTouchEnd={(e) => { const dx = e.changedTouches[0].clientX - window._touchStartX; if (dx > 50) setPhotoIndex(Math.max(0, photoIndex-1)); else if (dx < -50) setPhotoIndex(Math.min(photos.length-1, photoIndex+1)); }}
+        onClick={(e) => { const x = e.nativeEvent.offsetX; const w = e.currentTarget.offsetWidth; if (x < w/2) setPhotoIndex(Math.max(0, photoIndex-1)); else setPhotoIndex(Math.min(photos.length-1, photoIndex+1)); }}>
+        {photos[photoIndex] ? (
+          <img src={photos[photoIndex]} alt={current.name} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full bg-slate-700 flex items-center justify-center text-6xl">👤</div>
+        )}
+        {/* Navigation photos */}
+        {photos.length > 1 && (
+          <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1">
+            {photos.map((_, i) => (
+              <button key={i} onClick={() => setPhotoIndex(i)} className={`w-2 h-2 rounded-full ${i === photoIndex ? "bg-white" : "bg-white/40"}`} />
+            ))}
+          </div>
+        )}
+        {/* Badge compatibilité */}
+        <div className="absolute top-4 right-4 bg-black/60 rounded-full px-3 py-1">
+          <span className="text-white text-sm font-bold">{compatibility}% {emoji}</span>
         </div>
-      )}
+      </div>
+
+      {/* Infos profil */}
+      <div className="px-6 pt-4">
+        <h2 className="text-3xl font-bold text-white">{current.name}, {current.age}</h2>
+        <p className="text-gray-400 mt-1">{current.city === "vancouver" ? "Vancouver" : "Montréal"} • {current.creative_type}</p>
+        <ProfileView profile={current} currentUser={currentUser} fullPage={true} onClose={() => {}} />
+      </div>
+
+      </div>
+      {/* Boutons action */}
+      <div className="flex-shrink-0 px-6 py-3 pb-24 bg-slate-900 flex gap-4">
+        <button
+          onClick={() => handlePass(current)}
+          className="flex-1 py-4 bg-slate-700 hover:bg-slate-600 text-white rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-all"
+        >
+          <X size={22} /> Passer
+        </button>
+        <button
+          onClick={() => { onLike(current); const next = likes.filter(l => l.user_id !== current.user_id); setLikes(next); setCurrentIndex(Math.min(currentIndex, next.length - 1)); }}
+          className="flex-1 py-4 bg-gradient-to-r from-violet-600 to-indigo-500 text-white rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-all hover:shadow-lg"
+        >
+          <Heart size={22} /> Like Back
+        </button>
+      </div>
     </div>
   );
 };
