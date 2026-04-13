@@ -5,7 +5,7 @@ import { X, MessageCircle } from 'lucide-react';
 import { ProfileView } from './ProfileView';
 import { useTranslation } from 'react-i18next';
 
-export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch, mutualMatchProfiles = [], onSelectMatch, favorites = [], onToggleFavorite }) => {
+export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch, mutualMatchProfiles = [], onSelectMatch, favorites = [], onToggleFavorite, likerProfiles = [], onViewLikes }) => {
   const { t } = useTranslation();
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -156,6 +156,28 @@ export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch,
                   </button>
                 </div>
               ))}
+            </div>
+          )}
+          {likerProfiles.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-lg font-bold text-white mb-3">💕 Nouveau Like</h3>
+              <div className="flex gap-4 overflow-x-auto pb-2">
+                {likerProfiles.map((liker) => (
+                  <button key={liker.user_id} onClick={onViewLikes} className="flex-shrink-0 text-center relative hover:scale-105 transition-transform">
+                    <div className="relative w-20 h-20 mb-1">
+                      <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-pink-500">
+                        {liker.photo_url ? (
+                          <img src={liker.photo_url} alt="?" className="w-full h-full object-cover" style={{filter: 'blur(8px)', transform: 'scale(1.1)'}} />
+                        ) : (
+                          <div className="w-full h-full bg-slate-700 flex items-center justify-center text-3xl">👤</div>
+                        )}
+                      </div>
+                      <span className="absolute top-0 right-0 bg-pink-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center border-2 border-slate-900">❤️</span>
+                    </div>
+                    <p className="text-pink-400 text-xs font-semibold">Voir</p>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           <h2 className="text-2xl font-bold text-white mb-4">💬 Mes Conversations</h2>

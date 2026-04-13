@@ -44,6 +44,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
   const [viewMode, setViewMode] = useState("grid"); // "grid" ou "swipe"
   const [isMobile, setIsMobile] = useState(false);
   const [unviewedLikesCount, setUnviewedLikesCount] = useState(0);
+  const [likerProfiles, setLikerProfiles] = useState([]);
   const [filters, setFilters] = useState({});
   const [favorites, setFavorites] = useState([]);
 
@@ -204,6 +205,16 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
       // Compte seulement ceux que tu n'as pas encore liké
       const pendingLikes = likerIds.filter(id => !myLikedIds.includes(id));
       setUnviewedLikesCount(pendingLikes.length);
+      // Charge les profils des gens qui ont liké
+      if (pendingLikes.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, name, photo_url')
+          .in('user_id', pendingLikes);
+        setLikerProfiles(profiles || []);
+      } else {
+        setLikerProfiles([]);
+      }
     } catch (error) {
       console.error('Error loading unviewed likes count:', error);
     }
@@ -588,8 +599,11 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
       setChatUser(null);
       setSelectedMatch(null);
       setUnreadCount(0);
+      setMutualMatches(prev => prev.filter(id => id !== unmatchedUserId));
+      setMutualMatchProfiles(prev => prev.filter(p => p.user_id !== unmatchedUserId));
       await loadUnreadCount();
       await loadMatches();
+      await loadMutualMatchProfiles();
     } catch (error) {
       console.error('💥 Error:', error);
       alert('Erreur: ' + error.message);
@@ -1258,6 +1272,8 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
           onSelectMatch={(match) => setSelectedMatch({ ...match, compatibility: match.compatibility || calculateCompatibility(currentUserProfile, match) })}
           favorites={favorites}
           onToggleFavorite={toggleFavorite}
+          likerProfiles={likerProfiles}
+          onViewLikes={() => { setShowLikesReceived(true); setShowConversations(false); setActiveTab("likes"); }}
         />
       )}
 
