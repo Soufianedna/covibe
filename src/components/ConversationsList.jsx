@@ -137,16 +137,10 @@ export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch 
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 z-50">
-        <div className="bg-slate-800 border border-violet-500/30 rounded-3xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-          <div className="sticky top-0 bg-slate-800 border-b border-violet-500/30 p-6 flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-white">💬 {t('myConversations')}</h2>
-            <button onClick={onClose} className="p-2 hover:bg-slate-700 rounded-xl transition-all">
-              <X size={24} className="text-gray-300" />
-            </button>
-          </div>
-
-          <div className="p-6">
+      <div className="fixed inset-0 z-40 overflow-y-auto bg-slate-900 pb-24">
+        <div className="p-6 pt-16">
+          <h2 className="text-2xl font-bold text-white mb-6">💬 Mes Conversations</h2>
+          <div>
             {loading ? (
               <div className="text-center py-10">
                 <div className="text-4xl mb-2">⏳</div>
