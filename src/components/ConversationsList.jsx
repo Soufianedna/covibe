@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { X, MessageCircle } from 'lucide-react';
 import { ProfileView } from './ProfileView';
 import { useTranslation } from 'react-i18next';
+import { Logo } from './Logo';
 
 export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch, mutualMatchProfiles = [], onSelectMatch, favorites = [], onToggleFavorite, likerProfiles = [], onViewLikes }) => {
   const { t } = useTranslation();
@@ -139,7 +140,7 @@ export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch,
     <>
       <div className="fixed inset-0 z-40 overflow-y-auto bg-slate-900 pb-24">
         <div className="p-6 pt-16">
-          <h2 className="text-2xl font-bold text-white mb-4">🔥 Tes VibeMatches</h2>
+          <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2"><Logo size={28} /> Tes VibeMatches</h2>
           {mutualMatchProfiles.length > 0 && (
             <div className="flex gap-4 overflow-x-auto pb-4 mb-6">
               {mutualMatchProfiles.map((match) => (
@@ -160,21 +161,21 @@ export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch,
           )}
           {likerProfiles.length > 0 && (
             <div className="mb-6">
-              <h3 className="text-lg font-bold text-white mb-3">💕 Nouveau Like</h3>
+              <h3 className="text-lg font-bold text-white mb-3">💙 Nouveau Like</h3>
               <div className="flex gap-4 overflow-x-auto pb-2">
                 {likerProfiles.map((liker) => (
-                  <button key={liker.user_id} onClick={onViewLikes} className="flex-shrink-0 text-center relative hover:scale-105 transition-transform">
+                  <button key={liker.user_id} onClick={() => onViewLikes(liker)} className="flex-shrink-0 text-center relative hover:scale-105 transition-transform">
                     <div className="relative w-20 h-20 mb-1">
-                      <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-pink-500">
+                      <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-blue-400">
                         {liker.photo_url ? (
                           <img src={liker.photo_url} alt="?" className="w-full h-full object-cover" style={{filter: 'blur(8px)', transform: 'scale(1.1)'}} />
                         ) : (
                           <div className="w-full h-full bg-slate-700 flex items-center justify-center text-3xl">👤</div>
                         )}
                       </div>
-                      <span className="absolute top-0 right-0 bg-pink-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center border-2 border-slate-900">❤️</span>
+                      <span className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center border-2 border-slate-900">💙</span>
                     </div>
-                    <p className="text-pink-400 text-xs font-semibold">Voir</p>
+                    <p className="text-blue-400 text-xs font-semibold">Voir</p>
                   </button>
                 ))}
               </div>

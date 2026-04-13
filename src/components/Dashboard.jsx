@@ -811,7 +811,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
       </main>
 
       {selectedMatch && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 z-50">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 z-[100]">
           <div className="bg-slate-800 border border-violet-500/30 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-slate-800 border-b border-violet-500/30 p-6 flex items-center justify-between">
               <h2 className="text-2xl font-bold text-white">{t('detailedProfile')}</h2>
@@ -1042,7 +1042,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
       )}
 
       {showProfile && !showEditProfile && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 z-50">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 z-[100]">
           <div className="bg-slate-800 border border-violet-500/30 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-slate-800 border-b border-violet-500/30 p-6 flex items-center justify-between">
               <h2 className="text-2xl font-bold text-white">Mon Profil</h2>
@@ -1273,7 +1273,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
           favorites={favorites}
           onToggleFavorite={toggleFavorite}
           likerProfiles={likerProfiles}
-          onViewLikes={() => { setShowLikesReceived(true); setShowConversations(false); setActiveTab("likes"); }}
+          onViewLikes={(liker) => { setShowLikesReceived(true); setShowConversations(false); setActiveTab("likes"); if (liker) setTimeout(() => { window._openLikerProfile && window._openLikerProfile(liker.user_id); }, 300); }}
         />
       )}
 

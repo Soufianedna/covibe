@@ -12,6 +12,13 @@ export const LikesReceived = ({ currentUser, onClose, onLike }) => {
   const [likes, setLikes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedProfile, setSelectedProfile] = useState(null);
+  useEffect(() => {
+    window._openLikerProfile = (userId) => {
+      const profile = likes.find(p => p.user_id === userId);
+      if (profile) setSelectedProfile(profile);
+    };
+    return () => { window._openLikerProfile = null; };
+  }, [likes]);
 
   useEffect(() => {
     loadLikes();
@@ -222,9 +229,11 @@ export const LikesReceived = ({ currentUser, onClose, onLike }) => {
       </div>
 
       {selectedProfile && (
+        <div className="fixed inset-0 z-50 bg-slate-900 overflow-y-auto pb-24">
         <ProfileView
           profile={selectedProfile}
           currentUser={currentUser}
+          fullPage={true}
           onClose={() => setSelectedProfile(null)}
           onOpenChat={null}
           onUnmatch={null}
@@ -247,6 +256,7 @@ export const LikesReceived = ({ currentUser, onClose, onLike }) => {
             </div>
           }
         />
+        </div>
       )}
     </div>
   );

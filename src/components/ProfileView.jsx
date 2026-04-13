@@ -2,7 +2,7 @@ import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getCompatibilityLevel, calculateCompatibility } from '../lib/matching';
 
-export const ProfileView = ({ profile, currentUser, onClose, onOpenChat, onUnmatch, extraActions }) => {
+export const ProfileView = ({ profile, currentUser, onClose, onOpenChat, onUnmatch, extraActions, fullPage = false }) => {
   const { t } = useTranslation();
   const compatibility = currentUser ? calculateCompatibility(currentUser, profile) : 0;
   const { levelKey, color, emoji } = getCompatibilityLevel(compatibility);
@@ -30,14 +30,14 @@ export const ProfileView = ({ profile, currentUser, onClose, onOpenChat, onUnmat
   };
 
   return (
-    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-6 z-[110]">
-      <div className="bg-slate-800 border border-violet-500/30 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-slate-800 border-b border-violet-500/30 p-6 flex items-center justify-between z-10">
+    <div className={fullPage ? "w-full" : "fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-6 z-[110]"}>
+      <div className={fullPage ? "w-full" : "bg-slate-800 border border-violet-500/30 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"}>
+        {!fullPage && <div className="sticky top-0 bg-slate-800 border-b border-violet-500/30 p-6 flex items-center justify-between z-10">
           <h2 className="text-2xl font-bold text-white">Profil Détaillé</h2>
           <button onClick={onClose} className="p-2 hover:bg-slate-700 rounded-xl transition-all">
             <X size={24} className="text-gray-300" />
           </button>
-        </div>
+        </div>}
 
         <div className="p-6 space-y-6">
           {/* Photo + Infos principales */}
@@ -195,7 +195,7 @@ export const ProfileView = ({ profile, currentUser, onClose, onOpenChat, onUnmat
           </div>
 
           {/* Bouton chat */}
-          <button
+          {onOpenChat && <button
             onClick={() => {
               onClose();
               onOpenChat(profile);
@@ -203,7 +203,7 @@ export const ProfileView = ({ profile, currentUser, onClose, onOpenChat, onUnmat
             className="w-full py-4 bg-gradient-to-r from-violet-600 to-indigo-500 text-white rounded-xl font-bold text-lg hover:shadow-lg transition-all"
           >
             💬 Envoyer un message
-          </button>
+          </button>}
           {onUnmatch && (
             <button
               onClick={() => onUnmatch(profile.user_id)}
