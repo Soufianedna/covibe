@@ -5,7 +5,7 @@ import { X, MessageCircle } from 'lucide-react';
 import { ProfileView } from './ProfileView';
 import { useTranslation } from 'react-i18next';
 
-export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch }) => {
+export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch, mutualMatchProfiles = [], onSelectMatch, favorites = [], onToggleFavorite }) => {
   const { t } = useTranslation();
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -139,7 +139,26 @@ export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch 
     <>
       <div className="fixed inset-0 z-40 overflow-y-auto bg-slate-900 pb-24">
         <div className="p-6 pt-16">
-          <h2 className="text-2xl font-bold text-white mb-6">💬 Mes Conversations</h2>
+          <h2 className="text-2xl font-bold text-white mb-4">🔥 Tes VibeMatches</h2>
+          {mutualMatchProfiles.length > 0 && (
+            <div className="flex gap-4 overflow-x-auto pb-4 mb-6">
+              {mutualMatchProfiles.map((match) => (
+                <div key={match.user_id} className="flex-shrink-0 text-center relative">
+                  <button onClick={() => onSelectMatch && onSelectMatch(match)} className="hover:scale-105 transition-transform">
+                    <div className="relative">
+                      {match.photo_url ? (
+                        <img src={match.photo_url} alt={match.name} className="w-20 h-20 rounded-full object-cover border-4 border-violet-500 mb-1" />
+                      ) : (
+                        <div className="w-20 h-20 rounded-full bg-slate-700 flex items-center justify-center text-3xl border-4 border-violet-500 mb-1">👤</div>
+                      )}
+                    </div>
+                    <p className="text-white text-xs font-semibold max-w-[80px] truncate">{match.name}</p>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <h2 className="text-2xl font-bold text-white mb-4">💬 Mes Conversations</h2>
           <div>
             {loading ? (
               <div className="text-center py-10">

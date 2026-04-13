@@ -675,65 +675,10 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-white mb-2">{t('yourMatches')} 🔥</h2>
-          <p className="text-gray-300">
-            {filteredMatches.length > 0 ? `${filteredMatches.length} ${filteredMatches.length === 1 ? t('compatibleRoommate') : t('compatibleRoommates')} ${t('in')} ${getCityLabel(currentUserProfile.city)}` : t('allProfilesSeen')}
-          </p>
-        </div>
+      <main className="max-w-7xl mx-auto px-6 py-8 pb-24">
         {/* {t('filters')} */}
         <Filters onFilterChange={setFilters} hasSpace={currentUserProfile?.has_space} />
-        {/* Rangée de bulles photos */}
-        {mutualMatchProfiles.length > 0 && (
-          <div className="mb-8 overflow-x-auto">
-            <div className="flex gap-4 pb-4">
-              {mutualMatchProfiles.map((match) => (
-                <div
-                  key={match.user_id}
-                  className="flex-shrink-0 text-center relative"
-                >
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleFavorite(match.user_id);
-                    }}
-                    className="absolute -top-1 -left-1 p-1.5 bg-slate-800/80 hover:bg-yellow-500/20 rounded-full transition-all z-10"
-                    title="Ajouter aux favoris"
-                  >
-                    <Star size={16} className={favorites.includes(match.user_id) ? "text-yellow-400 fill-yellow-400" : "text-yellow-400"} />
-                  </button>
-                  <button
-                    onClick={() => setSelectedMatch({ ...match, compatibility: match.compatibility || calculateCompatibility(currentUserProfile, match) })}
-                    className="hover:scale-105 transition-transform"
-                  >
-                    <div className="relative">
-                      {match.photo_url ? (
-                        <img
-                          src={match.photo_url}
-                          alt={match.name}
-                          className="w-20 h-20 rounded-full object-cover border-4 border-violet-500 mb-2"
-                        />
-                      ) : (
-                        <div className="w-20 h-20 rounded-full bg-slate-700 flex items-center justify-center text-3xl border-4 border-violet-500 mb-2">
-                          👤
-                        </div>
-                      )}
-                      {match.compatibility && (
-                        <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-violet-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                          {Math.round(match.compatibility)}%
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-white text-sm font-semibold max-w-[80px] truncate flex items-center justify-center gap-1 mt-2">{match.name} {match.verified && <span className="inline-flex items-center justify-center w-3 h-3 bg-violet-500 rounded-full text-white" style={{fontSize: '6px'}}>✓</span>}</p>
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {loading ? (
+                {loading ? (
           <div className="text-center py-20">
             <div className="text-6xl mb-4">⏳</div>
             <p className="text-white text-xl font-semibold">{ t('searchingMatches') }</p>
@@ -1309,6 +1254,10 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
           onClose={() => { setShowConversations(false); setActiveTab("discover"); }}
           onUnmatch={handleUnmatch}
           onOpenChat={openChatWithMatch}
+          mutualMatchProfiles={mutualMatchProfiles}
+          onSelectMatch={(match) => setSelectedMatch({ ...match, compatibility: match.compatibility || calculateCompatibility(currentUserProfile, match) })}
+          favorites={favorites}
+          onToggleFavorite={toggleFavorite}
         />
       )}
 
