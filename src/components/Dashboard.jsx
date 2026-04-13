@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import { supabase } from '../lib/supabase';
-import { getTopMatches, getCompatibilityLevel } from '../lib/matching';
+import { getTopMatches, getCompatibilityLevel, calculateCompatibility } from '../lib/matching';
 import { calculateDistance, formatDistance } from '../lib/distance';
 import { Logo } from './Logo';
 import { MessageNotification } from './MessageNotification';
@@ -729,21 +729,28 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
                     <Star size={16} className={favorites.includes(match.user_id) ? "text-yellow-400 fill-yellow-400" : "text-yellow-400"} />
                   </button>
                   <button
-                    onClick={() => setSelectedMatch(match)}
+                    onClick={() => setSelectedMatch({ ...match, compatibility: match.compatibility || calculateCompatibility(currentUserProfile, match) })}
                     className="hover:scale-105 transition-transform"
                   >
-                    {match.photo_url ? (
-                      <img
-                        src={match.photo_url}
-                        alt={match.name}
-                        className="w-20 h-20 rounded-full object-cover border-4 border-violet-500 mb-2"
-                      />
-                    ) : (
-                      <div className="w-20 h-20 rounded-full bg-slate-700 flex items-center justify-center text-3xl border-4 border-violet-500 mb-2">
-                        👤
-                      </div>
-                    )}
-                    <p className="text-white text-sm font-semibold max-w-[80px] truncate flex items-center justify-center gap-1">{match.name} {match.verified && <span className="inline-flex items-center justify-center w-3 h-3 bg-violet-500 rounded-full text-white" style={{fontSize: '6px'}}>✓</span>}</p>
+                    <div className="relative">
+                      {match.photo_url ? (
+                        <img
+                          src={match.photo_url}
+                          alt={match.name}
+                          className="w-20 h-20 rounded-full object-cover border-4 border-violet-500 mb-2"
+                        />
+                      ) : (
+                        <div className="w-20 h-20 rounded-full bg-slate-700 flex items-center justify-center text-3xl border-4 border-violet-500 mb-2">
+                          👤
+                        </div>
+                      )}
+                      {match.compatibility && (
+                        <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-violet-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                          {Math.round(match.compatibility)}%
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-white text-sm font-semibold max-w-[80px] truncate flex items-center justify-center gap-1 mt-2">{match.name} {match.verified && <span className="inline-flex items-center justify-center w-3 h-3 bg-violet-500 rounded-full text-white" style={{fontSize: '6px'}}>✓</span>}</p>
                   </button>
                 </div>
               ))}
