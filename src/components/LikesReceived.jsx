@@ -89,7 +89,7 @@ export const LikesReceived = ({ currentUser, onClose, onLike, onViewLikes }) => 
     <div className="fixed inset-0 z-40 bg-slate-900 flex flex-col">
       {/* Header fixe */}
       <div className="flex-shrink-0 flex items-center justify-between px-6 pt-16 pb-4">
-        <h2 className="text-xl font-bold text-white">💕 {likes.length} like{likes.length > 1 ? "s" : ""} reçu{likes.length > 1 ? "s" : ""}</h2>
+        <h2 className="text-xl font-bold text-white">💙 {likes.length} like{likes.length > 1 ? "s" : ""} reçu{likes.length > 1 ? "s" : ""}</h2>
         <div className="flex items-center gap-2">
           <button onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))} disabled={currentIndex === 0} className="p-2 bg-slate-700 rounded-full disabled:opacity-30">
             <ChevronLeft size={20} className="text-white" />
@@ -102,7 +102,7 @@ export const LikesReceived = ({ currentUser, onClose, onLike, onViewLikes }) => 
       </div>
 
       {/* Zone scrollable */}
-      <div className="flex-1 overflow-y-auto pb-4">
+      <div className="flex-1 overflow-y-auto pb-40">
       {/* Photo principale */}
       <div className="relative mx-4 rounded-3xl overflow-hidden" style={{height: '55vh'}}
         onTouchStart={(e) => { window._touchStartX = e.touches[0].clientX; }}
@@ -136,7 +136,7 @@ export const LikesReceived = ({ currentUser, onClose, onLike, onViewLikes }) => 
 
       </div>
       {/* Boutons action */}
-      <div className="flex-shrink-0 px-6 py-3 pb-24 bg-slate-900 flex gap-4">
+      <div className="fixed left-0 right-0 px-6 py-4 bg-slate-900 border-t border-slate-700 flex gap-4 z-10" style={{bottom: "120px"}}>
         <button
           onClick={() => handlePass(current)}
           className="flex-1 py-4 bg-slate-700 hover:bg-slate-600 text-white rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-all"

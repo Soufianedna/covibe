@@ -190,7 +190,7 @@ export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch,
               </div>
             ) : matches.length === 0 ? (
               <div className="text-center py-10">
-                <div className="text-6xl mb-4">💔</div>
+                <div className="mb-4 flex justify-center"><Logo size={64} /></div>
                 <h3 className="text-xl font-bold text-white mb-2">Aucun match pour l'instant</h3>
                 <p className="text-gray-400">{t('keepSwiping')}</p>
               </div>

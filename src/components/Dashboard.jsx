@@ -15,6 +15,7 @@ import { LogOut, User, X, Heart, XCircle, MessageCircle, Star, LayoutGrid, Layer
 import { Filters } from './Filters';
 import { LikesReceived } from './LikesReceived';
 import { Favorites } from './Favorites';
+import { TopVibes } from './TopVibes';
 import { PhotoCarousel } from './PhotoCarousel';
 import { ProfileScore } from './ProfileScore';
 import SwipeView from "./SwipeView";
@@ -1312,16 +1313,9 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
       )}
 
       {showFavorites && (
-        <Favorites
+        <TopVibes
           currentUser={currentUserProfile}
-          onClose={() => { setShowFavorites(false); setActiveTab("discover"); }}
-          mutualMatches={mutualMatches}
-          onUnmatch={handleUnmatch}
-          onOpenChat={openChatWithMatch}
-          onLike={async (profile) => {
-            await handleLike(profile.user_id);
-            await loadFavoritesCount();
-          }}
+          onLike={async (profile) => { await handleLike(profile.user_id); }}
         />
       )}
 
@@ -1355,10 +1349,9 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
           <span className="text-xs font-medium">Discover</span>
         </button>
-        <button onClick={() => { setActiveTab('favorites'); setShowFavorites(true); setShowLikesReceived(false); setShowConversations(false); setShowProfile(false); }} className={`flex flex-col items-center gap-1 py-3 px-4 transition-all relative ${activeTab === 'favorites' ? 'text-yellow-400' : 'text-gray-500'}`}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          <span className="text-xs font-medium">Favoris</span>
-          {favoritesCount > 0 && <span className="absolute top-2 right-2 bg-yellow-500 text-white text-xs font-bold w-4 h-4 rounded-full flex items-center justify-center">{favoritesCount > 9 ? '9+' : favoritesCount}</span>}
+        <button onClick={() => { setActiveTab('favorites'); setShowFavorites(true); setShowLikesReceived(false); setShowConversations(false); setShowProfile(false); }} className={`flex flex-col items-center gap-1 py-3 px-4 transition-all relative ${activeTab === 'favorites' ? 'text-violet-400' : 'text-gray-500'}`}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          <span className="text-xs font-medium">Top Vibes</span>
         </button>
         <button onClick={() => { setActiveTab('likes'); setShowLikesReceived(true); setShowFavorites(false); setShowConversations(false); setShowProfile(false); }} className={`flex flex-col items-center gap-1 py-3 px-4 transition-all relative ${activeTab === 'likes' ? 'text-pink-400' : 'text-gray-500'}`}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
