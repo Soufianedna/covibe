@@ -28,7 +28,7 @@ serve(async (req) => {
       expires_at: expiresAt.toISOString()
     })
 
-    const verificationUrl = `https://www.covibe.ca/verify?token=${token}`
+    const verificationUrl = `https://www.covibe.ca/verify.html?token=${token}`
     
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',

@@ -3,37 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CoVibe - Vérification</title>
+  <title>CoVibe - Profil vérifié</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; text-align: center; min-height: 100vh; background: linear-gradient(135deg, #1e1040, #2d1b69); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; }
-    .logo { font-size: 32px; font-weight: 900; color: #a855f7; margin-bottom: 8px; }
-    .subtitle { color: #94a3b8; margin-bottom: 40px; }
-    .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 40px; max-width: 360px; width: 100%; }
-    h2 { font-size: 22px; margin-bottom: 12px; }
-    p { color: #94a3b8; line-height: 1.6; margin-bottom: 32px; }
+    body { font-family: -apple-system, Arial, sans-serif; text-align: center; min-height: 100vh; background: linear-gradient(135deg, #1e1040, #2d1b69); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; }
+    .logo { font-size: 32px; font-weight: 900; color: #a855f7; margin-bottom: 40px; }
+    .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 40px; max-width: 360px; width: 100%; }
+    .check { font-size: 64px; margin-bottom: 20px; }
+    h2 { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+    p { color: #94a3b8; margin-bottom: 32px; line-height: 1.6; }
     .btn { background: linear-gradient(to right, #7c3aed, #4f46e5); color: white; padding: 18px 32px; border-radius: 14px; text-decoration: none; font-weight: bold; font-size: 18px; display: block; width: 100%; }
-    .btn:active { opacity: 0.8; }
   </style>
   <script>
     window.onload = function() {
       const params = new URLSearchParams(window.location.search);
       const tokenHash = params.get('token_hash');
+      const token = params.get('token');
       const type = params.get('type') || 'signup';
+      
       if (tokenHash) {
-        const deepLink = 'covibe://login-callback?token_hash=' + tokenHash + '&type=' + type;
-        document.getElementById('btn').href = deepLink;
+        document.getElementById('btn').href = 'covibe://login-callback?token_hash=' + tokenHash + '&type=' + type;
+      } else if (token) {
+        document.getElementById('btn').href = 'covibe://verify?token=' + token;
       }
     }
   </script>
 </head>
 <body>
   <div class="logo">~ CoVibe</div>
-  <p class="subtitle">Trouve ton coloc créatif idéal</p>
   <div class="card">
-    <h2>✅ Confirme ton compte</h2>
-    <p>Clique sur le bouton ci-dessous pour ouvrir CoVibe et confirmer ton compte.</p>
-    <a id="btn" href="#" class="btn">Ouvrir CoVibe</a>
+    <div class="check">✅</div>
+    <h2>Profil vérifié !</h2>
+    <p>Ton badge de vérification est activé. Clique pour retourner dans l'app.</p>
+    <a id="btn" href="covibe://login-callback" class="btn">Ouvrir CoVibe 🏠</a>
   </div>
 </body>
 </html>

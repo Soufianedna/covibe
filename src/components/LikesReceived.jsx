@@ -79,7 +79,7 @@ export const LikesReceived = ({ currentUser, onClose, onLike, onViewLikes }) => 
 
   if (likes.length === 0) return (
     <div className="fixed inset-0 z-40 bg-slate-900 flex flex-col items-center justify-center pb-24">
-      <div className="text-6xl mb-4">💔</div>
+      <div className="text-6xl mb-4">💙</div>
       <h3 className="text-2xl font-bold text-white mb-2">Aucun like pour l'instant</h3>
       <p className="text-gray-400">Continue à swiper !</p>
     </div>
