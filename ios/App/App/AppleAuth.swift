@@ -25,10 +25,15 @@ public class AppleAuthPlugin: CAPPlugin, CAPBridgedPlugin, ASAuthorizationContro
     }
     
     public func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
-        return UIApplication.shared.connectedScenes
-            .compactMap({ $0 as? UIWindowScene })
-            .flatMap({ $0.windows })
-            .first(where: { $0.isKeyWindow }) ?? UIWindow()
+        if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+            if let window = scene.windows.first(where: { $0.isKeyWindow }) {
+                return window
+            }
+            if let window = scene.windows.first {
+                return window
+            }
+        }
+        return UIWindow()
     }
     
     public func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {

@@ -68,6 +68,7 @@ function AppContent() {
         }
       }
       if (url.includes('covibe://login-callback')) {
+        console.log('🍎 CALLBACK URL:', url);
         const hashPart = url.includes('#') ? url.split('#')[1] : url.split('?')[1];
         const params = new URLSearchParams(hashPart);
         const access_token = params.get('access_token');

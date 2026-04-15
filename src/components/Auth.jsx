@@ -194,8 +194,9 @@ export const Auth = () => {
               type="button"
               onClick={async () => {
                 try {
-                  const { Capacitor: Cap } = await import('@capacitor/core');
-                  const result = await (window.Capacitor.nativePromise || Cap.nativePromise).call(window.Capacitor, 'AppleAuth', 'signIn', {});
+                  const { error: oauthError } = await supabase.auth.signInWithOAuth({ provider: 'apple', options: { redirectTo: 'covibe://login-callback' } });
+                  if (oauthError) throw oauthError;
+                  return;
                   if (result.identityToken) {
                     const { error } = await supabase.auth.signInWithIdToken({
                       provider: 'apple',
