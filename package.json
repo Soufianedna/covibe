@@ -19,6 +19,7 @@
     "@capacitor/ios": "^8.2.0",
     "@capacitor/splash-screen": "^8.0.1",
     "@codetrix-studio/capacitor-google-auth": "^3.4.0-rc.4",
+    "@fontsource/pacifico": "^5.2.7",
     "@react-spring/web": "^9.7.5",
     "@supabase/supabase-js": "^2.39.0",
     "i18next": "^25.8.1",

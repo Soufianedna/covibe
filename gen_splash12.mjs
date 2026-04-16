@@ -1,4 +1,5 @@
-import { createCanvas } from 'canvas';
+import { createCanvas, registerFont } from 'canvas';
+registerFont('/tmp/Pacifico.ttf', { family: 'Pacifico' });
 import { writeFileSync } from 'fs';
 
 const size = 2732;
@@ -40,10 +41,10 @@ textGradient.addColorStop(0.5, '#A855F7');
 textGradient.addColorStop(1, '#06B6D4');
 
 ctx.fillStyle = textGradient;
-ctx.font = `bold ${size * 0.14}px sans-serif`;
+ctx.font = `${size * 0.14}px Pacifico`;
 ctx.textAlign = 'center';
 ctx.textBaseline = 'middle';
-ctx.fillText('CoVibe', size / 2, size * 0.91);
+ctx.fillText('Covibe', size / 2, size * 0.91);
 
 writeFileSync('/Users/souf/Downloads/files/splash.png', canvas.toBuffer('image/png'));
 console.log('✅ Splash généré');

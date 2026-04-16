@@ -5,6 +5,7 @@ import { Privacy } from './components/legal/Privacy';
 import { Terms } from './components/legal/Terms';
 import { Cookies } from './components/legal/Cookies';
 import { Mentions } from './components/legal/Mentions';
+import '@fontsource/pacifico';
 import { useState, useEffect } from 'react';
 import 'react-lazy-load-image-component/src/effects/blur.css';
 import { supabase } from './lib/supabase';
@@ -181,8 +182,8 @@ function AppContent() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-6xl mb-4">⏳</div>
-          <p className="text-white text-xl font-semibold">Chargement...</p>
+          <h1 className="text-5xl mb-6 bg-gradient-to-r from-violet-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent" style={{fontFamily: "'Pacifico', cursive"}}>Covibe</h1>
+          <div className="w-8 h-8 border-2 border-violet-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
         </div>
       </div>
     );

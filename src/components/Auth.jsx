@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Logo } from './Logo';
 import { useTranslation } from 'react-i18next';
+import '@fontsource/pacifico';
 
 export const Auth = () => {
   const { t } = useTranslation();
@@ -56,8 +57,8 @@ export const Auth = () => {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
             <Logo size={60} />
-            <h1 className="text-4xl font-black bg-gradient-to-r from-violet-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
-              CoVibe
+            <h1 className="text-4xl bg-gradient-to-r from-violet-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent" style={{fontFamily: "'Pacifico', cursive"}}>
+              Covibe
             </h1>
           </div>
           <p className="text-gray-300 text-lg">
