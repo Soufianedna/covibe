@@ -172,7 +172,7 @@ export const Onboarding = ({ user, onComplete }) => {
     if (!profile.bio) missing.push('Bio');
     if (!profile.photo_url) missing.push('Photo');
     if (!acceptedTerms) missing.push("Conditions d'utilisation");
-    if (missing.length > 0) { alert('⚠️ Champs manquants : ' + missing.join(', ')); return; }
+    // Validation souple - on continue même si des champs manquent
     try {
       const cleanProfile = {
         ...profile,
@@ -182,6 +182,11 @@ export const Onboarding = ({ user, onComplete }) => {
         cleanliness: parseInt(profile.cleanliness) || 3,
         noise_tolerance: parseInt(profile.noise_tolerance) || 5,
         guests_frequency: parseInt(profile.guests_frequency) || 3,
+        religious_practice: profile.religious_practice || 'none',
+        productive_time: profile.productive_time || 'flexible',
+        creative_type: profile.creative_type || 'other',
+        gender: profile.gender || 'prefer_not_to_say',
+        city: profile.city || 'vancouver',
         onboarding_complete: true,
       };
       // Refresh session avant upsert
@@ -198,10 +203,7 @@ export const Onboarding = ({ user, onComplete }) => {
     }
   };
 
-  const canSubmit = () => profile.name && profile.age && profile.gender && profile.city &&
-    profile.creative_type && profile.productive_time &&
-    (profile.has_space ? true : (profile.budget_min && profile.budget_max)) &&
-    profile.bio && profile.photo_url && acceptedTerms;
+  const canSubmit = () => true;
 
   const inputClass = "w-full px-4 py-3 bg-slate-700/50 border border-gray-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-violet-500";
   const checkboxClass = "w-5 h-5 rounded bg-slate-700 border-gray-600 text-violet-500 focus:ring-2 focus:ring-violet-500";

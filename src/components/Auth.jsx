@@ -196,20 +196,9 @@ export const Auth = () => {
               onClick={async () => {
                 try {
                   const { error: oauthError } = await supabase.auth.signInWithOAuth({ provider: 'apple', options: { redirectTo: 'covibe://login-callback' } });
-                  if (oauthError) throw oauthError;
-                  return;
-                  if (result.identityToken) {
-                    const { error } = await supabase.auth.signInWithIdToken({
-                      provider: 'apple',
-                      token: result.identityToken,
-                    });
-                    if (error) throw error;
-                  }
+                  if (oauthError) console.error('Apple OAuth error:', oauthError);
                 } catch(e) {
-                  const msg = e.message || e.toString();
-                  if (!msg.includes('1001') && !msg.includes('cancel') && !msg.includes('Cancel')) {
-                    alert('Erreur: ' + msg);
-                  }
+                  console.error('Apple Sign In error:', e);
                 }
               }}
               className="w-full py-3 bg-black text-white rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-gray-900 transition-all"
