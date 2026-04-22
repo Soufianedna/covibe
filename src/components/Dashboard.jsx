@@ -1315,7 +1315,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
       {/* BARRE DE NAVIGATION EN BAS */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-lg border-t border-violet-500/20 flex items-center justify-around px-2" style={{paddingBottom: 'calc(env(safe-area-inset-bottom) + 8px)'}}>
         <button onClick={() => { setActiveTab('discover'); setShowFavorites(false); setShowLikesReceived(false); setShowConversations(false); setShowProfile(false); }} className={`flex flex-col items-center gap-1 py-3 px-4 transition-all ${activeTab === 'discover' ? 'text-violet-400' : 'text-gray-500'}`}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+          <Logo size={32} />
           <span className="text-xs font-medium">Discover</span>
         </button>
         <button onClick={() => { setActiveTab('favorites'); setShowFavorites(true); setShowLikesReceived(false); setShowConversations(false); setShowProfile(false); }} className={`flex flex-col items-center gap-1 py-3 px-4 transition-all relative ${activeTab === 'favorites' ? 'text-violet-400' : 'text-gray-500'}`}>
