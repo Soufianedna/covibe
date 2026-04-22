@@ -703,16 +703,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
               return (
                 <div key={match.user_id} onClick={() => { setSelectedMatch(match); if (match.has_space) loadPropertyPhotos(match.user_id); }} className="bg-slate-800/50 backdrop-blur-lg border border-violet-500/30 rounded-2xl p-6 hover:border-violet-500 transition-all cursor-pointer hover:shadow-lg hover:shadow-violet-500/20">
                   <div className="mb-4 relative text-center">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(match.user_id);
-                      }}
-                      className="absolute top-2 left-2 p-2 bg-slate-800/80 hover:bg-yellow-500/20 rounded-full transition-all z-10"
-                      title="Ajouter aux favoris"
-                    >
-                      <Star size={20} className={favorites.includes(match.user_id) ? "text-yellow-400 fill-yellow-400" : "text-yellow-400"} />
-                    </button>
+
                     {match.photo_url ? (
                       <LazyLoadImage effect="blur" src={match.photo_url} alt={match.name} className="w-24 h-24 rounded-full mx-auto object-cover border-4 border-violet-500" />
                     ) : (
@@ -785,16 +776,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
           <div className="bg-slate-800 border border-violet-500/30 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-slate-800 border-b border-violet-500/30 p-6 flex items-center justify-between">
               <h2 className="text-2xl font-bold text-white">{t('detailedProfile')}</h2>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleFavorite(selectedMatch.user_id);
-                }}
-                className="p-2 bg-yellow-500/20 hover:bg-yellow-500/30 rounded-xl transition-all"
-                title="Ajouter aux favoris"
-              >
-                <Star size={24} className={favorites.includes(selectedMatch.user_id) ? "text-yellow-400 fill-yellow-400" : "text-yellow-400"} />
-              </button>
+
               <button onClick={() => setSelectedMatch(null)} className="p-2 hover:bg-slate-700 rounded-xl transition-all">
                 <X size={24} className="text-gray-300" />
               </button>
