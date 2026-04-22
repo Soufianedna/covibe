@@ -9,9 +9,10 @@ export const Onboarding = ({ user, onComplete }) => {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [propertyPhotos, setPropertyPhotos] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const appleOrGoogleName = user?.user_metadata?.full_name || user?.user_metadata?.name || '';
   const [profile, setProfile] = useState({
     user_id: user.id,
-    name: '',
+    name: appleOrGoogleName,
     age: '',
     gender: '',
     city: '',
