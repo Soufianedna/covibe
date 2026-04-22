@@ -658,37 +658,6 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-indigo-950">
-      <header className="bg-slate-900/80 backdrop-blur-xl border-b border-violet-500/20 shadow-lg shadow-purple-900/20">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center">
-            <Logo size={36} />
-          </div>
-          <div className="flex items-center gap-4">
-            {false && (
-              <div className="flex items-center gap-1 bg-slate-700/50 rounded-xl p-1">
-                <button
-                  onClick={() => setViewMode("grid")}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${viewMode === "grid" ? "bg-violet-600 text-white shadow-md" : "text-gray-400 hover:text-white hover:bg-slate-600"}`}
-                >
-                  <LayoutGrid size={18} />
-                  <span className="hidden md:inline text-sm">{t("gridView")}</span>
-                </button>
-                <button
-                  onClick={() => setViewMode("swipe")}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${viewMode === "swipe" ? "bg-violet-600 text-white shadow-md" : "text-gray-400 hover:text-white hover:bg-slate-600"}`}
-                >
-                  <Layers size={18} />
-                  <span className="hidden md:inline text-sm">{t("swipeView")}</span>
-                </button>
-              </div>
-            )}
-
-            <button onClick={onLogout} className="flex items-center justify-center w-10 h-10 bg-slate-700 hover:bg-slate-600 text-white rounded-xl transition-all">
-              <LogOut size={20} />
-            </button>
-          </div>
-        </div>
-      </header>
 
       <main className="max-w-7xl mx-auto px-6 py-8 pb-24">
         {/* {t('filters')} */}
