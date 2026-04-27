@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { Chat } from './Chat';
 import { ConversationsList } from './ConversationsList';
 import { LogOut, User, X, Heart, XCircle, MessageCircle, Star, LayoutGrid, Layers } from 'lucide-react';
-import { Filters } from './Filters';
+import { FilterPills } from './FilterPills';
 import { LikesReceived } from './LikesReceived';
 import { Favorites } from './Favorites';
 import { TopVibes } from './TopVibes';
@@ -662,7 +662,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
 
       <main className="max-w-7xl mx-auto px-6 py-8 pb-24">
         {/* {t('filters')} */}
-        <Filters onFilterChange={setFilters} hasSpace={currentUserProfile?.has_space} />
+        <FilterPills onFilterChange={setFilters} hasSpace={currentUserProfile?.has_space} />
                 {loading ? (
           <div className="text-center py-20">
             <div className="text-6xl mb-4">⏳</div>
