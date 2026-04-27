@@ -26,14 +26,14 @@ export const ProfilePage = ({ currentUser, onEdit, onLogout }) => {
           </div>
 
           <div className="space-y-3">
-            <a href="/terms" target="_blank" className="flex items-center gap-4 p-4 bg-slate-800 rounded-2xl hover:bg-slate-700 transition-all">
+            <button onClick={() => window.open("https://www.covibe.ca/terms", "_blank")} className="w-full flex items-center gap-4 p-4 bg-slate-800 rounded-2xl hover:bg-slate-700 transition-all">
               <FileText size={22} className="text-violet-400" />
               <span className="text-white font-semibold">Conditions d'utilisation</span>
-            </a>
-            <a href="/privacy" target="_blank" className="flex items-center gap-4 p-4 bg-slate-800 rounded-2xl hover:bg-slate-700 transition-all">
+            </button>
+            <button onClick={() => window.open("https://www.covibe.ca/privacy", "_blank")} className="w-full flex items-center gap-4 p-4 bg-slate-800 rounded-2xl hover:bg-slate-700 transition-all">
               <Shield size={22} className="text-violet-400" />
               <span className="text-white font-semibold">Politique de confidentialité</span>
-            </a>
+            </button>
             <button onClick={onLogout} className="w-full flex items-center gap-4 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl hover:bg-red-500/20 transition-all">
               <LogOut size={22} className="text-red-400" />
               <span className="text-red-400 font-semibold">Se déconnecter</span>
