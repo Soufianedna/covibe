@@ -6,6 +6,7 @@ import { calculateDistance, formatDistance } from '../lib/distance';
 import { Logo } from './Logo';
 import { MessageNotification } from './MessageNotification';
 import { ProfileEdit } from './ProfileEdit';
+import { ProfilePage } from './ProfilePage';
 import { MatchModal } from './MatchModal';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
@@ -993,102 +994,13 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
         </div>
       )}
 
-      {showProfile && !showEditProfile && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 z-[100]">
-          <div className="bg-slate-800 border border-violet-500/30 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-slate-800 border-b border-violet-500/30 p-6 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-white">Mon Profil</h2>
-              <button onClick={() => setShowProfile(false)} className="p-2 hover:bg-slate-700 rounded-xl transition-all">
-                <X size={24} className="text-gray-300" />
-              </button>
-            </div>
-            <div className="p-6">
-              <ProfileScore profile={currentUserProfile} />
-            </div>
-            <div className="p-6 space-y-6">
-              <div className="text-center">
-                {currentUserProfile.photo_url ? (
-                  <LazyLoadImage effect="blur" src={currentUserProfile.photo_url} alt={currentUserProfile.name} className="w-32 h-32 rounded-full mx-auto object-cover border-4 border-violet-500 mb-4" />
-                ) : (
-                  <div className="w-32 h-32 rounded-full mx-auto bg-slate-700 flex items-center justify-center text-6xl mb-4">👤</div>
-                )}
-                <h3 className="text-3xl font-bold text-white mb-2 flex items-center justify-center gap-2">{currentUserProfile.name} {currentUserProfile.verified && <span className="inline-flex items-center justify-center w-5 h-5 bg-violet-500 rounded-full text-white text-xs font-bold">✓</span>}</h3>
-                <p className="text-gray-400 mb-2">{currentUserProfile.age} ans • {t(getGenderLabel(currentUserProfile.gender))} • {getCityLabel(currentUserProfile.city)}</p>
-                <p className="text-violet-400 font-semibold text-lg">{t(getCreativeTypeLabel(currentUserProfile.creative_type))}</p>
-              </div>
-              <div>
-                <h4 className="text-lg font-bold text-white mb-2">{t('bio')}</h4>
-                <p className="text-gray-300 bg-slate-700/50 rounded-xl p-4">{currentUserProfile.bio}</p>
-              </div>
-              <div>
-                <h4 className="text-lg font-bold text-white mb-3">{t('myPreferences')}</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="bg-slate-700/50 rounded-xl p-4">
-                    <p className="text-gray-400 mb-1">{ t('schedule') }</p>
-                    <p className="text-white font-semibold">{t(getProductiveTimeLabel(currentUserProfile.productive_time))}</p>
-                  </div>
-                  <div className="bg-slate-700/50 rounded-xl p-4">
-                    <p className="text-gray-400 mb-1">{ t('cleanliness') }</p>
-                    <p className="text-white font-semibold">{currentUserProfile.cleanliness}/5</p>
-                  </div>
-                  <div className="bg-slate-700/50 rounded-xl p-4">
-                    <p className="text-gray-400 mb-1">Budget</p>
-                    <p className="text-white font-semibold">{currentUserProfile.has_space ? `${currentUserProfile.room_price}$/mois` : `${currentUserProfile.budget_min}$ - ${currentUserProfile.budget_max}$`}</p>
-                  </div>
-                  <div className="bg-slate-700/50 rounded-xl p-4">
-                    <p className="text-gray-400 mb-1">{ t('practices') }</p>
-                    <p className="text-white font-semibold">{t(getReligionLabel(currentUserProfile.religious_practice))}</p>
-                  </div>
-                </div>
-              </div>
-              <button onClick={() => setShowEditProfile(true)} className="w-full py-3 bg-gradient-to-r from-violet-600 to-indigo-500 text-white rounded-xl font-bold hover:shadow-lg transition-all">✏️ {t('editProfile')}</button>
-              {!currentUserProfile.verified && (
-                <button
-                  onClick={async () => {
-                    try {
-                      const { data: { user } } = await supabase.auth.getUser();
-                      if (!user.email_confirmed_at) {
-                        alert('⚠️ Veuillez d abord confirmer votre email Supabase.');
-                        return;
-                      }
-                      
-                      let { data: { session } } = await supabase.auth.getSession();
-                      if (!session) {
-                        const { data: refreshed } = await supabase.auth.refreshSession();
-                        session = refreshed.session;
-                      }
-                      if (!session) { showToast('❌ Session expirée, reconnecte-toi', 'error'); return; }
-                      const res = await fetch(import.meta.env.VITE_SUPABASE_URL + '/functions/v1/send-verification-email', {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          'Authorization': 'Bearer ' + session.access_token,
-                          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
-                        },
-                        body: JSON.stringify({ userId: user.id, email: user.email, name: currentUserProfile.name })
-                      });
-                      const data = await res.json();
-                      const error = !res.ok ? data : null;
-                      
-                      if (error) throw error;
-                      alert('📧 Email de vérification envoyé ! Vérifie ta boîte mail.');
-                    } catch (error) {
-                      console.error(error);
-                      alert('Erreur: ' + JSON.stringify(error));
-                    }
-                  }}
-                
-                  className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-bold transition-all mt-3"
-                >
-                  ✓ {t('verifyProfile')}
-                </button>
-              )}
-              <button onClick={() => setShowDeleteAccount(true)} className="w-full py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-xl font-bold transition-all mt-3">🗑️ {t('deleteProfile')}</button>
-            </div>
-          </div>
-        </div>
+      {showProfile && !showEditProfile && currentUserProfile && (
+        <ProfilePage
+          currentUser={currentUserProfile}
+          onEdit={() => setShowEditProfile(true)}
+          onLogout={onLogout}
+        />
       )}
-
       {showEditProfile && (
         <ProfileEdit userProfile={currentUserProfile} onSave={(updatedProfile) => { setCurrentUserProfile(updatedProfile); setShowEditProfile(false); setShowProfile(false); }} onCancel={() => setShowEditProfile(false)} />
       )}

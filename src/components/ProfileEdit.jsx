@@ -151,8 +151,8 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 z-50">
-      <div className="bg-slate-800 border border-violet-500/30 rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-slate-900 z-40 overflow-y-auto pb-24">
+      <div className="max-w-3xl mx-auto">
         <div className="sticky top-0 bg-slate-800 border-b border-violet-500/30 p-6 flex items-center justify-between z-10">
           <h2 className="text-2xl font-bold text-white">{t('editProfile')}</h2>
           <button onClick={onCancel} className="p-2 hover:bg-slate-700 rounded-xl transition-all">
