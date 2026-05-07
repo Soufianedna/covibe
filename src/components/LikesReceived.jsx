@@ -5,10 +5,10 @@ import { calculateCompatibility, getCompatibilityLevel } from '../lib/matching';
 import { ProfileView } from './ProfileView';
 import { useTranslation } from 'react-i18next';
 
-export const LikesReceived = ({ currentUser, onClose, onLike, onViewLikes }) => {
+export const LikesReceived = ({ currentUser, onClose, onLike, onViewLikes, initialLikes = [] }) => {
   const { t } = useTranslation();
-  const [likes, setLikes] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [likes, setLikes] = useState(initialLikes);
+  const [loading, setLoading] = useState(initialLikes.length === 0);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [photoIndex, setPhotoIndex] = useState(0);
 
@@ -73,7 +73,11 @@ export const LikesReceived = ({ currentUser, onClose, onLike, onViewLikes }) => 
 
   if (loading) return (
     <div className="fixed inset-0 z-40 bg-slate-900 flex items-center justify-center pb-24">
-      <p className="text-white text-xl">⏳ Chargement...</p>
+      <div className="space-y-4 w-full px-4">
+        <div className="w-full h-64 bg-slate-800 rounded-3xl animate-pulse"></div>
+        <div className="h-8 bg-slate-800 rounded-xl animate-pulse w-2/3"></div>
+        <div className="h-4 bg-slate-800 rounded-xl animate-pulse w-1/2"></div>
+      </div>
     </div>
   );
 

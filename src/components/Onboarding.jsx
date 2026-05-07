@@ -57,8 +57,8 @@ export const Onboarding = ({ user, onComplete }) => {
   });
 
   const questions = [
-    { id: 'basics', title: 'Commençons par les bases', type: 'fields' },
-    { id: 'productive', title: 'Ton rythme de vie', subtitle: 'Quand es-tu le plus productif·ve ?', type: 'buttons',
+    { id: 'basics', title: 'Commençons par les bases', type: 'fields', motivation: '👋 Bienvenue ! Plus tu es précis·e, meilleurs seront tes matchs.' },
+    { id: 'productive', title: 'Ton rythme de vie', subtitle: 'Quand es-tu le plus productif·ve ?', motivation: '⏰ Les colocs avec des rythmes similaires vivent mieux ensemble !', type: 'buttons',
       field: { name: 'productive_time', options: [
         { value: 'early', label: '🌅 Matinal (6h-10h)' },
         { value: 'day', label: '☀️ Après-midi (12h-18h)' },
@@ -66,7 +66,7 @@ export const Onboarding = ({ user, onComplete }) => {
         { value: 'night', label: '🌙 Noctambule (minuit-6h)' },
       ]}
     },
-    { id: 'creative', title: 'Ton parcours créatif', subtitle: 'Aide-nous à comprendre ton univers', type: 'buttons',
+    { id: 'creative', title: 'Ton parcours créatif', subtitle: 'Aide-nous à comprendre ton univers', motivation: '🎨 Ta créativité est ce qui te rend unique — montre-la !', type: 'buttons',
       field: { name: 'creative_type', options: [
         { value: 'musician', label: '🎵 Musicien·ne' },
         { value: 'artist', label: '🎨 Artiste visuel·le' },
@@ -78,7 +78,7 @@ export const Onboarding = ({ user, onComplete }) => {
         { value: 'other', label: '✨ Autre' },
       ]}
     },
-    { id: 'languages', title: 'Langues parlées', subtitle: 'Sélectionne toutes les langues que tu parles', type: 'buttons',
+    { id: 'languages', title: 'Langues parlées', subtitle: 'Sélectionne toutes les langues que tu parles', motivation: '🌍 Partager une langue facilite la vie en colocation !', type: 'buttons',
       field: { name: 'languages', multi: true, options: [
         { value: 'french', label: 'Français' },
         { value: 'english', label: 'Anglais' },
@@ -92,10 +92,10 @@ export const Onboarding = ({ user, onComplete }) => {
         { value: 'other', label: 'Autre' },
       ]}
     },
-    { id: 'seeking', title: 'Que cherches-tu ?', subtitle: 'Coche toutes les options qui te correspondent', type: 'seeking' },
-    { id: 'location', title: 'Où cherches-tu une coloc ?', subtitle: 'Indique ta localisation', type: 'location' },
-    { id: 'lifestyle', title: 'Ton style de vie', subtitle: 'Parle-nous de tes habitudes', type: 'combined' },
-    { id: 'religion', title: 'Pratiques religieuses ou alimentaires', subtitle: 'Y a-t-il des pratiques importantes pour toi ?', type: 'buttons',
+    { id: 'seeking', title: 'Que cherches-tu ?', subtitle: 'Coche toutes les options qui te correspondent', motivation: '🏠 Cette info nous aide à te trouver les meilleurs profils !', type: 'seeking' },
+    { id: 'location', title: 'Où cherches-tu une coloc ?', subtitle: 'Indique ta localisation', motivation: '📍 Ta localisation augmente ton score de compatibilité de 30% !', type: 'location' },
+    { id: 'lifestyle', title: 'Ton style de vie', subtitle: 'Parle-nous de tes habitudes', motivation: '✨ Les habitudes du quotidien font toute la différence en coloc !', type: 'combined' },
+    { id: 'religion', title: 'Pratiques religieuses ou alimentaires', subtitle: 'Y a-t-il des pratiques importantes pour toi ?', motivation: '🙏 Respecter les pratiques de chacun crée une vraie harmonie !', type: 'buttons',
       field: { name: 'religious_practice', options: [
         { value: 'none', label: '🤷 Aucune préférence' },
         { value: 'muslim', label: '☪️ Halal' },
@@ -105,7 +105,7 @@ export const Onboarding = ({ user, onComplete }) => {
         { value: 'secular', label: '🔬 Laïc' },
       ]}
     },
-    { id: 'safe_space', title: 'Espace sécuritaire', subtitle: 'Sélectionne les valeurs importantes pour toi', type: 'buttons',
+    { id: 'safe_space', title: 'Espace sécuritaire', subtitle: 'Sélectionne les valeurs importantes pour toi', motivation: '💜 CoVibe croit en un espace respectueux pour tout le monde !', type: 'buttons',
       field: { name: 'safe_space_preferences', multi: true, options: [
         { value: 'lgbtq_friendly', label: '🏳️‍🌈 LGBTQ+ friendly' },
         { value: 'trans_affirming', label: '🏳️‍⚧️ Trans-affirming' },
@@ -115,13 +115,13 @@ export const Onboarding = ({ user, onComplete }) => {
         { value: 'open_to_all', label: '🤝 Ouvert à tous' },
       ]}
     },
-    { id: 'move_in', title: "Date d'emménagement", subtitle: 'Quand souhaites-tu emménager ?', type: 'fields',
+    { id: 'move_in', title: "Date d'emménagement", subtitle: 'Quand souhaites-tu emménager ?', motivation: '📅 On ne te montrera que des profils disponibles au bon moment !', type: 'fields',
       fields: [{ name: 'move_in_date', label: "Date d'emménagement souhaitée", type: 'date' }]
     },
-    { id: 'bio', title: 'Parle-nous de toi', subtitle: 'Écris une courte bio pour te présenter', type: 'fields',
+    { id: 'bio', title: 'Parle-nous de toi', subtitle: 'Écris une courte bio pour te présenter', motivation: '✍️ Les profils avec une bio reçoivent 3x plus de likes !', type: 'fields',
       fields: [{ name: 'bio', label: 'Ta bio', type: 'textarea', placeholder: 'Parle de tes passions, tes projets, ce que tu recherches...', required: true }]
     },
-    { id: 'photo', title: 'Ta photo de profil', subtitle: 'Ajoute une photo pour que les autres te reconnaissent', type: 'photo' },
+    { id: 'photo', title: 'Ta photo de profil', subtitle: 'Ajoute une photo pour que les autres te reconnaissent', motivation: '📸 Les profils avec photo reçoivent 10x plus de likes !', type: 'photo' },
   ];
 
   const currentQuestion = questions[step];
@@ -239,6 +239,7 @@ export const Onboarding = ({ user, onComplete }) => {
             <p className="text-gray-400 text-sm">Question {step + 1} / {questions.length}</p>
           </div>
           <div className="mb-8">
+            {currentQuestion.motivation && <div className="mb-3 px-4 py-2 bg-violet-500/20 border border-violet-500/30 rounded-xl"><p className="text-violet-300 text-sm font-medium">{currentQuestion.motivation}</p></div>}
             <h2 className="text-3xl font-bold text-white mb-2">{currentQuestion.title}</h2>
             {currentQuestion.subtitle && <p className="text-gray-400">{currentQuestion.subtitle}</p>}
           </div>

@@ -1,12 +1,21 @@
 import { useState } from 'react';
+import { supabase } from '../lib/supabase';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import { Settings, LogOut, FileText, Shield, Edit3 } from 'lucide-react';
 import { ProfileScore } from './ProfileScore';
 import { useTranslation } from 'react-i18next';
 
-export const ProfilePage = ({ currentUser, onEdit, onLogout }) => {
+export const ProfilePage = ({ currentUser, onEdit, onLogout, onDeleteAccount }) => {
   const { t } = useTranslation();
   const [showSettings, setShowSettings] = useState(false);
+  const [isPaused, setIsPaused] = useState(currentUser?.is_paused || false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const togglePause = async () => {
+    const newVal = !isPaused;
+    setIsPaused(newVal);
+    await supabase.from('profiles').update({ is_paused: newVal }).eq('user_id', currentUser.user_id);
+  };
 
   const getCityLabel = (city) => city === 'vancouver' ? 'Vancouver' : 'Montréal';
   const getGenderLabel = (g) => ({ man: 'Homme', woman: 'Femme', non_binary: 'Non-binaire', prefer_not_to_say: 'Non précisé' }[g] || g);
@@ -34,10 +43,40 @@ export const ProfilePage = ({ currentUser, onEdit, onLogout }) => {
               <Shield size={22} className="text-violet-400" />
               <span className="text-white font-semibold">Politique de confidentialité</span>
             </button>
+            {/* Mode Fantôme */}
+            <button onClick={togglePause} className="w-full flex items-center justify-between p-4 bg-slate-800 rounded-2xl hover:bg-slate-700 transition-all">
+              <div className="flex items-center gap-4">
+                <span className="text-2xl">{isPaused ? '👻' : '🌙'}</span>
+                <div className="text-left">
+                  <p className="text-white font-semibold">Mode Fantôme</p>
+                  <p className="text-gray-400 text-xs">{isPaused ? 'Ton profil est masqué' : 'Masque ton profil temporairement'}</p>
+                </div>
+              </div>
+              <div className={`w-12 h-6 rounded-full transition-all ${isPaused ? 'bg-violet-600' : 'bg-slate-600'}`}>
+                <div className={`w-6 h-6 bg-white rounded-full shadow transition-all ${isPaused ? 'translate-x-6' : 'translate-x-0'}`} />
+              </div>
+            </button>
+
             <button onClick={onLogout} className="w-full flex items-center gap-4 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl hover:bg-red-500/20 transition-all">
               <LogOut size={22} className="text-red-400" />
               <span className="text-red-400 font-semibold">Se déconnecter</span>
             </button>
+
+            <button onClick={() => setShowDeleteConfirm(true)} className="w-full flex items-center gap-4 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl hover:bg-red-500/20 transition-all">
+              <span className="text-red-400 text-xl">🗑️</span>
+              <span className="text-red-400 font-semibold">Supprimer mon compte</span>
+            </button>
+
+            {showDeleteConfirm && (
+              <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4">
+                <p className="text-white font-bold mb-2">⚠️ Es-tu sûr·e ?</p>
+                <p className="text-gray-400 text-sm mb-4">Cette action est irréversible. Toutes tes données seront supprimées.</p>
+                <div className="flex gap-3">
+                  <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 py-3 bg-slate-700 text-white rounded-xl font-bold">Annuler</button>
+                  <button onClick={onDeleteAccount} className="flex-1 py-3 bg-red-500 text-white rounded-xl font-bold">Supprimer</button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

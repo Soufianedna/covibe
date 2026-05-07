@@ -29,16 +29,16 @@ export const TopVibes = ({ currentUser, onLike, onPass }) => {
 
       const { data: allProfiles } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*, profile_photos(photo_url, position)')
         .eq('city', currentUser.city)
         .eq('onboarding_complete', true)
         .neq('user_id', currentUser.user_id);
 
-      const withPhotos = await Promise.all((allProfiles || []).map(async (p) => {
-        const { data: photos } = await supabase.from('profile_photos').select('photo_url').eq('user_id', p.user_id).order('position');
+      const withPhotos = (allProfiles || []).map((p) => {
+        const photos = (p.profile_photos || []).sort((a,b) => a.position - b.position);
         const compatibility = calculateCompatibility(currentUser, p);
-        return { ...p, photos: photos || [], compatibility };
-      }));
+        return { ...p, photos, compatibility };
+      });
 
       const topVibes = withPhotos
         .filter(p => p.compatibility >= 90 && !swipedIds.includes(p.user_id))
@@ -58,7 +58,11 @@ export const TopVibes = ({ currentUser, onLike, onPass }) => {
 
   if (loading) return (
     <div className="fixed inset-0 z-40 bg-slate-900 flex items-center justify-center pb-24">
-      <p className="text-white text-xl">⏳ Chargement...</p>
+      <div className="space-y-4 w-full px-4">
+        <div className="w-full h-64 bg-slate-800 rounded-3xl animate-pulse"></div>
+        <div className="h-8 bg-slate-800 rounded-xl animate-pulse w-2/3"></div>
+        <div className="h-4 bg-slate-800 rounded-xl animate-pulse w-1/2"></div>
+      </div>
     </div>
   );
 

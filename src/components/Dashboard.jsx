@@ -1168,6 +1168,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
           currentUser={currentUserProfile}
           onClose={() => { setShowLikesReceived(false); setActiveTab("discover"); }}
           onViewLikes={() => { setUnviewedLikesCount(0); }}
+          initialLikes={likerProfiles}
           onLike={async (profile) => {
             await handleLike(profile.user_id);
             setShowLikesReceived(false);

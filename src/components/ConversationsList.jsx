@@ -54,7 +54,7 @@ export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch,
 
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*, profile_photos(photo_url, position)')
         .in('user_id', mutualIds);
 
       if (profilesError) throw profilesError;
@@ -185,8 +185,7 @@ export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch,
           <div>
             {loading ? (
               <div className="text-center py-10">
-                <div className="text-4xl mb-2">⏳</div>
-                <p className="text-gray-400">Chargement...</p>
+                <div className="space-y-3 w-full"><div className="h-16 bg-slate-800 rounded-2xl animate-pulse"></div><div className="h-16 bg-slate-800 rounded-2xl animate-pulse"></div><div className="h-16 bg-slate-800 rounded-2xl animate-pulse"></div></div>
               </div>
             ) : matches.length === 0 ? (
               <div className="text-center py-10">
