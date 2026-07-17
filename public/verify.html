@@ -22,7 +22,7 @@
       const type = params.get('type') || 'signup';
       
       if (tokenHash) {
-        document.getElementById('btn').href = 'covibe://login-callback?token_hash=' + tokenHash + '&type=' + type;
+        document.getElementById('btn').href = 'covibe://verify?token_hash=' + tokenHash + '&type=' + type;
       } else if (token) {
         document.getElementById('btn').href = 'covibe://verify?token=' + token;
       }
