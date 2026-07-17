@@ -151,16 +151,8 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900 z-40 overflow-y-auto pb-24">
-      <div className="max-w-3xl mx-auto">
-        <div className="sticky top-0 bg-slate-800 border-b border-violet-500/30 p-6 flex items-center justify-between z-10">
-          <h2 className="text-2xl font-bold text-white">{t('editProfile')}</h2>
-          <button onClick={onCancel} className="p-2 hover:bg-slate-700 rounded-xl transition-all">
-            <X size={24} className="text-gray-300" />
-          </button>
-        </div>
-
-        <div className="p-6 space-y-6">
+    <div className="max-w-3xl mx-auto">
+      <div className="space-y-6">
           {/* PHOTOS MULTIPLES */}
           <PhotoUploader
             userId={userProfile.user_id}
@@ -855,6 +847,5 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
           </div>
         </div>
       </div>
-    </div>
   );
 };

@@ -5,7 +5,6 @@ import { getTopMatches, getCompatibilityLevel, calculateCompatibility } from '..
 import { calculateDistance, formatDistance } from '../lib/distance';
 import { Logo } from './Logo';
 import { MessageNotification } from './MessageNotification';
-import { ProfileEdit } from './ProfileEdit';
 import { ProfilePage } from './ProfilePage';
 import { MatchModal } from './MatchModal';
 import { LanguageSwitcher } from './LanguageSwitcher';
@@ -31,7 +30,6 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
   const [showProfile, setShowProfile] = useState(false);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [notifications, setNotifications] = useState([]);
-  const [showEditProfile, setShowEditProfile] = useState(false);
   const [showConversations, setShowConversations] = useState(false);
   const [currentUserProfile, setCurrentUserProfile] = useState(userProfile);
   const [mutualMatches, setMutualMatches] = useState([]);
@@ -527,6 +525,9 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
     return labels[religion] || religion;
   };
 
+  const getWorkLocationLabel = (w) => ({ remote: 'remote', office: 'office', hybrid: 'hybrid', freelance: 'freelance', student: 'student', other: 'other' }[w] || w);
+  const getRelationshipLabel = (r) => ({ single: 'single', couple: 'couple', married: 'married' }[r] || r);
+  const getLanguageLabel = (l) => ({ french: 'Français', english: 'Anglais', spanish: 'Espagnol', arabic: 'Arabe', portuguese: 'Portugais', mandarin: 'Mandarin', hindi: 'Hindi', farsi: 'Farsi', cantonese: 'Cantonais', other: 'Autre' }[l] || l);
   const isMutualMatch = (matchId) => mutualMatches.includes(matchId);
 
   const applyFilters = (matchesList) => {
@@ -943,7 +944,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
                   </div>
                   <div className="bg-slate-700/50 rounded-xl p-4">
                     <p className="text-gray-400 mb-1">{ t('guestsFrequency') }</p>
-                    <p className="text-white font-semibold">{selectedMatch.guest_frequency}/5</p>
+                    <p className="text-white font-semibold">{selectedMatch.guests_frequency}/5</p>
                   </div>
                   <div className="bg-slate-700/50 rounded-xl p-4">
                     <p className="text-gray-400 mb-1">{ t('schedule') }</p>
@@ -953,12 +954,46 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
                     <p className="text-gray-400 mb-1">{ t('practices') }</p>
                     <p className="text-white font-semibold break-words">{t(getReligionLabel(selectedMatch.religious_practice))}</p>
                   </div>
+                  {selectedMatch.work_location && (
+                    <div className="bg-slate-700/50 rounded-xl p-4">
+                      <p className="text-gray-400 mb-1">💼 Travail</p>
+                      <p className="text-white font-semibold">{t(getWorkLocationLabel(selectedMatch.work_location))}</p>
+                    </div>
+                  )}
+                  {selectedMatch.relationship_status && (
+                    <div className="bg-slate-700/50 rounded-xl p-4">
+                      <p className="text-gray-400 mb-1">💜 Statut</p>
+                      <p className="text-white font-semibold">{t(getRelationshipLabel(selectedMatch.relationship_status))}</p>
+                    </div>
+                  )}
+                  {selectedMatch.move_in_date && (
+                    <div className="bg-slate-700/50 rounded-xl p-4 col-span-2">
+                      <p className="text-gray-400 mb-1">📅 Emménagement</p>
+                      <p className="text-white font-semibold">{new Date(selectedMatch.move_in_date).toLocaleDateString('fr-CA', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                    </div>
+                  )}
                   <div className="bg-slate-700/50 rounded-xl p-4 col-span-2">
-                    <p className="text-gray-400 mb-1">{ t('substances') }</p>
-                    <p className="text-white font-semibold">{selectedMatch.substances || t('notSpecified')}</p>
+                    <p className="text-gray-400 mb-1">✨ Style de vie</p>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {selectedMatch.alcohol_ok && <span className="px-3 py-1 bg-slate-600 text-gray-200 rounded-full text-xs font-semibold">🍷 Alcool OK</span>}
+                      {selectedMatch.cannabis_friendly && <span className="px-3 py-1 bg-slate-600 text-gray-200 rounded-full text-xs font-semibold">🌿 420 friendly</span>}
+                      {selectedMatch.no_substances && <span className="px-3 py-1 bg-slate-600 text-gray-200 rounded-full text-xs font-semibold">✨ Mode de vie sobre</span>}
+                      {!selectedMatch.alcohol_ok && !selectedMatch.cannabis_friendly && !selectedMatch.no_substances && <span className="text-gray-500 text-xs">{t('notSpecified')}</span>}
+                    </div>
                   </div>
                 </div>
               </div>
+
+              {selectedMatch.languages && selectedMatch.languages.length > 0 && (
+                <div>
+                  <h4 className="text-lg font-bold text-white mb-3">🌍 Langues</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedMatch.languages.map((lang) => (
+                      <span key={lang} className="px-3 py-1 bg-violet-500/20 border border-violet-500/50 rounded-full text-violet-300 text-sm font-semibold">{getLanguageLabel(lang)}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {isMutualMatch(selectedMatch.user_id) ? (
                 <div className="bg-gradient-to-r from-violet-600/20 to-indigo-500/20 border border-violet-500/50 rounded-xl p-6 text-center">
@@ -994,15 +1029,12 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
         </div>
       )}
 
-      {showProfile && !showEditProfile && currentUserProfile && (
+      {showProfile && currentUserProfile && (
         <ProfilePage
           currentUser={currentUserProfile}
-          onEdit={() => setShowEditProfile(true)}
+          onSave={(updatedProfile) => setCurrentUserProfile(updatedProfile)}
           onLogout={onLogout}
         />
-      )}
-      {showEditProfile && (
-        <ProfileEdit userProfile={currentUserProfile} onSave={(updatedProfile) => { setCurrentUserProfile(updatedProfile); setShowEditProfile(false); setShowProfile(false); }} onCancel={() => setShowEditProfile(false)} />
       )}
 
       {showDeleteAccount && (

@@ -3,13 +3,15 @@ import { supabase } from '../lib/supabase';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import { Settings, LogOut, FileText, Shield, Edit3 } from 'lucide-react';
 import { ProfileScore } from './ProfileScore';
+import { ProfileEdit } from './ProfileEdit';
 import { useTranslation } from 'react-i18next';
 
-export const ProfilePage = ({ currentUser, onEdit, onLogout, onDeleteAccount }) => {
+export const ProfilePage = ({ currentUser, onSave, onLogout, onDeleteAccount }) => {
   const { t } = useTranslation();
   const [showSettings, setShowSettings] = useState(false);
   const [isPaused, setIsPaused] = useState(currentUser?.is_paused || false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [activeSection, setActiveSection] = useState('view');
 
   const togglePause = async () => {
     const newVal = !isPaused;
@@ -22,6 +24,9 @@ export const ProfilePage = ({ currentUser, onEdit, onLogout, onDeleteAccount }) 
   const getCreativeTypeLabel = (type) => ({ musician: 'Musicien·ne', artist: 'Artiste visuel·le', developer: 'Développeur·se', content_creator: 'Créateur·rice de contenu', entrepreneur: 'Entrepreneur·e', designer: 'Designer', writer: 'Écrivain·e', photographer: 'Photographe', other: 'Autre créatif·ve' }[type] || type);
   const getProductiveTimeLabel = (t) => ({ early: '🌅 Lève-tôt', late: '🌙 Couche-tard', flexible: '🔄 Flexible' }[t] || t);
   const getReligionLabel = (r) => ({ none: 'Aucune', christian: 'Chrétien·ne', muslim: 'Musulman·e', jewish: 'Juif·ve', buddhist: 'Bouddhiste', hindu: 'Hindou·e', spiritual: 'Spirituel·le', other: 'Autre' }[r] || r);
+  const getWorkLocationLabel = (w) => ({ remote: '🏠 Télétravail', office: '🏢 Bureau', hybrid: '🔄 Hybride', freelance: '💼 Freelance', student: '📚 Étudiant·e', other: '🎨 Autre' }[w] || w);
+  const getRelationshipLabel = (r) => ({ single: 'Célibataire', couple: 'En couple', married: 'Marié·e' }[r] || r);
+  const getLanguageLabel = (l) => ({ french: 'Français', english: 'Anglais', spanish: 'Espagnol', arabic: 'Arabe', portuguese: 'Portugais', mandarin: 'Mandarin', hindi: 'Hindi', farsi: 'Farsi', cantonese: 'Cantonais', other: 'Autre' }[l] || l);
 
   if (showSettings) {
     return (
@@ -88,12 +93,29 @@ export const ProfilePage = ({ currentUser, onEdit, onLogout, onDeleteAccount }) 
       <div className="p-6 pt-16">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">Mon Profil</h2>
+          <h2 className="text-2xl font-bold text-white">{activeSection === 'view' ? 'Mon Profil' : 'Modifier'}</h2>
           <button onClick={() => setShowSettings(true)} className="p-2 hover:bg-slate-700 rounded-xl transition-all">
             <Settings size={24} className="text-gray-300" />
           </button>
         </div>
 
+        <div className="flex gap-2 mb-6 bg-slate-800/50 p-1 rounded-2xl">
+          <button onClick={() => setActiveSection('view')} className={`flex-1 py-3 rounded-xl font-bold transition-all ${activeSection === 'view' ? 'bg-gradient-to-r from-violet-600 to-indigo-500 text-white' : 'text-gray-400'}`}>
+            Mon Profil
+          </button>
+          <button onClick={() => setActiveSection('edit')} className={`flex-1 py-3 rounded-xl font-bold transition-all ${activeSection === 'edit' ? 'bg-gradient-to-r from-violet-600 to-indigo-500 text-white' : 'text-gray-400'}`}>
+            Modifier
+          </button>
+        </div>
+
+        {activeSection === 'edit' ? (
+          <ProfileEdit
+            userProfile={currentUser}
+            onSave={(updated) => { onSave && onSave(updated); setActiveSection('view'); }}
+            onCancel={() => setActiveSection('view')}
+          />
+        ) : (
+        <>
         {/* Photo + infos */}
         <div className="text-center mb-6">
           {currentUser.photo_url ? (
@@ -114,10 +136,6 @@ export const ProfilePage = ({ currentUser, onEdit, onLogout, onDeleteAccount }) 
           <ProfileScore profile={currentUser} />
         </div>
 
-        {/* Bouton modifier */}
-        <button onClick={onEdit} className="w-full py-4 bg-gradient-to-r from-violet-600 to-indigo-500 text-white rounded-2xl font-bold text-lg flex items-center justify-center gap-2 mb-6 hover:shadow-lg transition-all">
-          <Edit3 size={20} /> Modifier mon profil
-        </button>
 
         {/* Bio */}
         {currentUser.bio && (
@@ -153,7 +171,59 @@ export const ProfilePage = ({ currentUser, onEdit, onLogout, onDeleteAccount }) 
             <p className="text-gray-400 text-xs mb-1">🐾 Animaux</p>
             <p className="text-white font-semibold text-sm">{currentUser.pets ? 'Oui' : 'Non'}</p>
           </div>
+          {currentUser.work_location && (
+            <div className="bg-slate-800 rounded-2xl p-4">
+              <p className="text-gray-400 text-xs mb-1">💼 Travail</p>
+              <p className="text-white font-semibold text-sm">{getWorkLocationLabel(currentUser.work_location)}</p>
+            </div>
+          )}
+          {currentUser.relationship_status && (
+            <div className="bg-slate-800 rounded-2xl p-4">
+              <p className="text-gray-400 text-xs mb-1">💜 Statut</p>
+              <p className="text-white font-semibold text-sm">{getRelationshipLabel(currentUser.relationship_status)}</p>
+            </div>
+          )}
+          <div className="bg-slate-800 rounded-2xl p-4">
+            <p className="text-gray-400 text-xs mb-1">🔊 Bruit</p>
+            <p className="text-white font-semibold text-sm">{currentUser.noise_tolerance}/10</p>
+          </div>
+          <div className="bg-slate-800 rounded-2xl p-4">
+            <p className="text-gray-400 text-xs mb-1">🎉 Invités</p>
+            <p className="text-white font-semibold text-sm">{currentUser.guests_frequency}/5</p>
+          </div>
+          {currentUser.move_in_date && (
+            <div className="bg-slate-800 rounded-2xl p-4 col-span-2">
+              <p className="text-gray-400 text-xs mb-1">📅 Emménagement</p>
+              <p className="text-white font-semibold text-sm">{new Date(currentUser.move_in_date).toLocaleDateString('fr-CA', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            </div>
+          )}
         </div>
+
+        {/* Langues */}
+        {currentUser.languages && currentUser.languages.length > 0 && (
+          <div className="mt-4 bg-slate-800 rounded-2xl p-4">
+            <p className="text-gray-400 text-xs mb-2">🌍 Langues</p>
+            <div className="flex flex-wrap gap-2">
+              {currentUser.languages.map((lang) => (
+                <span key={lang} className="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm font-semibold">{getLanguageLabel(lang)}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Style de vie */}
+        {(currentUser.alcohol_ok || currentUser.cannabis_friendly || currentUser.no_substances) && (
+          <div className="mt-4 bg-slate-800 rounded-2xl p-4">
+            <p className="text-gray-400 text-xs mb-2">✨ Style de vie</p>
+            <div className="flex flex-wrap gap-2">
+              {currentUser.alcohol_ok && <span className="px-3 py-1 bg-slate-700 text-gray-200 rounded-full text-sm font-semibold">🍷 Alcool OK</span>}
+              {currentUser.cannabis_friendly && <span className="px-3 py-1 bg-slate-700 text-gray-200 rounded-full text-sm font-semibold">🌿 420 friendly</span>}
+              {currentUser.no_substances && <span className="px-3 py-1 bg-slate-700 text-gray-200 rounded-full text-sm font-semibold">✨ Mode de vie sobre</span>}
+            </div>
+          </div>
+        )}
+        </>
+        )}
       </div>
     </div>
   );
