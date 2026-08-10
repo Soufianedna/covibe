@@ -17,6 +17,7 @@ import { LikesReceived } from './LikesReceived';
 import { Favorites } from './Favorites';
 import { TopVibes } from './TopVibes';
 import { ProfileScore } from './ProfileScore';
+import { ProfileDetailView } from './ProfileDetailView';
 import SwipeView from "./SwipeView";
 export const Dashboard = ({ user, userProfile, onLogout }) => {
   const { t } = useTranslation();
@@ -532,23 +533,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
   const getGenderLabel = (gender) => gender;
   const getCityLabel = (city) => city;
   const getCreativeTypeLabel = (type) => type;
-  const getProfilePhotoUrls = (profile) => {
-    const raw = profile?.photos && profile.photos.length > 0 ? profile.photos : [profile?.photo_url];
-    return raw.map((p) => (typeof p === 'string' ? p : p?.photo_url)).filter(Boolean);
-  };
   const getProductiveTimeLabel = (time) => time;
-  const getReligionLabel = (religion) => {
-    const labels = {
-      muslim: 'muslim', christian: 'christian', jewish: 'jewish',
-      buddhist: 'buddhist', hindu: 'hindu', atheist: 'atheist',
-      vegetarian_vegan: 'vegetarian_vegan', none: 'none', other: 'other'
-    };
-    return labels[religion] || religion;
-  };
-
-  const getWorkLocationLabel = (w) => ({ remote: 'remote', office: 'office', hybrid: 'hybrid', freelance: 'freelance', student: 'student', other: 'other' }[w] || w);
-  const getRelationshipLabel = (r) => ({ single: 'single', couple: 'couple', married: 'married' }[r] || r);
-  const getLanguageLabel = (l) => ({ french: 'Français', english: 'Anglais', spanish: 'Espagnol', arabic: 'Arabe', portuguese: 'Portugais', mandarin: 'Mandarin', hindi: 'Hindi', farsi: 'Farsi', cantonese: 'Cantonais', other: 'Autre' }[l] || l);
   const isMutualMatch = (matchId) => mutualMatches.includes(matchId);
 
   const applyFilters = (matchesList) => {
@@ -985,310 +970,59 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
       </main>
 
       {selectedMatch && (
-        <div className="fixed inset-0 bg-gradient-to-br from-slate-950 via-purple-950 to-indigo-950 z-[100] overflow-y-auto">
-          <div className="fixed -top-20 -left-20 w-80 h-80 bg-violet-600 rounded-full blur-3xl opacity-[0.18] pointer-events-none z-0" />
-          <div className="fixed -bottom-20 -right-20 w-96 h-96 bg-cyan-500 rounded-full blur-3xl opacity-[0.18] pointer-events-none z-0" />
-          <div className="fixed top-1/3 right-0 w-80 h-80 bg-violet-600 rounded-full blur-3xl opacity-[0.18] pointer-events-none z-0" />
-
-          <button onClick={() => setSelectedMatch(null)} className="fixed right-4 z-20 p-2 bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-lg hover:bg-slate-900/80 rounded-full transition-all" style={{ top: 'calc(env(safe-area-inset-top) + 16px)' }}>
-            <X size={24} className="text-white" />
-          </button>
-
-          <div className="px-6 pb-4 space-y-6">
-            {/* Photo 1 en hero, pleine largeur */}
-            <div className="-mx-6 relative aspect-[4/5] bg-slate-700 overflow-hidden rounded-b-2xl">
-              {getProfilePhotoUrls(selectedMatch)[0] ? (
-                <img src={getProfilePhotoUrls(selectedMatch)[0]} alt={selectedMatch.name} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-8xl">👤</div>
-              )}
-              <div className="absolute left-4 px-3 py-1 bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-lg rounded-full" style={{ top: 'calc(env(safe-area-inset-top) + 16px)' }}>
-                <span className={`text-sm font-bold ${getCompatibilityLevel(selectedMatch.compatibility).color}`}>{getCompatibilityLevel(selectedMatch.compatibility).emoji} {selectedMatch.compatibility}%</span>
-              </div>
-              <div className="absolute inset-x-0 bottom-0 p-6 pt-16 bg-gradient-to-t from-black/80 to-transparent">
-                <h3 className="text-3xl font-bold text-white flex items-center gap-2">
-                  {selectedMatch.name}, {selectedMatch.age}
-                  {selectedMatch.verified && (
-                    <span className="inline-flex items-center justify-center w-6 h-6 bg-violet-500 rounded-full text-white text-sm font-bold">✓</span>
-                  )}
-                </h3>
-                <p className="text-gray-200 mt-1">
-                  📍 {getCityLabel(selectedMatch.city)}
-                  {currentUserProfile?.latitude && selectedMatch.latitude && (
-                    <> · {formatDistance(calculateDistance(currentUserProfile.latitude, currentUserProfile.longitude, selectedMatch.latitude, selectedMatch.longitude))}</>
-                  )}
-                </p>
-              </div>
-            </div>
-
-            {/* Bloc identité */}
-            <div className="text-center space-y-1">
-              <p className="text-gray-300">{t(getGenderLabel(selectedMatch.gender))} · <span className="text-violet-400 font-semibold">{t(getCreativeTypeLabel(selectedMatch.creative_type))}</span></p>
-            </div>
-
-            {selectedMatchPartner && (
-              <div className="flex flex-col items-center gap-1 text-sm text-gray-300">
-                <div className="flex items-center gap-2">
-                  <span>🤝 cherche une coloc avec</span>
-                  <button
-                    onClick={() => {
-                      const profileWithScore = { ...selectedMatchPartner, compatibility: calculateCompatibility(currentUserProfile, selectedMatchPartner) };
-                      setSelectedMatch(profileWithScore);
-                      if (selectedMatchPartner.has_space) loadPropertyPhotos(selectedMatchPartner.user_id);
-                    }}
-                    className="flex items-center gap-2 hover:opacity-80 transition-all"
-                  >
-                    {selectedMatchPartner.photo_url ? (
-                      <img src={selectedMatchPartner.photo_url} alt={selectedMatchPartner.name} className="w-8 h-8 rounded-full object-cover border-2 border-cyan-400" />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm border-2 border-cyan-400">👤</div>
-                    )}
-                    <span className="text-cyan-400 font-semibold">{selectedMatchPartner.name?.split(' ')[0]}</span>
-                  </button>
-                </div>
-                {getPartnershipWith(selectedMatch.user_id)?.status === 'accepted' ? (
-                  <button
-                    onClick={() => handleToggleFlexible(getPartnershipWith(selectedMatch.user_id))}
-                    className="flex items-center gap-2 mt-1 text-xs text-gray-400 hover:text-gray-300 transition-all"
-                  >
-                    <div className={`w-8 h-4 rounded-full transition-all ${getPartnershipWith(selectedMatch.user_id).is_flexible ? 'bg-cyan-500/40' : 'bg-slate-600'}`}>
-                      <div className={`w-3.5 h-3.5 bg-white rounded-full shadow transition-all mt-0.5 ${getPartnershipWith(selectedMatch.user_id).is_flexible ? 'translate-x-4' : 'translate-x-0.5'}`} />
-                    </div>
-                    <span>{getPartnershipWith(selectedMatch.user_id).is_flexible ? 'Ouverts aussi à une place seule' : 'Cherchent ensemble · 2 chambres'}</span>
-                  </button>
-                ) : (
-                  <p className="text-xs text-gray-500">
-                    {getAcceptedPartnershipFor(selectedMatch.user_id)?.is_flexible ? 'Ouverts aussi à une place seule' : 'Cherchent ensemble · 2 chambres'}
-                  </p>
-                )}
-              </div>
-            )}
-
-            {!selectedMatch.has_space && selectedMatch.open_to_group_search && (
-              <div className="p-3 bg-cyan-500/20 border border-cyan-500/50 rounded-xl text-center">
-                <p className="text-cyan-400 font-semibold">🤝 {t('openToGroupSearch')}</p>
-                <p className="text-xs text-gray-400 mt-1">{t('groupSearchDescription')}</p>
-              </div>
-            )}
-
-            {/* Bio */}
-            <div>
-              <h4 className="text-lg font-bold text-white mb-2">{t('bio')}</h4>
-              <p className="text-gray-200 bg-slate-800 rounded-2xl p-6 text-lg leading-relaxed">{selectedMatch.bio}</p>
-            </div>
-
-            {/* Photo 2 */}
-            {getProfilePhotoUrls(selectedMatch)[1] && (
-              <div className="-mx-6 relative aspect-[4/5] rounded-2xl overflow-hidden">
-                <img src={getProfilePhotoUrls(selectedMatch)[1]} alt={selectedMatch.name} className="w-full h-full object-cover" />
-              </div>
-            )}
-
-            {/* Infos clés en tags groupés */}
-            <div>
-              <h5 className="text-xs uppercase tracking-wide text-gray-500 font-semibold mb-2">Le quotidien</h5>
-              <div className="flex flex-wrap gap-2">
-                <span className="px-3 py-1.5 bg-slate-700/50 rounded-full text-sm text-gray-200">⏰ {t(getProductiveTimeLabel(selectedMatch.productive_time))}</span>
-                <span className="px-3 py-1.5 bg-slate-700/50 rounded-full text-sm text-gray-200">🧹 {t('cleanliness')} {selectedMatch.cleanliness}/5</span>
-                <span className="px-3 py-1.5 bg-slate-700/50 rounded-full text-sm text-gray-200">🔊 {t('noiseTolerance')} {selectedMatch.noise_tolerance}/10</span>
-                <span className="px-3 py-1.5 bg-slate-700/50 rounded-full text-sm text-gray-200">🎉 {t('guestsFrequency')} {selectedMatch.guests_frequency}/5</span>
-                <span className="px-3 py-1.5 bg-slate-700/50 rounded-full text-sm text-gray-200">{selectedMatch.smoking ? '🚬' : '🚭'} {t('tobacco')}: {selectedMatch.smoking ? t('yes') : t('no')}</span>
-                <span className="px-3 py-1.5 bg-slate-700/50 rounded-full text-sm text-gray-200">{selectedMatch.pets ? '✅' : '❌'} {t('animals')}: {selectedMatch.pets ? t('yes') : t('no')}</span>
-              </div>
-            </div>
-
-            <div>
-              <h5 className="text-xs uppercase tracking-wide text-gray-500 font-semibold mb-2">Logement</h5>
-              <div className="flex flex-wrap gap-2">
-                <span className="px-3 py-1.5 bg-violet-500/20 border border-violet-500/50 rounded-full text-sm text-violet-300">
-                  ✓ {selectedMatch.seeking === 'room' ? t('lookingForRoommate') : t('lookingForStudio')}
-                </span>
-                <span className="px-3 py-1.5 bg-purple-500/20 border border-purple-500/50 rounded-full text-sm text-purple-300">
-                  🎨 {selectedMatch.seeking === 'room' ? t('lookingForStudio') : t('lookingForRoommate')}
-                </span>
-                <span className="px-3 py-1.5 bg-slate-700/50 rounded-full text-sm text-gray-200">
-                  💰 {selectedMatch.has_space ? `${t('roomPriceLabel')} ${selectedMatch.room_price}$/mois` : `${selectedMatch.budget_min}$ - ${selectedMatch.budget_max}$ CAD${t('perMonth')}`}
-                </span>
-                {selectedMatch.work_location && (
-                  <span className="px-3 py-1.5 bg-slate-700/50 rounded-full text-sm text-gray-200">💼 {t(getWorkLocationLabel(selectedMatch.work_location))}</span>
-                )}
-                {selectedMatch.relationship_status && (
-                  <span className="px-3 py-1.5 bg-slate-700/50 rounded-full text-sm text-gray-200">💜 {t(getRelationshipLabel(selectedMatch.relationship_status))}</span>
-                )}
-                {selectedMatch.move_in_date && (
-                  <span className="px-3 py-1.5 bg-slate-700/50 rounded-full text-sm text-gray-200">📅 {new Date(selectedMatch.move_in_date).toLocaleDateString('fr-CA', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <h5 className="text-xs uppercase tracking-wide text-gray-500 font-semibold mb-2">Style de vie</h5>
-              <div className="flex flex-wrap gap-2">
-                <span className="px-3 py-1.5 bg-slate-700/50 rounded-full text-sm text-gray-200">🙏 {t(getReligionLabel(selectedMatch.religious_practice))}</span>
-                {selectedMatch.alcohol_ok && <span className="px-3 py-1.5 bg-slate-700/50 rounded-full text-sm text-gray-200">🍷 Alcool OK</span>}
-                {selectedMatch.cannabis_friendly && <span className="px-3 py-1.5 bg-slate-700/50 rounded-full text-sm text-gray-200">🌿 420 friendly</span>}
-                {selectedMatch.no_substances && <span className="px-3 py-1.5 bg-slate-700/50 rounded-full text-sm text-gray-200">✨ Mode de vie sobre</span>}
-                {!selectedMatch.alcohol_ok && !selectedMatch.cannabis_friendly && !selectedMatch.no_substances && <span className="text-gray-500 text-xs">{t('notSpecified')}</span>}
-              </div>
-            </div>
-
-            {/* Langues */}
-            {selectedMatch.languages && selectedMatch.languages.length > 0 && (
-              <div>
-                <h5 className="text-xs uppercase tracking-wide text-gray-500 font-semibold mb-2">🌍 Langues</h5>
-                <div className="flex flex-wrap gap-2">
-                  {selectedMatch.languages.map((lang) => (
-                    <span key={lang} className="px-3 py-1.5 bg-violet-500/20 border border-violet-500/50 rounded-full text-violet-300 text-sm font-semibold">{getLanguageLabel(lang)}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Photo 3 et suivantes */}
-            {getProfilePhotoUrls(selectedMatch).slice(2).map((url, idx) => (
-              <div key={idx} className="-mx-6 relative aspect-[4/5] rounded-2xl overflow-hidden">
-                <img src={url} alt={`${selectedMatch.name} ${idx + 3}`} className="w-full h-full object-cover" />
-              </div>
-            ))}
-
-            {/* SECTION ESPACE DISPONIBLE */}
-            {selectedMatch.has_space && (
-              <div className="bg-slate-800 rounded-2xl p-6 space-y-4">
-                <h4 className="text-lg font-bold text-white">🏠 {t('availableSpace')}</h4>
-
-                {/* Prix */}
-                <div className="bg-gradient-to-r from-violet-600/20 to-indigo-500/20 border border-violet-500/30 rounded-xl p-4">
-                  <p className="text-2xl font-bold text-white text-center">
-                    {selectedMatch.room_price}$ {t('perMonth')}
-                  </p>
-                </div>
-
-                {/* Photos de l'appart */}
-                {selectedMatchPropertyPhotos.length > 0 && (
-                  <div>
-                    <p className="text-sm font-semibold text-gray-300 mb-2">{t('propertyPhotos')}</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {selectedMatchPropertyPhotos.map((photo) => (
-                        <img key={photo.id} src={photo.url} alt="Property" onClick={() => setLightboxPhoto(photo.url)} className="w-full h-32 object-cover rounded-xl cursor-pointer hover:opacity-90 transition-all" />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Type + Meublé */}
-                <div className="grid grid-cols-2 gap-4">
-                  {selectedMatch.property_type && (
-                    <div>
-                      <p className="text-xs text-gray-400 mb-1">{t('propertyType')}</p>
-                      <p className="text-white font-semibold">{t(selectedMatch.property_type)}</p>
-                    </div>
-                  )}
-                  {selectedMatch.is_furnished !== null && (
-                    <div>
-                      <p className="text-xs text-gray-400 mb-1">{t('isFurnished')}</p>
-                      <p className="text-white font-semibold">{selectedMatch.is_furnished ? '✅ ' + t('furnished') : t('unfurnished')}</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Description */}
-                {selectedMatch.property_description && (
-                  <div>
-                    <p className="text-xs text-gray-400 mb-1">{t('propertyDescription')}</p>
-                    <p className="text-gray-300 bg-slate-700/50 rounded-xl p-3 text-sm">{selectedMatch.property_description}</p>
-                  </div>
-                )}
-
-                {/* Équipements */}
-                {selectedMatch.amenities && (Array.isArray(selectedMatch.amenities) ? selectedMatch.amenities : JSON.parse(selectedMatch.amenities || "[]")).length > 0 && (
-                  <div>
-                    <p className="text-xs text-gray-400 mb-2">{t('amenities')}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {(Array.isArray(selectedMatch.amenities) ? selectedMatch.amenities : JSON.parse(selectedMatch.amenities || "[]")).map(amenity => (
-                        <span key={amenity} className="px-3 py-1 bg-cyan-500/20 border border-cyan-500/50 rounded-full text-cyan-400 text-xs">
-                          ✓ {t(amenity)}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Badge espace créatif */}
-                {selectedMatch.has_creative_space && (
-                  <div className="p-3 bg-purple-500/20 border border-purple-500/50 rounded-xl text-center">
-                    <p className="text-purple-400 font-semibold">🎨 {t('creativeSpaceAvailable')}</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Compatibilité, condensée en bas */}
-            <div className="bg-slate-800/60 rounded-2xl p-4">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-gray-300">{t('compatibility')}</span>
-                <span className={`text-lg font-bold ${getCompatibilityLevel(selectedMatch.compatibility).color}`}>{getCompatibilityLevel(selectedMatch.compatibility).emoji} {selectedMatch.compatibility}% · {t(getCompatibilityLevel(selectedMatch.compatibility).levelKey)}</span>
-              </div>
-              <div className="space-y-2">
-                {[
-                  { label: '💰 ' + t('budget'), value: currentUserProfile && selectedMatch ? (() => { const b1min = currentUserProfile.budget_min||0; const b1max = currentUserProfile.budget_max||9999; const b2min = selectedMatch.budget_min||0; const b2max = selectedMatch.budget_max||9999; const overlap = Math.min(b1max,b2max)-Math.max(b1min,b2min); return overlap>0 ? Math.round((overlap/(Math.max(b1max,b2max)-Math.min(b1min,b2min)))*30) : 0; })() : 0, max: 30 },
-                  { label: '🌅 ' + t('scheduleLabel'), value: currentUserProfile?.schedule === selectedMatch?.schedule ? 20 : (currentUserProfile?.schedule && selectedMatch?.schedule ? 5 : 10), max: 20 },
-                  { label: '🏠 ' + t('habits'), value: (() => { let s=0; if(currentUserProfile?.smoking === selectedMatch?.smoking) s+=8; if(currentUserProfile?.pets === selectedMatch?.pets || currentUserProfile?.pets_ok || selectedMatch?.pets_ok) s+=8; if(Math.abs((currentUserProfile?.cleanliness||3)-(selectedMatch?.cleanliness||3))<=1) s+=9; return s; })(), max: 25 },
-                  { label: '🙏 ' + t('practices'), value: currentUserProfile?.religious_practice === selectedMatch?.religious_practice ? 15 : ((!currentUserProfile?.religious_practice||currentUserProfile?.religious_practice==='none') || (!selectedMatch?.religious_practice||selectedMatch?.religious_practice==='none') ? 10 : 5), max: 15 },
-                  { label: '✨ ' + t('lifestyle'), value: (() => { let s=0; if(Math.abs((currentUserProfile?.noise_tolerance||5)-(selectedMatch?.noise_tolerance||5))<=2) s+=5; if(Math.abs((currentUserProfile?.guests_frequency||2)-(selectedMatch?.guests_frequency||2))<=1) s+=5; return s; })(), max: 10 },
-                ].map(({ label, value, max }) => (
-                  <div key={label}>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="text-gray-400">{label}</span>
-                    </div>
-                    <div className="w-full bg-slate-700 rounded-full h-1.5">
-                      <div className="bg-gradient-to-r from-violet-500 to-indigo-400 h-1.5 rounded-full transition-all" style={{width: `${(value/max)*100}%`}}></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Actions, sticky bottom */}
-          <div className="sticky bottom-0 bg-white/5 backdrop-blur-xl border-t border-white/10 shadow-[0_-4px_24px_rgba(0,0,0,0.25)] p-3">
-            {isMutualMatch(selectedMatch.user_id) ? (
-              <div className="bg-gradient-to-r from-violet-600/20 to-indigo-500/20 border border-violet-500/50 rounded-xl p-4">
-                <button onClick={() => openChatWithMatch(selectedMatch)} className="flex items-center justify-center gap-3 w-full py-3 bg-gradient-to-r from-violet-600 to-indigo-500 text-white rounded-xl font-bold hover:shadow-lg transition-all">
-                  <MessageCircle size={24} />
-                  Envoyer un message
+        <ProfileDetailView
+          profile={selectedMatch}
+          isPreview={false}
+          currentUserProfile={currentUserProfile}
+          searchPartnerships={searchPartnerships}
+          partnerProfile={selectedMatchPartner}
+          propertyPhotos={selectedMatchPropertyPhotos}
+          onClose={() => setSelectedMatch(null)}
+          onViewPartner={(partner) => {
+            const profileWithScore = { ...partner, compatibility: calculateCompatibility(currentUserProfile, partner) };
+            setSelectedMatch(profileWithScore);
+            if (partner.has_space) loadPropertyPhotos(partner.user_id);
+          }}
+          onToggleFlexible={handleToggleFlexible}
+          onPropertyPhotoClick={(url) => setLightboxPhoto(url)}
+        >
+          {isMutualMatch(selectedMatch.user_id) ? (
+            <div className="bg-gradient-to-r from-violet-600/20 to-indigo-500/20 border border-violet-500/50 rounded-xl p-4">
+              <button onClick={() => openChatWithMatch(selectedMatch)} className="flex items-center justify-center gap-3 w-full py-3 bg-gradient-to-r from-violet-600 to-indigo-500 text-white rounded-xl font-bold hover:shadow-lg transition-all">
+                <MessageCircle size={24} />
+                Envoyer un message
+              </button>
+              {renderPartnershipButton(selectedMatch)}
+              <div className="flex items-center justify-center gap-3 mt-3">
+                <button onClick={() => handleUnmatch(selectedMatch.user_id)} className="text-sm text-red-400/60 hover:text-red-400/90 transition-all">
+                  Unmatch
                 </button>
-                {renderPartnershipButton(selectedMatch)}
-                <div className="flex items-center justify-center gap-3 mt-3">
-                  <button onClick={() => handleUnmatch(selectedMatch.user_id)} className="text-sm text-red-400/60 hover:text-red-400/90 transition-all">
-                    Unmatch
-                  </button>
-                  {getPartnershipWith(selectedMatch.user_id)?.status === 'accepted' && (
-                    <>
-                      <span className="text-slate-600">|</span>
-                      <button onClick={() => handleLeavePartnership(getPartnershipWith(selectedMatch.user_id))} className="text-sm text-red-400/60 hover:text-red-400/90 transition-all">
-                        Quitter le binôme
-                      </button>
-                    </>
-                  )}
-                </div>
+                {getPartnershipWith(selectedMatch.user_id)?.status === 'accepted' && (
+                  <>
+                    <span className="text-slate-600">|</span>
+                    <button onClick={() => handleLeavePartnership(getPartnershipWith(selectedMatch.user_id))} className="text-sm text-red-400/60 hover:text-red-400/90 transition-all">
+                      Quitter le binôme
+                    </button>
+                  </>
+                )}
               </div>
-            ) : (
-              <div className="bg-gradient-to-r from-violet-600/20 to-indigo-500/20 border border-violet-500/50 rounded-xl p-6">
-                <p className="text-white text-center mb-4">{ t('whatDoYouThink') } {selectedMatch.name.split(' ')[0]} ?</p>
-                <div className="flex gap-4">
-                  <button onClick={() => handlePass(selectedMatch.user_id)} className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold transition-all">
-                    <XCircle size={24} />
-                    {t('pass')}
-                  </button>
-                  <button onClick={() => handleLike(selectedMatch.user_id)} className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-600 to-indigo-500 text-white rounded-xl font-bold hover:shadow-lg transition-all">
-                    <Heart size={24} />
-                    Like
-                  </button>
-                </div>
+            </div>
+          ) : (
+            <div className="bg-gradient-to-r from-violet-600/20 to-indigo-500/20 border border-violet-500/50 rounded-xl p-6">
+              <p className="text-white text-center mb-4">{ t('whatDoYouThink') } {selectedMatch.name.split(' ')[0]} ?</p>
+              <div className="flex gap-4">
+                <button onClick={() => handlePass(selectedMatch.user_id)} className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold transition-all">
+                  <XCircle size={24} />
+                  {t('pass')}
+                </button>
+                <button onClick={() => handleLike(selectedMatch.user_id)} className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-600 to-indigo-500 text-white rounded-xl font-bold hover:shadow-lg transition-all">
+                  <Heart size={24} />
+                  Like
+                </button>
               </div>
-            )}
-          </div>
-        </div>
+            </div>
+          )}
+        </ProfileDetailView>
       )}
 
       {showProfile && currentUserProfile && (

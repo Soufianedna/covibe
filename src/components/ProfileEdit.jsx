@@ -113,6 +113,8 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
     setProfile(newProfile);
   };
 
+  const trimIfString = (value) => (typeof value === 'string' ? value.trim() : value);
+
   const handleSave = async () => {
     if (!profile.name || !profile.age || !profile.bio || (!profile.has_space && (!profile.budget_min || !profile.budget_max))) {
       showToast('⚠️ Champs obligatoires manquants', 'warning'); return;
@@ -123,6 +125,9 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
     try {
       const cleanProfile = {
         ...profile,
+        name: trimIfString(profile.name),
+        bio: trimIfString(profile.bio),
+        property_description: trimIfString(profile.property_description),
         age: parseInt(profile.age),
         budget_min: parseInt(profile.budget_min),
         budget_max: parseInt(profile.budget_max),

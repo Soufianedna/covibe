@@ -175,8 +175,12 @@ export const Onboarding = ({ user, onComplete }) => {
     if (!acceptedTerms) missing.push("Conditions d'utilisation");
     // Validation souple - on continue même si des champs manquent
     try {
+      const trimIfString = (value) => (typeof value === 'string' ? value.trim() : value);
       const cleanProfile = {
         ...profile,
+        name: trimIfString(profile.name),
+        bio: trimIfString(profile.bio),
+        property_description: trimIfString(profile.property_description),
         age: profile.age ? parseInt(profile.age) : null,
         budget_min: profile.budget_min ? parseInt(profile.budget_min) : null,
         budget_max: profile.budget_max ? parseInt(profile.budget_max) : null,

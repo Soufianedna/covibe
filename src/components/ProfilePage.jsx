@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { LazyLoadImage } from 'react-lazy-load-image-component';
 import { Settings, LogOut, FileText, Shield, Edit3 } from 'lucide-react';
 import { ProfileScore } from './ProfileScore';
 import { ProfileEdit } from './ProfileEdit';
+import { ProfileDetailView } from './ProfileDetailView';
 import { useTranslation } from 'react-i18next';
 
 export const ProfilePage = ({ currentUser, onSave, onLogout, onDeleteAccount, searchPartnerships = [] }) => {
@@ -13,6 +13,7 @@ export const ProfilePage = ({ currentUser, onSave, onLogout, onDeleteAccount, se
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [activeSection, setActiveSection] = useState('view');
   const [partnerProfile, setPartnerProfile] = useState(null);
+  const [propertyPhotos, setPropertyPhotos] = useState([]);
 
   const myPartnership = searchPartnerships.find(p =>
     p.status === 'accepted' && (p.requester_id === currentUser?.user_id || p.partner_id === currentUser?.user_id)
@@ -41,20 +42,25 @@ export const ProfilePage = ({ currentUser, onSave, onLogout, onDeleteAccount, se
       });
   }, [partnerId]);
 
+  useEffect(() => {
+    if (!currentUser?.has_space) {
+      setPropertyPhotos([]);
+      return;
+    }
+    supabase
+      .from('property_photos')
+      .select('*')
+      .eq('user_id', currentUser.user_id)
+      .order('position')
+      .then(({ data }) => setPropertyPhotos(data || []));
+  }, [currentUser?.user_id, currentUser?.has_space]);
+
   const togglePause = async () => {
     const newVal = !isPaused;
     setIsPaused(newVal);
     await supabase.from('profiles').update({ is_paused: newVal }).eq('user_id', currentUser.user_id);
   };
 
-  const getCityLabel = (city) => city === 'vancouver' ? 'Vancouver' : 'Montréal';
-  const getGenderLabel = (g) => ({ man: 'Homme', woman: 'Femme', non_binary: 'Non-binaire', prefer_not_to_say: 'Non précisé' }[g] || g);
-  const getCreativeTypeLabel = (type) => ({ musician: 'Musicien·ne', artist: 'Artiste visuel·le', developer: 'Développeur·se', content_creator: 'Créateur·rice de contenu', entrepreneur: 'Entrepreneur·e', designer: 'Designer', writer: 'Écrivain·e', photographer: 'Photographe', other: 'Autre créatif·ve' }[type] || type);
-  const getProductiveTimeLabel = (t) => ({ early: '🌅 Lève-tôt', late: '🌙 Couche-tard', flexible: '🔄 Flexible' }[t] || t);
-  const getReligionLabel = (r) => ({ none: 'Aucune', christian: 'Chrétien·ne', muslim: 'Musulman·e', jewish: 'Juif·ve', buddhist: 'Bouddhiste', hindu: 'Hindou·e', spiritual: 'Spirituel·le', other: 'Autre' }[r] || r);
-  const getWorkLocationLabel = (w) => ({ remote: '🏠 Télétravail', office: '🏢 Bureau', hybrid: '🔄 Hybride', freelance: '💼 Freelance', student: '📚 Étudiant·e', other: '🎨 Autre' }[w] || w);
-  const getRelationshipLabel = (r) => ({ single: 'Célibataire', couple: 'En couple', married: 'Marié·e' }[r] || r);
-  const getLanguageLabel = (l) => ({ french: 'Français', english: 'Anglais', spanish: 'Espagnol', arabic: 'Arabe', portuguese: 'Portugais', mandarin: 'Mandarin', hindi: 'Hindi', farsi: 'Farsi', cantonese: 'Cantonais', other: 'Autre' }[l] || l);
 
   if (showSettings) {
     return (
@@ -144,132 +150,19 @@ export const ProfilePage = ({ currentUser, onSave, onLogout, onDeleteAccount, se
           />
         ) : (
         <>
-        {/* Photo + infos */}
-        <div className="text-center mb-6">
-          {currentUser.photo_url ? (
-            <LazyLoadImage effect="blur" src={currentUser.photo_url} alt={currentUser.name} className="w-28 h-28 rounded-full mx-auto object-cover border-4 border-violet-500 mb-4" />
-          ) : (
-            <div className="w-28 h-28 rounded-full mx-auto bg-slate-700 flex items-center justify-center text-5xl mb-4">👤</div>
-          )}
-          <h3 className="text-3xl font-bold text-white mb-1 flex items-center justify-center gap-2">
-            {currentUser.name}
-            {currentUser.verified && <span className="inline-flex items-center justify-center w-5 h-5 bg-violet-500 rounded-full text-white text-xs font-bold">✓</span>}
-          </h3>
-          <p className="text-gray-400 mb-1">{currentUser.age} ans • {getGenderLabel(currentUser.gender)} • {getCityLabel(currentUser.city)}</p>
-          <p className="text-violet-400 font-semibold">{getCreativeTypeLabel(currentUser.creative_type)}</p>
-        </div>
-
-        {/* Binôme de recherche */}
-        {partnerProfile && (
-          <div className="flex flex-col items-center gap-1 mb-6 text-sm text-gray-300">
-            <div className="flex items-center gap-2">
-              <span>🤝 cherche une coloc avec</span>
-              <div className="flex items-center gap-2">
-                {partnerProfile.photo_url ? (
-                  <img src={partnerProfile.photo_url} alt={partnerProfile.name} className="w-8 h-8 rounded-full object-cover border-2 border-cyan-400" />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm border-2 border-cyan-400">👤</div>
-                )}
-                <span className="text-cyan-400 font-semibold">{partnerProfile.name?.split(' ')[0]}</span>
-              </div>
-            </div>
-            <p className="text-xs text-gray-500">
-              {myPartnership?.is_flexible ? 'Ouverts aussi à une place seule' : 'Cherchent ensemble · 2 chambres'}
-            </p>
-          </div>
-        )}
-
         {/* Score */}
         <div className="mb-6">
           <ProfileScore profile={currentUser} />
         </div>
 
-
-        {/* Bio */}
-        {currentUser.bio && (
-          <div className="mb-4 bg-slate-800 rounded-2xl p-4">
-            <p className="text-gray-400 text-sm mb-1">Bio</p>
-            <p className="text-white">{currentUser.bio}</p>
-          </div>
-        )}
-
-        {/* Préférences */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-slate-800 rounded-2xl p-4">
-            <p className="text-gray-400 text-xs mb-1">🌅 Rythme</p>
-            <p className="text-white font-semibold text-sm">{getProductiveTimeLabel(currentUser.productive_time)}</p>
-          </div>
-          <div className="bg-slate-800 rounded-2xl p-4">
-            <p className="text-gray-400 text-xs mb-1">🧹 Propreté</p>
-            <p className="text-white font-semibold text-sm">{currentUser.cleanliness}/5</p>
-          </div>
-          <div className="bg-slate-800 rounded-2xl p-4">
-            <p className="text-gray-400 text-xs mb-1">💰 Budget</p>
-            <p className="text-white font-semibold text-sm">{currentUser.has_space ? `${currentUser.room_price}$/mois` : `${currentUser.budget_min}$ - ${currentUser.budget_max}$`}</p>
-          </div>
-          <div className="bg-slate-800 rounded-2xl p-4">
-            <p className="text-gray-400 text-xs mb-1">🙏 Pratiques</p>
-            <p className="text-white font-semibold text-sm">{getReligionLabel(currentUser.religious_practice)}</p>
-          </div>
-          <div className="bg-slate-800 rounded-2xl p-4">
-            <p className="text-gray-400 text-xs mb-1">🚬 Tabac</p>
-            <p className="text-white font-semibold text-sm">{currentUser.smoking ? 'Oui' : 'Non'}</p>
-          </div>
-          <div className="bg-slate-800 rounded-2xl p-4">
-            <p className="text-gray-400 text-xs mb-1">🐾 Animaux</p>
-            <p className="text-white font-semibold text-sm">{currentUser.pets ? 'Oui' : 'Non'}</p>
-          </div>
-          {currentUser.work_location && (
-            <div className="bg-slate-800 rounded-2xl p-4">
-              <p className="text-gray-400 text-xs mb-1">💼 Travail</p>
-              <p className="text-white font-semibold text-sm">{getWorkLocationLabel(currentUser.work_location)}</p>
-            </div>
-          )}
-          {currentUser.relationship_status && (
-            <div className="bg-slate-800 rounded-2xl p-4">
-              <p className="text-gray-400 text-xs mb-1">💜 Statut</p>
-              <p className="text-white font-semibold text-sm">{getRelationshipLabel(currentUser.relationship_status)}</p>
-            </div>
-          )}
-          <div className="bg-slate-800 rounded-2xl p-4">
-            <p className="text-gray-400 text-xs mb-1">🔊 Bruit</p>
-            <p className="text-white font-semibold text-sm">{currentUser.noise_tolerance}/10</p>
-          </div>
-          <div className="bg-slate-800 rounded-2xl p-4">
-            <p className="text-gray-400 text-xs mb-1">🎉 Invités</p>
-            <p className="text-white font-semibold text-sm">{currentUser.guests_frequency}/5</p>
-          </div>
-          {currentUser.move_in_date && (
-            <div className="bg-slate-800 rounded-2xl p-4 col-span-2">
-              <p className="text-gray-400 text-xs mb-1">📅 Emménagement</p>
-              <p className="text-white font-semibold text-sm">{new Date(currentUser.move_in_date).toLocaleDateString('fr-CA', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-            </div>
-          )}
-        </div>
-
-        {/* Langues */}
-        {currentUser.languages && currentUser.languages.length > 0 && (
-          <div className="mt-4 bg-slate-800 rounded-2xl p-4">
-            <p className="text-gray-400 text-xs mb-2">🌍 Langues</p>
-            <div className="flex flex-wrap gap-2">
-              {currentUser.languages.map((lang) => (
-                <span key={lang} className="px-3 py-1 bg-violet-500/20 text-violet-300 rounded-full text-sm font-semibold">{getLanguageLabel(lang)}</span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Style de vie */}
-        {(currentUser.alcohol_ok || currentUser.cannabis_friendly || currentUser.no_substances) && (
-          <div className="mt-4 bg-slate-800 rounded-2xl p-4">
-            <p className="text-gray-400 text-xs mb-2">✨ Style de vie</p>
-            <div className="flex flex-wrap gap-2">
-              {currentUser.alcohol_ok && <span className="px-3 py-1 bg-slate-700 text-gray-200 rounded-full text-sm font-semibold">🍷 Alcool OK</span>}
-              {currentUser.cannabis_friendly && <span className="px-3 py-1 bg-slate-700 text-gray-200 rounded-full text-sm font-semibold">🌿 420 friendly</span>}
-              {currentUser.no_substances && <span className="px-3 py-1 bg-slate-700 text-gray-200 rounded-full text-sm font-semibold">✨ Mode de vie sobre</span>}
-            </div>
-          </div>
-        )}
+        <ProfileDetailView
+          profile={currentUser}
+          isPreview={true}
+          currentUserProfile={currentUser}
+          searchPartnerships={searchPartnerships}
+          partnerProfile={partnerProfile}
+          propertyPhotos={propertyPhotos}
+        />
         </>
         )}
       </div>
