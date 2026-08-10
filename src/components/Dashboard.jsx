@@ -1134,14 +1134,15 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
                   {selectedMatch.has_creative_space && (
                     <div className="mt-4 p-3 bg-purple-500/20 border border-purple-500/50 rounded-xl text-center">
                       <p className="text-purple-400 font-semibold">🎨 {t('creativeSpaceAvailable')}</p>
-                  {!selectedMatch.has_space && selectedMatch.open_to_group_search && (
-                    <div className="mt-4 p-3 bg-cyan-500/20 border border-cyan-500/50 rounded-xl text-center">
-                      <p className="text-cyan-400 font-semibold">🤝 {t('openToGroupSearch')}</p>
-                      <p className="text-xs text-gray-400 mt-1">{t('groupSearchDescription')}</p>
                     </div>
                   )}
-                    </div>
-                  )}
+                </div>
+              )}
+
+              {!selectedMatch.has_space && selectedMatch.open_to_group_search && (
+                <div className="p-3 bg-cyan-500/20 border border-cyan-500/50 rounded-xl text-center">
+                  <p className="text-cyan-400 font-semibold">🤝 {t('openToGroupSearch')}</p>
+                  <p className="text-xs text-gray-400 mt-1">{t('groupSearchDescription')}</p>
                 </div>
               )}
 
