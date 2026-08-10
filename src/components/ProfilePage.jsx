@@ -161,16 +161,21 @@ export const ProfilePage = ({ currentUser, onSave, onLogout, onDeleteAccount, se
 
         {/* Binôme de recherche */}
         {partnerProfile && (
-          <div className="flex items-center justify-center gap-2 mb-6 text-sm text-gray-300">
-            <span>🤝 cherche une coloc avec</span>
+          <div className="flex flex-col items-center gap-1 mb-6 text-sm text-gray-300">
             <div className="flex items-center gap-2">
-              {partnerProfile.photo_url ? (
-                <img src={partnerProfile.photo_url} alt={partnerProfile.name} className="w-8 h-8 rounded-full object-cover border-2 border-cyan-400" />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm border-2 border-cyan-400">👤</div>
-              )}
-              <span className="text-cyan-400 font-semibold">{partnerProfile.name?.split(' ')[0]}</span>
+              <span>🤝 cherche une coloc avec</span>
+              <div className="flex items-center gap-2">
+                {partnerProfile.photo_url ? (
+                  <img src={partnerProfile.photo_url} alt={partnerProfile.name} className="w-8 h-8 rounded-full object-cover border-2 border-cyan-400" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm border-2 border-cyan-400">👤</div>
+                )}
+                <span className="text-cyan-400 font-semibold">{partnerProfile.name?.split(' ')[0]}</span>
+              </div>
             </div>
+            <p className="text-xs text-gray-500">
+              {myPartnership?.is_flexible ? 'Ouverts aussi à une place seule' : 'Cherchent ensemble · 2 chambres'}
+            </p>
           </div>
         )}
 

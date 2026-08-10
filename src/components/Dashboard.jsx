@@ -754,13 +754,38 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
     }
   };
 
+  const handleToggleFlexible = async (partnership) => {
+    try {
+      const { error } = await supabase
+        .from('search_partnerships')
+        .update({ is_flexible: !partnership.is_flexible })
+        .eq('id', partnership.id);
+      if (error) throw error;
+      await loadSearchPartnerships();
+    } catch (error) {
+      console.error('Error toggling partnership flexibility:', error);
+      alert('Erreur: ' + error.message);
+    }
+  };
+
   const renderPartnershipButton = (match) => {
     const partnership = getPartnershipWith(match.user_id);
 
     if (partnership?.status === 'accepted') {
       return (
-        <div className="mt-3 py-2 px-4 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400/90 text-xs font-semibold rounded-lg text-center">
-          🤝 Vous cherchez ensemble
+        <div className="mt-3">
+          <div className="py-2 px-4 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400/90 text-xs font-semibold rounded-lg text-center">
+            🤝 Vous cherchez ensemble
+          </div>
+          <button
+            onClick={() => handleToggleFlexible(partnership)}
+            className="w-full flex items-center justify-center gap-2 mt-2 py-1 text-xs text-gray-400 hover:text-gray-300 transition-all"
+          >
+            <div className={`w-8 h-4 rounded-full transition-all ${partnership.is_flexible ? 'bg-cyan-500/40' : 'bg-slate-600'}`}>
+              <div className={`w-3.5 h-3.5 bg-white rounded-full shadow transition-all mt-0.5 ${partnership.is_flexible ? 'translate-x-4' : 'translate-x-0.5'}`} />
+            </div>
+            <span>{partnership.is_flexible ? 'Ouverts aussi à une place seule' : 'Cherchent ensemble · 2 chambres'}</span>
+          </button>
         </div>
       );
     }
@@ -987,23 +1012,28 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
                 <p className="text-violet-400 font-semibold text-lg">{t(getCreativeTypeLabel(selectedMatch.creative_type))}</p>
               </div>
               {selectedMatchPartner && (
-                <div className="flex items-center justify-center gap-2 text-sm text-gray-300">
-                  <span>🤝 cherche une coloc avec</span>
-                  <button
-                    onClick={() => {
-                      const profileWithScore = { ...selectedMatchPartner, compatibility: calculateCompatibility(currentUserProfile, selectedMatchPartner) };
-                      setSelectedMatch(profileWithScore);
-                      if (selectedMatchPartner.has_space) loadPropertyPhotos(selectedMatchPartner.user_id);
-                    }}
-                    className="flex items-center gap-2 hover:opacity-80 transition-all"
-                  >
-                    {selectedMatchPartner.photo_url ? (
-                      <img src={selectedMatchPartner.photo_url} alt={selectedMatchPartner.name} className="w-8 h-8 rounded-full object-cover border-2 border-cyan-400" />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm border-2 border-cyan-400">👤</div>
-                    )}
-                    <span className="text-cyan-400 font-semibold">{selectedMatchPartner.name?.split(' ')[0]}</span>
-                  </button>
+                <div className="flex flex-col items-center gap-1 text-sm text-gray-300">
+                  <div className="flex items-center gap-2">
+                    <span>🤝 cherche une coloc avec</span>
+                    <button
+                      onClick={() => {
+                        const profileWithScore = { ...selectedMatchPartner, compatibility: calculateCompatibility(currentUserProfile, selectedMatchPartner) };
+                        setSelectedMatch(profileWithScore);
+                        if (selectedMatchPartner.has_space) loadPropertyPhotos(selectedMatchPartner.user_id);
+                      }}
+                      className="flex items-center gap-2 hover:opacity-80 transition-all"
+                    >
+                      {selectedMatchPartner.photo_url ? (
+                        <img src={selectedMatchPartner.photo_url} alt={selectedMatchPartner.name} className="w-8 h-8 rounded-full object-cover border-2 border-cyan-400" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm border-2 border-cyan-400">👤</div>
+                      )}
+                      <span className="text-cyan-400 font-semibold">{selectedMatchPartner.name?.split(' ')[0]}</span>
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    {getAcceptedPartnershipFor(selectedMatch.user_id)?.is_flexible ? 'Ouverts aussi à une place seule' : 'Cherchent ensemble · 2 chambres'}
+                  </p>
                 </div>
               )}
               <div className="bg-slate-700/50 rounded-xl p-6">
