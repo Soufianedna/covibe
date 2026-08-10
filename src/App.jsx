@@ -48,7 +48,7 @@ function AppContent() {
         const token = new URL(url.replace('covibe://', 'https://covibe.ca/')).searchParams.get('token');
         if (token) window.location.href = '/verify?token=' + token;
       }
-      if (url.includes('covibe://reset-password')) {
+      if (url.includes('covibe://reset-password') && !url.includes('token_hash')) {
         setShowResetPassword(true);
       }
       if (url.includes('/verify') && url.includes('token_hash')) {
@@ -64,8 +64,13 @@ function AppContent() {
         const params = new URLSearchParams(url.split('?')[1]);
         const tokenHash = params.get('token_hash');
         if (tokenHash) {
-          await supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' });
-          setShowResetPassword(true);
+          const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' });
+          if (!error) {
+            setShowResetPassword(true);
+          } else {
+            console.error('Reset password token verification failed:', error);
+            alert('Ce lien de réinitialisation a expiré ou est invalide. Merci de refaire une demande depuis "Mot de passe oublié".');
+          }
         }
       }
       if (url.includes('covibe://login-callback')) {
