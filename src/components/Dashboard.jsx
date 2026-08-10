@@ -47,6 +47,8 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
   const [likerProfiles, setLikerProfiles] = useState([]);
   const [filters, setFilters] = useState({});
   const [favorites, setFavorites] = useState([]);
+  const [searchPartnerships, setSearchPartnerships] = useState([]);
+  const [selectedMatchPartner, setSelectedMatchPartner] = useState(null);
 
 
   // Détection mobile
@@ -67,6 +69,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
     loadUnviewedLikesCount();
     loadFavoritesCount();
     loadFavorites();
+    loadSearchPartnerships();
     const unsubscribe = subscribeToNewMessages();
     const unsubscribeLikes = subscribeToNewLikes();
     const unsubscribeConvDelete = subscribeToConversationDeletes();
@@ -95,6 +98,21 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
       loadMutualMatchProfiles();
     }
   }, [mutualMatches]);
+
+  // Charger le profil du binôme de recherche accepté du profil actuellement affiché
+  useEffect(() => {
+    if (!selectedMatch) {
+      setSelectedMatchPartner(null);
+      return;
+    }
+    const partnership = getAcceptedPartnershipFor(selectedMatch.user_id);
+    if (!partnership) {
+      setSelectedMatchPartner(null);
+      return;
+    }
+    const partnerId = partnership.requester_id === selectedMatch.user_id ? partnership.partner_id : partnership.requester_id;
+    loadPartnerProfile(partnerId);
+  }, [selectedMatch, searchPartnerships]);
 
   const loadMutualMatchProfiles = async () => {
     console.log("🔥 LOADING MUTUAL MATCH PROFILES, mutualMatches:", mutualMatches);
@@ -613,6 +631,184 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
     }
   };
 
+  const loadSearchPartnerships = async () => {
+    try {
+      // On charge mes propres partnerships (peu importe le status) + tous les
+      // partnerships déjà acceptés, quel qu'en soit le participant (RLS : policy
+      // "Anyone can view accepted partnerships"). Ça permet de savoir si la
+      // personne consultée est déjà en binôme avec quelqu'un d'autre que moi.
+      const { data, error } = await supabase
+        .from('search_partnerships')
+        .select('*')
+        .or(`status.eq.accepted,requester_id.eq.${user.id},partner_id.eq.${user.id}`);
+      if (error) throw error;
+      setSearchPartnerships(data || []);
+    } catch (error) {
+      console.error('Error loading search partnerships:', error);
+    }
+  };
+
+  const getPartnershipWith = (otherUserId) => searchPartnerships.find(p =>
+    (p.requester_id === user.id && p.partner_id === otherUserId) ||
+    (p.requester_id === otherUserId && p.partner_id === user.id)
+  );
+
+  const hasAcceptedPartnershipElsewhere = (otherUserId) => searchPartnerships.some(p =>
+    p.status === 'accepted' &&
+    (p.requester_id === user.id || p.partner_id === user.id) &&
+    p.requester_id !== otherUserId && p.partner_id !== otherUserId
+  );
+
+  const isUserAlreadyPartnered = (userId) => searchPartnerships.some(p =>
+    p.status === 'accepted' && (p.requester_id === userId || p.partner_id === userId)
+  );
+
+  // Contrairement à getPartnershipWith (relatif à moi), celle-ci trouve le binôme
+  // accepté de N'IMPORTE QUEL profil consulté (utile pour afficher "cherche avec X").
+  const getAcceptedPartnershipFor = (userId) => searchPartnerships.find(p =>
+    p.status === 'accepted' && (p.requester_id === userId || p.partner_id === userId)
+  );
+
+  const loadPartnerProfile = async (partnerId) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', partnerId)
+        .maybeSingle();
+      if (error) throw error;
+      setSelectedMatchPartner(data || null);
+    } catch (error) {
+      console.error('Error loading partner profile:', error);
+      setSelectedMatchPartner(null);
+    }
+  };
+
+  const handleSendPartnershipInvite = async (partnerId) => {
+    try {
+      const { error } = await supabase
+        .from('search_partnerships')
+        .insert({ requester_id: user.id, partner_id: partnerId, status: 'pending' });
+      if (error) throw error;
+      await loadSearchPartnerships();
+    } catch (error) {
+      console.error('Error sending search partnership invite:', error);
+      alert('Erreur: ' + error.message);
+    }
+  };
+
+  const handleAcceptPartnership = async (partnership) => {
+    try {
+      const { error } = await supabase
+        .from('search_partnerships')
+        .update({ status: 'accepted' })
+        .eq('id', partnership.id);
+      if (error) throw error;
+
+      const otherId = partnership.requester_id === user.id ? partnership.partner_id : partnership.requester_id;
+
+      // Nettoyage intentionnel : accepter un binôme annule automatiquement toutes
+      // les autres invitations en attente impliquant l'un des deux membres du
+      // nouveau binôme (moi ou l'autre personne), qu'ils y soient requester ou
+      // partner. Les invitations pending entre deux tiers qui ne nous concernent
+      // pas ne sont pas touchées.
+      await supabase
+        .from('search_partnerships')
+        .delete()
+        .eq('status', 'pending')
+        .or(`requester_id.eq.${user.id},partner_id.eq.${user.id},requester_id.eq.${otherId},partner_id.eq.${otherId}`);
+
+      await loadSearchPartnerships();
+    } catch (error) {
+      console.error('Error accepting search partnership:', error);
+      alert('Erreur: ' + error.message);
+    }
+  };
+
+  const handleLeavePartnership = async (partnership) => {
+    if (!confirm('Es-tu sûr de vouloir quitter ce binôme de recherche ?')) return;
+    try {
+      const { error } = await supabase
+        .from('search_partnerships')
+        .delete()
+        .eq('id', partnership.id);
+      if (error) throw error;
+      await loadSearchPartnerships();
+    } catch (error) {
+      console.error('Error leaving search partnership:', error);
+      alert('Erreur: ' + error.message);
+    }
+  };
+
+  const handleDeclinePartnership = async (partnership) => {
+    try {
+      const { error } = await supabase
+        .from('search_partnerships')
+        .delete()
+        .eq('id', partnership.id);
+      if (error) throw error;
+      await loadSearchPartnerships();
+    } catch (error) {
+      console.error('Error declining search partnership:', error);
+      alert('Erreur: ' + error.message);
+    }
+  };
+
+  const renderPartnershipButton = (match) => {
+    const partnership = getPartnershipWith(match.user_id);
+
+    if (partnership?.status === 'accepted') {
+      return (
+        <div className="mt-3">
+          <div className="w-full py-3 bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 rounded-xl font-bold text-center">
+            🤝 Vous cherchez ensemble
+          </div>
+          <button onClick={() => handleLeavePartnership(partnership)} className="flex items-center justify-center gap-3 w-full py-3 mt-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/50 rounded-xl font-bold transition-all">
+            Quitter le binôme
+          </button>
+        </div>
+      );
+    }
+
+    if (partnership?.status === 'pending' && partnership.requester_id === user.id) {
+      return (
+        <button disabled className="flex items-center justify-center gap-3 w-full py-3 mt-3 bg-slate-600/50 text-gray-400 border border-slate-500/50 rounded-xl font-bold cursor-not-allowed">
+          ⏳ Invitation envoyée
+        </button>
+      );
+    }
+
+    if (partnership?.status === 'pending' && partnership.partner_id === user.id) {
+      return (
+        <button onClick={() => handleAcceptPartnership(partnership)} className="flex items-center justify-center gap-3 w-full py-3 mt-3 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/50 rounded-xl font-bold transition-all">
+          ✅ Accepter de chercher ensemble
+        </button>
+      );
+    }
+
+    if (hasAcceptedPartnershipElsewhere(match.user_id)) {
+      return (
+        <button disabled className="flex items-center justify-center gap-3 w-full py-3 mt-3 bg-slate-600/50 text-gray-400 border border-slate-500/50 rounded-xl font-bold cursor-not-allowed">
+          Tu es déjà en binôme
+        </button>
+      );
+    }
+
+    if (isUserAlreadyPartnered(match.user_id)) {
+      return (
+        <button disabled className="flex items-center justify-center gap-3 w-full py-3 mt-3 bg-slate-600/50 text-gray-400 border border-slate-500/50 rounded-xl font-bold cursor-not-allowed">
+          Déjà en binôme
+        </button>
+      );
+    }
+
+    return (
+      <button onClick={() => handleSendPartnershipInvite(match.user_id)} className="flex items-center justify-center gap-3 w-full py-3 mt-3 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/50 rounded-xl font-bold transition-all">
+        🤝 Chercher ensemble
+      </button>
+    );
+  };
+
   const toggleFavorite = async (profileUserId) => {
     try {
       // Vérifier si déjà en favori
@@ -795,6 +991,26 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
                 </p>
                 <p className="text-violet-400 font-semibold text-lg">{t(getCreativeTypeLabel(selectedMatch.creative_type))}</p>
               </div>
+              {selectedMatchPartner && (
+                <div className="flex items-center justify-center gap-2 text-sm text-gray-300">
+                  <span>🤝 cherche une coloc avec</span>
+                  <button
+                    onClick={() => {
+                      const profileWithScore = { ...selectedMatchPartner, compatibility: calculateCompatibility(currentUserProfile, selectedMatchPartner) };
+                      setSelectedMatch(profileWithScore);
+                      if (selectedMatchPartner.has_space) loadPropertyPhotos(selectedMatchPartner.user_id);
+                    }}
+                    className="flex items-center gap-2 hover:opacity-80 transition-all"
+                  >
+                    {selectedMatchPartner.photo_url ? (
+                      <img src={selectedMatchPartner.photo_url} alt={selectedMatchPartner.name} className="w-8 h-8 rounded-full object-cover border-2 border-cyan-400" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm border-2 border-cyan-400">👤</div>
+                    )}
+                    <span className="text-cyan-400 font-semibold">{selectedMatchPartner.name?.split(' ')[0]}</span>
+                  </button>
+                </div>
+              )}
               <div className="bg-slate-700/50 rounded-xl p-6">
                 <div className="text-center mb-4">
                   <p className="text-gray-300 mb-2">{t('compatibility')}</p>
@@ -1008,6 +1224,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
                     <XCircle size={20} />
                     Unmatch
                   </button>
+                  {renderPartnershipButton(selectedMatch)}
                 </div>
               ) : (
                 <div className="bg-gradient-to-r from-violet-600/20 to-indigo-500/20 border border-violet-500/50 rounded-xl p-6">
@@ -1034,6 +1251,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
           currentUser={currentUserProfile}
           onSave={(updatedProfile) => setCurrentUserProfile(updatedProfile)}
           onLogout={onLogout}
+          searchPartnerships={searchPartnerships}
         />
       )}
 
@@ -1170,6 +1388,9 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
           onToggleFavorite={toggleFavorite}
           likerProfiles={likerProfiles}
           onViewLikes={(liker) => { setShowLikesReceived(true); setShowConversations(false); setActiveTab("likes"); if (liker) setTimeout(() => { window._openLikerProfile && window._openLikerProfile(liker.user_id); }, 300); }}
+          searchPartnerships={searchPartnerships}
+          onAcceptPartnership={handleAcceptPartnership}
+          onDeclinePartnership={handleDeclinePartnership}
         />
       )}
 

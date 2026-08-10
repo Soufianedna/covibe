@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 import { Settings, LogOut, FileText, Shield, Edit3 } from 'lucide-react';
@@ -6,12 +6,40 @@ import { ProfileScore } from './ProfileScore';
 import { ProfileEdit } from './ProfileEdit';
 import { useTranslation } from 'react-i18next';
 
-export const ProfilePage = ({ currentUser, onSave, onLogout, onDeleteAccount }) => {
+export const ProfilePage = ({ currentUser, onSave, onLogout, onDeleteAccount, searchPartnerships = [] }) => {
   const { t } = useTranslation();
   const [showSettings, setShowSettings] = useState(false);
   const [isPaused, setIsPaused] = useState(currentUser?.is_paused || false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [activeSection, setActiveSection] = useState('view');
+  const [partnerProfile, setPartnerProfile] = useState(null);
+
+  const myPartnership = searchPartnerships.find(p =>
+    p.status === 'accepted' && (p.requester_id === currentUser?.user_id || p.partner_id === currentUser?.user_id)
+  );
+  const partnerId = myPartnership
+    ? (myPartnership.requester_id === currentUser.user_id ? myPartnership.partner_id : myPartnership.requester_id)
+    : null;
+
+  useEffect(() => {
+    if (!partnerId) {
+      setPartnerProfile(null);
+      return;
+    }
+    supabase
+      .from('profiles')
+      .select('user_id, name, photo_url')
+      .eq('user_id', partnerId)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('Error loading partner profile:', error);
+          setPartnerProfile(null);
+          return;
+        }
+        setPartnerProfile(data || null);
+      });
+  }, [partnerId]);
 
   const togglePause = async () => {
     const newVal = !isPaused;
@@ -130,6 +158,21 @@ export const ProfilePage = ({ currentUser, onSave, onLogout, onDeleteAccount }) 
           <p className="text-gray-400 mb-1">{currentUser.age} ans • {getGenderLabel(currentUser.gender)} • {getCityLabel(currentUser.city)}</p>
           <p className="text-violet-400 font-semibold">{getCreativeTypeLabel(currentUser.creative_type)}</p>
         </div>
+
+        {/* Binôme de recherche */}
+        {partnerProfile && (
+          <div className="flex items-center justify-center gap-2 mb-6 text-sm text-gray-300">
+            <span>🤝 cherche une coloc avec</span>
+            <div className="flex items-center gap-2">
+              {partnerProfile.photo_url ? (
+                <img src={partnerProfile.photo_url} alt={partnerProfile.name} className="w-8 h-8 rounded-full object-cover border-2 border-cyan-400" />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-sm border-2 border-cyan-400">👤</div>
+              )}
+              <span className="text-cyan-400 font-semibold">{partnerProfile.name?.split(' ')[0]}</span>
+            </div>
+          </div>
+        )}
 
         {/* Score */}
         <div className="mb-6">

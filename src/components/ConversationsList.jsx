@@ -6,12 +6,37 @@ import { ProfileView } from './ProfileView';
 import { useTranslation } from 'react-i18next';
 import { Logo } from './Logo';
 
-export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch, mutualMatchProfiles = [], onSelectMatch, favorites = [], onToggleFavorite, likerProfiles = [], onViewLikes }) => {
+export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch, mutualMatchProfiles = [], onSelectMatch, favorites = [], onToggleFavorite, likerProfiles = [], onViewLikes, searchPartnerships = [], onAcceptPartnership, onDeclinePartnership }) => {
   const { t } = useTranslation();
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [conversationData, setConversationData] = useState({});
   const [selectedProfile, setSelectedProfile] = useState(null);
+  const [inviterProfiles, setInviterProfiles] = useState({});
+
+  const pendingInvitesReceived = searchPartnerships.filter(p => p.status === 'pending' && p.partner_id === currentUser.user_id);
+
+  useEffect(() => {
+    if (pendingInvitesReceived.length === 0) {
+      setInviterProfiles({});
+      return;
+    }
+    const requesterIds = pendingInvitesReceived.map(p => p.requester_id);
+    supabase
+      .from('profiles')
+      .select('user_id, name, photo_url')
+      .in('user_id', requesterIds)
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('Error loading partnership inviter profiles:', error);
+          setInviterProfiles({});
+          return;
+        }
+        const map = {};
+        (data || []).forEach((p) => { map[p.user_id] = p; });
+        setInviterProfiles(map);
+      });
+  }, [searchPartnerships, currentUser.user_id]);
 
   useEffect(() => {
     loadMatches();
@@ -140,6 +165,34 @@ export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch,
     <>
       <div className="fixed inset-0 z-40 overflow-y-auto bg-slate-900 pb-24">
         <div className="p-6 pt-16">
+          {pendingInvitesReceived.length > 0 && (
+            <div className="mb-6 space-y-3">
+              {pendingInvitesReceived.map((invite) => {
+                const inviter = inviterProfiles[invite.requester_id];
+                if (!inviter) return null;
+                return (
+                  <div key={invite.id} className="flex items-center gap-4 p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-xl">
+                    {inviter.photo_url ? (
+                      <img src={inviter.photo_url} alt={inviter.name} className="w-14 h-14 rounded-full object-cover border-2 border-cyan-400" />
+                    ) : (
+                      <div className="w-14 h-14 rounded-full bg-slate-700 flex items-center justify-center text-2xl border-2 border-cyan-400">👤</div>
+                    )}
+                    <div className="flex-1">
+                      <p className="text-white font-semibold">{inviter.name?.split(' ')[0]} t'invite à chercher une coloc ensemble</p>
+                      <div className="flex gap-2 mt-2">
+                        <button onClick={() => onAcceptPartnership(invite)} className="flex-1 py-2 bg-gradient-to-r from-violet-600 to-indigo-500 text-white rounded-xl font-bold text-sm hover:shadow-lg transition-all">
+                          Accepter
+                        </button>
+                        <button onClick={() => onDeclinePartnership(invite)} className="flex-1 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/50 rounded-xl font-bold text-sm transition-all">
+                          Refuser
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
           <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2"><Logo size={28} /> Tes VibeMatches</h2>
           {mutualMatchProfiles.length > 0 && (
             <div className="flex gap-4 overflow-x-auto pb-4 mb-6">
