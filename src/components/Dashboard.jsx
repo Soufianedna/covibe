@@ -759,20 +759,15 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
 
     if (partnership?.status === 'accepted') {
       return (
-        <div className="mt-3">
-          <div className="w-full py-3 bg-cyan-500/20 text-cyan-400 border border-cyan-500/50 rounded-xl font-bold text-center">
-            🤝 Vous cherchez ensemble
-          </div>
-          <button onClick={() => handleLeavePartnership(partnership)} className="flex items-center justify-center gap-3 w-full py-3 mt-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/50 rounded-xl font-bold transition-all">
-            Quitter le binôme
-          </button>
+        <div className="mt-3 py-2 px-4 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400/90 text-xs font-semibold rounded-lg text-center">
+          🤝 Vous cherchez ensemble
         </div>
       );
     }
 
     if (partnership?.status === 'pending' && partnership.requester_id === user.id) {
       return (
-        <button disabled className="flex items-center justify-center gap-3 w-full py-3 mt-3 bg-slate-600/50 text-gray-400 border border-slate-500/50 rounded-xl font-bold cursor-not-allowed">
+        <button disabled className="flex items-center justify-center gap-2 w-full py-2.5 mt-3 bg-slate-600/30 text-gray-400 border border-slate-500/30 rounded-xl text-sm font-semibold cursor-not-allowed">
           ⏳ Invitation envoyée
         </button>
       );
@@ -780,7 +775,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
 
     if (partnership?.status === 'pending' && partnership.partner_id === user.id) {
       return (
-        <button onClick={() => handleAcceptPartnership(partnership)} className="flex items-center justify-center gap-3 w-full py-3 mt-3 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/50 rounded-xl font-bold transition-all">
+        <button onClick={() => handleAcceptPartnership(partnership)} className="flex items-center justify-center gap-2 w-full py-2.5 mt-3 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 rounded-xl text-sm font-semibold transition-all">
           ✅ Accepter de chercher ensemble
         </button>
       );
@@ -788,7 +783,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
 
     if (hasAcceptedPartnershipElsewhere(match.user_id)) {
       return (
-        <button disabled className="flex items-center justify-center gap-3 w-full py-3 mt-3 bg-slate-600/50 text-gray-400 border border-slate-500/50 rounded-xl font-bold cursor-not-allowed">
+        <button disabled className="flex items-center justify-center gap-2 w-full py-2.5 mt-3 bg-slate-600/30 text-gray-400 border border-slate-500/30 rounded-xl text-sm font-semibold cursor-not-allowed">
           Tu es déjà en binôme
         </button>
       );
@@ -796,14 +791,14 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
 
     if (isUserAlreadyPartnered(match.user_id)) {
       return (
-        <button disabled className="flex items-center justify-center gap-3 w-full py-3 mt-3 bg-slate-600/50 text-gray-400 border border-slate-500/50 rounded-xl font-bold cursor-not-allowed">
+        <button disabled className="flex items-center justify-center gap-2 w-full py-2.5 mt-3 bg-slate-600/30 text-gray-400 border border-slate-500/30 rounded-xl text-sm font-semibold cursor-not-allowed">
           Déjà en binôme
         </button>
       );
     }
 
     return (
-      <button onClick={() => handleSendPartnershipInvite(match.user_id)} className="flex items-center justify-center gap-3 w-full py-3 mt-3 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/50 rounded-xl font-bold transition-all">
+      <button onClick={() => handleSendPartnershipInvite(match.user_id)} className="flex items-center justify-center gap-2 w-full py-2.5 mt-3 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 rounded-xl text-sm font-semibold transition-all">
         🤝 Chercher ensemble
       </button>
     );
@@ -1220,11 +1215,20 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
                     <MessageCircle size={24} />
                     Envoyer un message
                   </button>
-                  <button onClick={() => handleUnmatch(selectedMatch.user_id)} className="flex items-center justify-center gap-3 w-full py-3 mt-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/50 rounded-xl font-bold transition-all">
-                    <XCircle size={20} />
-                    Unmatch
-                  </button>
                   {renderPartnershipButton(selectedMatch)}
+                  <div className="flex items-center justify-center gap-3 mt-4">
+                    <button onClick={() => handleUnmatch(selectedMatch.user_id)} className="text-sm text-red-400/60 hover:text-red-400/90 transition-all">
+                      Unmatch
+                    </button>
+                    {getPartnershipWith(selectedMatch.user_id)?.status === 'accepted' && (
+                      <>
+                        <span className="text-slate-600">|</span>
+                        <button onClick={() => handleLeavePartnership(getPartnershipWith(selectedMatch.user_id))} className="text-sm text-red-400/60 hover:text-red-400/90 transition-all">
+                          Quitter le binôme
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <div className="bg-gradient-to-r from-violet-600/20 to-indigo-500/20 border border-violet-500/50 rounded-xl p-6">
