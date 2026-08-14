@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import { X, Send, XCircle } from 'lucide-react';
+import { X, Send, XCircle, MoreVertical, Check, CheckCheck } from 'lucide-react';
 import { ProfileView } from './ProfileView';
 import { useTranslation } from 'react-i18next';
 
@@ -11,7 +11,11 @@ export const Chat = ({ currentUser, matchedUser, onClose, onUnmatch, onMessagesR
   const [loading, setLoading] = useState(true);
   const [conversationId, setConversationId] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [isOtherTyping, setIsOtherTyping] = useState(false);
   const messagesEndRef = useRef(null);
+  const typingChannelRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
 
   useEffect(() => {
     loadConversation();
@@ -29,9 +33,41 @@ export const Chat = ({ currentUser, matchedUser, onClose, onUnmatch, onMessagesR
     }
   }, [conversationId]);
 
+  // Canal presence dédié à l'indicateur de saisie — dépendances stables
+  // (conversationId uniquement) pour ne pas rouvrir le canal à chaque frappe.
+  useEffect(() => {
+    if (!conversationId) return;
+
+    const channel = supabase.channel(`typing:${conversationId}`, {
+      config: { presence: { key: currentUser.user_id } },
+    });
+
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        const otherTyping = Object.entries(state)
+          .filter(([key]) => key !== currentUser.user_id)
+          .some(([, presences]) => presences.some((p) => p.typing));
+        setIsOtherTyping(otherTyping);
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.track({ typing: false });
+        }
+      });
+
+    typingChannelRef.current = channel;
+
+    return () => {
+      clearTimeout(typingTimeoutRef.current);
+      channel.unsubscribe();
+      typingChannelRef.current = null;
+    };
+  }, [conversationId]);
+
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isOtherTyping]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -137,6 +173,18 @@ export const Chat = ({ currentUser, matchedUser, onClose, onUnmatch, onMessagesR
       )
       .on('postgres_changes',
         {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${conversationId}`
+        },
+        (payload) => {
+          console.log('✏️ Message mis à jour:', payload.new);
+          setMessages(current => current.map((m) => (m.id === payload.new.id ? payload.new : m)));
+        }
+      )
+      .on('postgres_changes',
+        {
           event: 'DELETE',
           schema: 'public',
           table: 'conversations',
@@ -156,11 +204,24 @@ export const Chat = ({ currentUser, matchedUser, onClose, onUnmatch, onMessagesR
     };
   };
 
+  const handleTyping = (value) => {
+    setNewMessage(value);
+    const channel = typingChannelRef.current;
+    if (!channel) return;
+    channel.track({ typing: true });
+    clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      channel.track({ typing: false });
+    }, 2000);
+  };
+
   const sendMessage = async (e) => {
     e.preventDefault();
     if (!newMessage.trim() || !conversationId) return;
     const messageContent = newMessage.trim();
     setNewMessage('');
+    clearTimeout(typingTimeoutRef.current);
+    typingChannelRef.current?.track({ typing: false });
     try {
       console.log('📤 Envoi message:', messageContent);
       const { data, error } = await supabase
@@ -182,71 +243,175 @@ export const Chat = ({ currentUser, matchedUser, onClose, onUnmatch, onMessagesR
     }
   };
 
+  const formatDayLabel = (dateStr) => {
+    const date = new Date(dateStr);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    if (date.toDateString() === today.toDateString()) return "Aujourd'hui";
+    if (date.toDateString() === yesterday.toDateString()) return 'Hier';
+    return date.toLocaleDateString('fr-CA', {
+      day: 'numeric',
+      month: 'long',
+      year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined,
+    });
+  };
+
+  const buildTimeline = (msgs) => {
+    const items = [];
+    let currentDay = null;
+    let currentGroup = null;
+    for (const message of msgs) {
+      const day = new Date(message.created_at).toDateString();
+      if (day !== currentDay) {
+        items.push({ type: 'day', date: message.created_at });
+        currentDay = day;
+        currentGroup = null;
+      }
+      if (currentGroup && currentGroup.senderId === message.sender_id) {
+        currentGroup.messages.push(message);
+      } else {
+        currentGroup = { type: 'group', senderId: message.sender_id, messages: [message] };
+        items.push(currentGroup);
+      }
+    }
+    return items;
+  };
+
+  const timeline = buildTimeline(messages);
+
   return (
     <>
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 z-[100]">
-        <div className="bg-slate-800 border border-violet-500/30 rounded-3xl max-w-2xl w-full h-[80vh] flex flex-col">
-          <div className="sticky top-0 bg-slate-800 border-b border-violet-500/30 p-6 flex items-center justify-between rounded-t-3xl">
-            <button 
-              onClick={() => setShowProfile(true)} 
-              className="flex items-center gap-3 hover:opacity-80 transition-all"
+      <div className="fixed inset-0 bg-gradient-to-br from-slate-950 via-purple-950 to-indigo-950 z-[100] flex flex-col">
+        <div className="fixed -top-20 -left-20 w-80 h-80 bg-violet-600 rounded-full blur-3xl opacity-[0.18] pointer-events-none z-0" />
+        <div className="fixed -bottom-20 -right-20 w-96 h-96 bg-cyan-500 rounded-full blur-3xl opacity-[0.18] pointer-events-none z-0" />
+        <div className="fixed top-1/3 right-0 w-80 h-80 bg-violet-600 rounded-full blur-3xl opacity-[0.18] pointer-events-none z-0" />
+
+        <div className="shrink-0 relative z-10 bg-white/5 backdrop-blur-xl border-b border-white/10" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 12px)' }}>
+          <div className="px-4 pb-3 flex items-center justify-between gap-2">
+            <button
+              onClick={() => setShowProfile(true)}
+              className="flex items-center gap-3 hover:opacity-80 transition-all min-w-0"
             >
               {matchedUser.photo_url ? (
-                <img src={matchedUser.photo_url} alt={matchedUser.name} className="w-12 h-12 rounded-full object-cover border-2 border-violet-500" />
+                <img src={matchedUser.photo_url} alt={matchedUser.name} className="w-11 h-11 rounded-full object-cover border-2 border-violet-500 shrink-0" />
               ) : (
-                <div className="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center text-2xl">👤</div>
+                <div className="w-11 h-11 rounded-full bg-slate-700 flex items-center justify-center text-2xl shrink-0">👤</div>
               )}
-              <div className="text-left">
-                <h2 className="text-xl font-bold text-white">{matchedUser.name}</h2>
-                <p className="text-sm text-gray-400">{t('matchCovibe')}</p>
+              <div className="text-left min-w-0">
+                <h2 className="text-lg font-bold text-white truncate">{matchedUser.name}</h2>
+                <p className="text-xs text-gray-400 truncate">{t('matchCovibe')}</p>
               </div>
             </button>
-            <button onClick={() => onUnmatch(matchedUser.user_id)} className="flex items-center gap-2 px-3 py-1.5 bg-slate-700/50 hover:bg-gradient-to-r hover:from-red-500/20 hover:to-indigo-500/20 text-gray-400 hover:text-red-400 rounded-lg transition-all text-sm border border-slate-600 hover:border-red-500/50">
-              <XCircle size={16} />
-              <span className="text-xs font-medium">{t('unmatch')}</span>
-            </button>
-            <button onClick={onClose} className="p-2 hover:bg-slate-700 rounded-xl transition-all">
-              <X size={24} className="text-gray-300" />
-            </button>
+            <div className="flex items-center gap-1 shrink-0">
+              <div className="relative">
+                <button onClick={() => setShowMenu((v) => !v)} className="p-2 hover:bg-white/10 rounded-full transition-all">
+                  <MoreVertical size={20} className="text-gray-300" />
+                </button>
+                {showMenu && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
+                    <div className="absolute right-0 top-full mt-2 bg-slate-800/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-lg overflow-hidden z-20 min-w-[160px]">
+                      <button
+                        onClick={() => { setShowMenu(false); onUnmatch(matchedUser.user_id); }}
+                        className="w-full flex items-center gap-2 px-4 py-3 text-red-400 hover:bg-red-500/10 transition-all text-sm font-medium"
+                      >
+                        <XCircle size={16} />
+                        {t('unmatch')}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+              <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-all">
+                <X size={22} className="text-white" />
+              </button>
+            </div>
           </div>
+        </div>
 
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
-            {loading ? (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-4xl">⏳</div>
-              </div>
-            ) : messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <div className="text-6xl mb-4">💬</div>
-                <h3 className="text-xl font-bold text-white mb-2">{t('startConversation')}</h3>
-                <p className="text-gray-400">{t('sendFirstMessage')} {matchedUser.name}</p>
-              </div>
-            ) : (
-              messages.map((message) => {
-                const isMe = message.sender_id === currentUser.user_id;
+        <div className="flex-1 overflow-y-auto p-4 relative z-10">
+          {loading ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-4xl">⏳</div>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center">
+              <div className="text-6xl mb-4">💬</div>
+              <h3 className="text-xl font-bold text-white mb-2">{t('startConversation')}</h3>
+              <p className="text-gray-400">{t('sendFirstMessage')} {matchedUser.name}</p>
+            </div>
+          ) : (
+            <>
+              {timeline.map((item, idx) => {
+                if (item.type === 'day') {
+                  return (
+                    <div key={`day-${idx}`} className="flex justify-center my-4">
+                      <span className="text-xs text-gray-400 bg-white/5 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
+                        {formatDayLabel(item.date)}
+                      </span>
+                    </div>
+                  );
+                }
+
+                const isMe = item.senderId === currentUser.user_id;
+                const lastMessage = item.messages[item.messages.length - 1];
+
                 return (
-                  <div key={message.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[70%] rounded-2xl px-4 py-3 ${isMe ? 'bg-gradient-to-r from-violet-600 to-indigo-500 text-white' : 'bg-slate-700 text-white'}`}>
-                      <p className="break-words">{message.content}</p>
-                      <p className={`text-xs mt-1 ${isMe ? 'text-violet-100' : 'text-gray-400'}`}>
-                        {new Date(message.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                      </p>
+                  <div key={item.messages[0].id} className={`flex flex-col mb-3 ${isMe ? 'items-end' : 'items-start'}`}>
+                    <div className={`flex flex-col gap-1 ${isMe ? 'items-end' : 'items-start'}`}>
+                      {item.messages.map((message, i) => {
+                        const isLast = i === item.messages.length - 1;
+                        const tailClass = isMe
+                          ? (isLast ? 'rounded-br-md' : '')
+                          : (isLast ? 'rounded-bl-md' : '');
+                        return (
+                          <div
+                            key={message.id}
+                            className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${tailClass} ${isMe ? 'bg-gradient-to-r from-violet-600 to-indigo-500 text-white' : 'bg-slate-700/80 backdrop-blur-sm text-white'}`}
+                          >
+                            <p className="break-words">{message.content}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className={`flex items-center gap-1 px-1 mt-1 ${isMe ? 'flex-row-reverse' : ''}`}>
+                      <span className="text-xs text-gray-500">
+                        {new Date(lastMessage.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      {isMe && (
+                        lastMessage.read
+                          ? <CheckCheck size={14} className="text-cyan-400" />
+                          : <Check size={14} className="text-gray-500" />
+                      )}
                     </div>
                   </div>
                 );
-              })
-            )}
-            <div ref={messagesEndRef} />
-          </div>
+              })}
 
-          <form onSubmit={sendMessage} className="p-6 border-t border-violet-500/30">
+              {isOtherTyping && (
+                <div className="flex justify-start mb-3">
+                  <div className="bg-slate-700/80 backdrop-blur-sm rounded-2xl rounded-bl-md px-4 py-3 flex items-center gap-1.5">
+                    <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        <div className="shrink-0 relative z-10 bg-white/5 backdrop-blur-xl border-t border-white/10" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}>
+          <form onSubmit={sendMessage} className="p-4">
             <div className="flex gap-3">
               <input
                 type="text"
                 value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
+                onChange={(e) => handleTyping(e.target.value)}
                 placeholder={t('typeMessage')}
-                className="flex-1 px-4 py-3 bg-slate-700 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
               />
               <button
                 type="submit"
