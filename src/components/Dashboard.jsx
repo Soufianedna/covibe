@@ -507,7 +507,6 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
     setUnreadCount(0);
     setMatchModalData(null);
     setSelectedMatch(null);
-    setShowConversations(false);
 
     const user1 = user.id < matchedUser.user_id ? user.id : matchedUser.user_id;
     const user2 = user.id < matchedUser.user_id ? matchedUser.user_id : user.id;

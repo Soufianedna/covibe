@@ -392,24 +392,23 @@ export const Chat = ({ currentUserProfile, matchedUser, onClose, onUnmatch, onMe
                 const lastMessage = item.messages[item.messages.length - 1];
 
                 return (
-                  <div key={item.messages[0].id} className={`flex flex-col mb-3 ${isMe ? 'items-end' : 'items-start'}`}>
-                    <div className={`flex flex-col gap-1 ${isMe ? 'items-end' : 'items-start'}`}>
-                      {item.messages.map((message, i) => {
-                        const isLast = i === item.messages.length - 1;
-                        const tailClass = isMe
-                          ? (isLast ? 'rounded-br-md' : '')
-                          : (isLast ? 'rounded-bl-md' : '');
-                        return (
+                  <div key={item.messages[0].id} className="mb-3">
+                    {item.messages.map((message, i) => {
+                      const isLast = i === item.messages.length - 1;
+                      const tailClass = isMe
+                        ? (isLast ? 'rounded-br-md' : '')
+                        : (isLast ? 'rounded-bl-md' : '');
+                      return (
+                        <div key={message.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} ${i > 0 ? 'mt-1' : ''}`}>
                           <div
-                            key={message.id}
-                            className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${tailClass} ${isMe ? 'bg-gradient-to-r from-violet-600 to-indigo-500 text-white' : 'bg-slate-700/80 backdrop-blur-sm text-white'}`}
+                            className={`w-fit max-w-[75%] rounded-2xl px-4 py-2.5 ${tailClass} ${isMe ? 'bg-gradient-to-r from-violet-600 to-indigo-500 text-white' : 'bg-slate-700/80 backdrop-blur-sm text-white'}`}
                           >
                             <p className="break-words">{message.content}</p>
                           </div>
-                        );
-                      })}
-                    </div>
-                    <div className={`flex items-center gap-1 px-1 mt-1 ${isMe ? 'flex-row-reverse' : ''}`}>
+                        </div>
+                      );
+                    })}
+                    <div className={`flex items-center gap-1 px-1 mt-1 ${isMe ? 'justify-end flex-row-reverse' : 'justify-start'}`}>
                       <span className="text-xs text-gray-500">
                         {new Date(lastMessage.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                       </span>

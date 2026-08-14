@@ -324,10 +324,7 @@ export const ConversationsList = ({ currentUserProfile, onClose, onOpenChat, onU
                   return (
                     <button
                       key={match.user_id}
-                      onClick={() => {
-                        onOpenChat(match);
-                        onClose();
-                      }}
+                      onClick={() => onOpenChat(match)}
                       className="w-full flex items-center gap-4 p-4 bg-slate-800/60 backdrop-blur-sm hover:bg-slate-700/60 rounded-2xl transition-all relative"
                     >
                       <div
