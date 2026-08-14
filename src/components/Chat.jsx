@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { X, Send, XCircle, MoreVertical, Check, CheckCheck } from 'lucide-react';
-import { ProfileView } from './ProfileView';
+import { ProfileDetailView } from './ProfileDetailView';
+import { ProfileMatchActions } from './ProfileMatchActions';
+import { calculateCompatibility } from '../lib/matching';
 import { useTranslation } from 'react-i18next';
 
-export const Chat = ({ currentUser, matchedUser, onClose, onUnmatch, onMessagesRead }) => {
+export const Chat = ({ currentUserProfile, matchedUser, onClose, onUnmatch, onMessagesRead, searchPartnerships = [] }) => {
   const { t } = useTranslation();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -13,6 +15,8 @@ export const Chat = ({ currentUser, matchedUser, onClose, onUnmatch, onMessagesR
   const [showProfile, setShowProfile] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [isOtherTyping, setIsOtherTyping] = useState(false);
+  const [matchedUserPartner, setMatchedUserPartner] = useState(null);
+  const [matchedUserPhotos, setMatchedUserPhotos] = useState([]);
   const messagesEndRef = useRef(null);
   const typingChannelRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -39,14 +43,14 @@ export const Chat = ({ currentUser, matchedUser, onClose, onUnmatch, onMessagesR
     if (!conversationId) return;
 
     const channel = supabase.channel(`typing:${conversationId}`, {
-      config: { presence: { key: currentUser.user_id } },
+      config: { presence: { key: currentUserProfile.user_id } },
     });
 
     channel
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState();
         const otherTyping = Object.entries(state)
-          .filter(([key]) => key !== currentUser.user_id)
+          .filter(([key]) => key !== currentUserProfile.user_id)
           .some(([, presences]) => presences.some((p) => p.typing));
         setIsOtherTyping(otherTyping);
       })
@@ -66,6 +70,36 @@ export const Chat = ({ currentUser, matchedUser, onClose, onUnmatch, onMessagesR
   }, [conversationId]);
 
   useEffect(() => {
+    const partnership = searchPartnerships.find(p =>
+      p.status === 'accepted' && (p.requester_id === matchedUser.user_id || p.partner_id === matchedUser.user_id)
+    );
+    if (!partnership) {
+      setMatchedUserPartner(null);
+      return;
+    }
+    const partnerId = partnership.requester_id === matchedUser.user_id ? partnership.partner_id : partnership.requester_id;
+    supabase
+      .from('profiles')
+      .select('user_id, name, photo_url')
+      .eq('user_id', partnerId)
+      .maybeSingle()
+      .then(({ data }) => setMatchedUserPartner(data || null));
+  }, [matchedUser.user_id, searchPartnerships]);
+
+  useEffect(() => {
+    if (!matchedUser.has_space) {
+      setMatchedUserPhotos([]);
+      return;
+    }
+    supabase
+      .from('property_photos')
+      .select('*')
+      .eq('user_id', matchedUser.user_id)
+      .order('position')
+      .then(({ data }) => setMatchedUserPhotos(data || []));
+  }, [matchedUser.user_id, matchedUser.has_space]);
+
+  useEffect(() => {
     scrollToBottom();
   }, [messages, isOtherTyping]);
 
@@ -80,7 +114,7 @@ export const Chat = ({ currentUser, matchedUser, onClose, onUnmatch, onMessagesR
         .from('messages')
         .update({ read: true })
         .eq('conversation_id', conversationId)
-        .neq('sender_id', currentUser.user_id)
+        .neq('sender_id', currentUserProfile.user_id)
         .eq('read', false);
       if (error) {
         console.error('❌ Erreur marquage lu:', error);
@@ -95,8 +129,8 @@ export const Chat = ({ currentUser, matchedUser, onClose, onUnmatch, onMessagesR
 
   const loadConversation = async () => {
     try {
-      const user1 = currentUser.user_id < matchedUser.user_id ? currentUser.user_id : matchedUser.user_id;
-      const user2 = currentUser.user_id < matchedUser.user_id ? matchedUser.user_id : currentUser.user_id;
+      const user1 = currentUserProfile.user_id < matchedUser.user_id ? currentUserProfile.user_id : matchedUser.user_id;
+      const user2 = currentUserProfile.user_id < matchedUser.user_id ? matchedUser.user_id : currentUserProfile.user_id;
       console.log('🔍 Recherche conversation entre:', user1, user2);
       let { data: conversation, error } = await supabase
         .from('conversations')
@@ -166,7 +200,7 @@ export const Chat = ({ currentUser, matchedUser, onClose, onUnmatch, onMessagesR
         (payload) => {
           console.log('📩 Nouveau message reçu:', payload.new);
           setMessages(current => [...current, payload.new]);
-          if (payload.new.sender_id !== currentUser.user_id) {
+          if (payload.new.sender_id !== currentUserProfile.user_id) {
             markMessagesAsRead();
           }
         }
@@ -228,7 +262,7 @@ export const Chat = ({ currentUser, matchedUser, onClose, onUnmatch, onMessagesR
         .from('messages')
         .insert({
           conversation_id: conversationId,
-          sender_id: currentUser.user_id,
+          sender_id: currentUserProfile.user_id,
           content: messageContent,
           read: false
         })
@@ -354,7 +388,7 @@ export const Chat = ({ currentUser, matchedUser, onClose, onUnmatch, onMessagesR
                   );
                 }
 
-                const isMe = item.senderId === currentUser.user_id;
+                const isMe = item.senderId === currentUserProfile.user_id;
                 const lastMessage = item.messages[item.messages.length - 1];
 
                 return (
@@ -426,13 +460,19 @@ export const Chat = ({ currentUser, matchedUser, onClose, onUnmatch, onMessagesR
       </div>
 
       {showProfile && (
-        <ProfileView
-          profile={matchedUser}
-          currentUser={currentUser}
+        <ProfileDetailView
+          profile={{ ...matchedUser, compatibility: calculateCompatibility(currentUserProfile, matchedUser) }}
+          currentUserProfile={currentUserProfile}
+          searchPartnerships={searchPartnerships}
+          partnerProfile={matchedUserPartner}
+          propertyPhotos={matchedUserPhotos}
           onClose={() => setShowProfile(false)}
-          onOpenChat={() => setShowProfile(false)}
-          onUnmatch={(userId) => { onUnmatch(userId); setShowProfile(false); onClose(); }}
-        />
+        >
+          <ProfileMatchActions
+            onSendMessage={() => setShowProfile(false)}
+            onUnmatch={() => { onUnmatch(matchedUser.user_id); setShowProfile(false); onClose(); }}
+          />
+        </ProfileDetailView>
       )}
     </>
   );

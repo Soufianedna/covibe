@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Heart, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { calculateCompatibility, getCompatibilityLevel } from '../lib/matching';
-import { ProfileView } from './ProfileView';
+import { ProfileDetailView } from './ProfileDetailView';
 import { useTranslation } from 'react-i18next';
 
-export const LikesReceived = ({ currentUser, onClose, onLike, onViewLikes, initialLikes = [] }) => {
+export const LikesReceived = ({ currentUserProfile, onClose, onLike, onViewLikes, initialLikes = [] }) => {
   const { t } = useTranslation();
   const [likes, setLikes] = useState(initialLikes);
   const [loading, setLoading] = useState(initialLikes.length === 0);
@@ -25,7 +25,7 @@ export const LikesReceived = ({ currentUser, onClose, onLike, onViewLikes, initi
       const { data: receivedLikes } = await supabase
         .from('swipes')
         .select('user_id')
-        .eq('swiped_user_id', currentUser.user_id)
+        .eq('swiped_user_id', currentUserProfile.user_id)
         .eq('is_like', true)
         .eq('viewed', false);
 
@@ -34,7 +34,7 @@ export const LikesReceived = ({ currentUser, onClose, onLike, onViewLikes, initi
       const { data: myLikes } = await supabase
         .from('swipes')
         .select('swiped_user_id')
-        .eq('user_id', currentUser.user_id);
+        .eq('user_id', currentUserProfile.user_id);
 
       const myLikedIds = (myLikes || []).map(l => l.swiped_user_id);
       const pending = receivedLikes.filter(l => !myLikedIds.includes(l.user_id)).map(l => l.user_id);
@@ -60,7 +60,7 @@ export const LikesReceived = ({ currentUser, onClose, onLike, onViewLikes, initi
   };
 
   const handlePass = async (profile) => {
-    await supabase.from('swipes').upsert({ user_id: currentUser.user_id, swiped_user_id: profile.user_id, is_like: false });
+    await supabase.from('swipes').upsert({ user_id: currentUserProfile.user_id, swiped_user_id: profile.user_id, is_like: false });
     const next = likes.filter(l => l.user_id !== profile.user_id);
     setLikes(next);
     setCurrentIndex(Math.min(currentIndex, next.length - 1));
@@ -68,7 +68,7 @@ export const LikesReceived = ({ currentUser, onClose, onLike, onViewLikes, initi
 
   const current = likes[currentIndex];
   const photos = current ? (current.photos?.length > 0 ? current.photos.map(p => p.photo_url) : [current.photo_url]) : [];
-  const compatibility = current && currentUser ? calculateCompatibility(currentUser, current) : 0;
+  const compatibility = current && currentUserProfile ? calculateCompatibility(currentUserProfile, current) : 0;
   const { color, emoji } = getCompatibilityLevel(compatibility);
 
   if (loading) return (
@@ -135,7 +135,13 @@ export const LikesReceived = ({ currentUser, onClose, onLike, onViewLikes, initi
       <div className="px-6 pt-4">
         <h2 className="text-3xl font-bold text-white">{current.name}, {current.age}</h2>
         <p className="text-gray-400 mt-1">{current.city === "vancouver" ? "Vancouver" : "Montréal"} • {current.creative_type}</p>
-        <ProfileView profile={current} currentUser={currentUser} fullPage={true} onClose={() => {}} />
+        <ProfileDetailView
+          profile={{ ...current, compatibility }}
+          isPreview={true}
+          hideCompatibility={false}
+          hideHeroPhoto={true}
+          currentUserProfile={currentUserProfile}
+        />
       </div>
 
       </div>

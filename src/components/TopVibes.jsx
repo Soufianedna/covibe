@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { calculateCompatibility, getCompatibilityLevel } from '../lib/matching';
 import { Heart, X } from 'lucide-react';
-import { ProfileView } from './ProfileView';
+import { ProfileDetailView } from './ProfileDetailView';
 
-export const TopVibes = ({ currentUser, onLike, onPass }) => {
+export const TopVibes = ({ currentUserProfile, onLike, onPass }) => {
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -23,20 +23,20 @@ export const TopVibes = ({ currentUser, onLike, onPass }) => {
       const { data: swiped } = await supabase
         .from('swipes')
         .select('swiped_user_id')
-        .eq('user_id', currentUser.user_id);
+        .eq('user_id', currentUserProfile.user_id);
 
       const swipedIds = (swiped || []).map(s => s.swiped_user_id);
 
       const { data: allProfiles } = await supabase
         .from('profiles')
         .select('*, profile_photos(photo_url, position)')
-        .eq('city', currentUser.city)
+        .eq('city', currentUserProfile.city)
         .eq('onboarding_complete', true)
-        .neq('user_id', currentUser.user_id);
+        .neq('user_id', currentUserProfile.user_id);
 
       const withPhotos = (allProfiles || []).map((p) => {
         const photos = (p.profile_photos || []).sort((a,b) => a.position - b.position);
-        const compatibility = calculateCompatibility(currentUser, p);
+        const compatibility = calculateCompatibility(currentUserProfile, p);
         return { ...p, photos, compatibility };
       });
 
@@ -122,7 +122,13 @@ export const TopVibes = ({ currentUser, onLike, onPass }) => {
           <p className="text-gray-400 mt-1">{current.city === 'vancouver' ? 'Vancouver' : 'Montréal'}</p>
           {current.bio && <p className="text-gray-300 mt-3">{current.bio}</p>}
 
-          <ProfileView profile={current} currentUser={currentUser} fullPage={true} onClose={() => {}} />
+          <ProfileDetailView
+            profile={current}
+            isPreview={true}
+            hideCompatibility={false}
+            hideHeroPhoto={true}
+            currentUserProfile={currentUserProfile}
+          />
         </div>
       </div>
 

@@ -158,6 +158,7 @@ export const ProfilePage = ({ currentUser, onSave, onLogout, onDeleteAccount, se
         <ProfileDetailView
           profile={currentUser}
           isPreview={true}
+          hideCompatibility={true}
           currentUserProfile={currentUser}
           searchPartnerships={searchPartnerships}
           partnerProfile={partnerProfile}

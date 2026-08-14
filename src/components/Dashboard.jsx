@@ -11,13 +11,14 @@ import { LanguageSwitcher } from './LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
 import { Chat } from './Chat';
 import { ConversationsList } from './ConversationsList';
-import { LogOut, User, X, Heart, XCircle, MessageCircle, Star, LayoutGrid, Layers } from 'lucide-react';
+import { LogOut, User, X, Heart, XCircle, Star, LayoutGrid, Layers } from 'lucide-react';
 import { FilterPills } from './FilterPills';
 import { LikesReceived } from './LikesReceived';
 import { Favorites } from './Favorites';
 import { TopVibes } from './TopVibes';
 import { ProfileScore } from './ProfileScore';
 import { ProfileDetailView } from './ProfileDetailView';
+import { ProfileMatchActions } from './ProfileMatchActions';
 import SwipeView from "./SwipeView";
 export const Dashboard = ({ user, userProfile, onLogout }) => {
   const { t } = useTranslation();
@@ -987,26 +988,16 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
           onPropertyPhotoClick={(url) => setLightboxPhoto(url)}
         >
           {isMutualMatch(selectedMatch.user_id) ? (
-            <div className="bg-gradient-to-r from-violet-600/20 to-indigo-500/20 border border-violet-500/50 rounded-xl p-4">
-              <button onClick={() => openChatWithMatch(selectedMatch)} className="flex items-center justify-center gap-3 w-full py-3 bg-gradient-to-r from-violet-600 to-indigo-500 text-white rounded-xl font-bold hover:shadow-lg transition-all">
-                <MessageCircle size={24} />
-                Envoyer un message
-              </button>
-              {renderPartnershipButton(selectedMatch)}
-              <div className="flex items-center justify-center gap-3 mt-3">
-                <button onClick={() => handleUnmatch(selectedMatch.user_id)} className="text-sm text-red-400/60 hover:text-red-400/90 transition-all">
-                  Unmatch
-                </button>
-                {getPartnershipWith(selectedMatch.user_id)?.status === 'accepted' && (
-                  <>
-                    <span className="text-slate-600">|</span>
-                    <button onClick={() => handleLeavePartnership(getPartnershipWith(selectedMatch.user_id))} className="text-sm text-red-400/60 hover:text-red-400/90 transition-all">
-                      Quitter le binôme
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
+            <ProfileMatchActions
+              onSendMessage={() => openChatWithMatch(selectedMatch)}
+              onUnmatch={() => handleUnmatch(selectedMatch.user_id)}
+              partnershipSlot={renderPartnershipButton(selectedMatch)}
+              onLeavePartnership={
+                getPartnershipWith(selectedMatch.user_id)?.status === 'accepted'
+                  ? () => handleLeavePartnership(getPartnershipWith(selectedMatch.user_id))
+                  : undefined
+              }
+            />
           ) : (
             <div className="bg-gradient-to-r from-violet-600/20 to-indigo-500/20 border border-violet-500/50 rounded-xl p-6">
               <p className="text-white text-center mb-4">{ t('whatDoYouThink') } {selectedMatch.name.split(' ')[0]} ?</p>
@@ -1157,7 +1148,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
 
       {showConversations && (
         <ConversationsList
-          currentUser={currentUserProfile}
+          currentUserProfile={currentUserProfile}
           onClose={() => { setShowConversations(false); setActiveTab("discover"); }}
           onUnmatch={handleUnmatch}
           onOpenChat={openChatWithMatch}
@@ -1170,6 +1161,10 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
           searchPartnerships={searchPartnerships}
           onAcceptPartnership={handleAcceptPartnership}
           onDeclinePartnership={handleDeclinePartnership}
+          getPartnershipWith={getPartnershipWith}
+          renderPartnershipButton={renderPartnershipButton}
+          onLeavePartnership={handleLeavePartnership}
+          onToggleFlexible={handleToggleFlexible}
         />
       )}
 
@@ -1184,9 +1179,10 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
 
       {chatUser && (
         <Chat
-          currentUser={currentUserProfile}
+          currentUserProfile={currentUserProfile}
           matchedUser={chatUser}
           onUnmatch={handleUnmatch}
+          searchPartnerships={searchPartnerships}
           onClose={() => {
             setChatUser(null);
             loadUnreadCount();
@@ -1197,7 +1193,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
       )}
       {showLikesReceived && (
         <LikesReceived
-          currentUser={currentUserProfile}
+          currentUserProfile={currentUserProfile}
           onClose={() => { setShowLikesReceived(false); setActiveTab("discover"); }}
           onViewLikes={() => { setUnviewedLikesCount(0); }}
           initialLikes={likerProfiles}
@@ -1210,7 +1206,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
 
       {showFavorites && (
         <TopVibes
-          currentUser={currentUserProfile}
+          currentUserProfile={currentUserProfile}
           onLike={async (profile) => { await handleLike(profile.user_id); }}
         />
       )}

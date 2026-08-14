@@ -2,10 +2,13 @@ import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { getCompatibilityLevel } from '../lib/matching';
 import { calculateDistance, formatDistance } from '../lib/distance';
+import { getDisplayAmenities } from '../lib/amenities';
 
 export const ProfileDetailView = ({
   profile,
   isPreview = false,
+  hideCompatibility = false,
+  hideHeroPhoto = false,
   currentUserProfile,
   searchPartnerships = [],
   partnerProfile,
@@ -38,29 +41,10 @@ export const ProfileDetailView = ({
     const raw = p?.photos && p.photos.length > 0 ? p.photos : [p?.photo_url];
     return raw.map((photo) => (typeof photo === 'string' ? photo : photo?.photo_url)).filter(Boolean);
   };
-  // amenities est stocké en base comme une chaîne JSON (colonne text) plutôt
-  // qu'un vrai tableau Postgres. On parse défensivement et on filtre les
-  // entrées non-alphanumériques (ex: "[", "]") issues de données déjà
-  // corrompues par un ancien bug de sauvegarde, sans planter sur du JSON invalide.
-  const getAmenitiesList = (p) => {
-    const raw = p?.amenities;
-    let parsed = [];
-    if (Array.isArray(raw)) {
-      parsed = raw;
-    } else if (typeof raw === 'string' && raw) {
-      try {
-        const result = JSON.parse(raw);
-        parsed = Array.isArray(result) ? result : [];
-      } catch {
-        parsed = [];
-      }
-    }
-    return parsed.filter((a) => typeof a === 'string' && /[a-zA-Z0-9]/.test(a));
-  };
 
   if (!profile) return null;
 
-  const photos = getProfilePhotoUrls(profile);
+  const photos = hideHeroPhoto ? [] : getProfilePhotoUrls(profile);
 
   const acceptedPartnership = searchPartnerships.find(p =>
     p.status === 'accepted' && (p.requester_id === profile.user_id || p.partner_id === profile.user_id)
@@ -74,32 +58,34 @@ export const ProfileDetailView = ({
   const body = (
     <div className={isPreview ? 'space-y-6' : 'px-6 pb-4 space-y-6'}>
       {/* Photo 1 en hero, pleine largeur */}
-      <div className={`${isPreview ? '' : '-mx-6'} relative aspect-[4/5] bg-slate-700 overflow-hidden ${isPreview ? 'rounded-2xl' : 'rounded-b-2xl'}`}>
-        {photos[0] ? (
-          <img src={photos[0]} alt={profile.name} className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-8xl">👤</div>
-        )}
-        {!isPreview && (
-          <div className="absolute left-4 px-3 py-1 bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-lg rounded-full" style={{ top: 'calc(env(safe-area-inset-top) + 16px)' }}>
-            <span className={`text-sm font-bold ${getCompatibilityLevel(profile.compatibility).color}`}>{getCompatibilityLevel(profile.compatibility).emoji} {profile.compatibility}%</span>
+      {!hideHeroPhoto && (
+        <div className={`${isPreview ? '' : '-mx-6'} relative aspect-[4/5] bg-slate-700 overflow-hidden ${isPreview ? 'rounded-2xl' : 'rounded-b-2xl'}`}>
+          {photos[0] ? (
+            <img src={photos[0]} alt={profile.name} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-8xl">👤</div>
+          )}
+          {!hideCompatibility && (
+            <div className="absolute left-4 px-3 py-1 bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-lg rounded-full" style={{ top: 'calc(env(safe-area-inset-top) + 16px)' }}>
+              <span className={`text-sm font-bold ${getCompatibilityLevel(profile.compatibility).color}`}>{getCompatibilityLevel(profile.compatibility).emoji} {profile.compatibility}%</span>
+            </div>
+          )}
+          <div className="absolute inset-x-0 bottom-0 p-6 pt-16 bg-gradient-to-t from-black/80 to-transparent">
+            <h3 className="text-3xl font-bold text-white flex items-center gap-2">
+              {profile.name?.trim()}, {profile.age}
+              {profile.verified && (
+                <span className="inline-flex items-center justify-center w-6 h-6 bg-violet-500 rounded-full text-white text-sm font-bold">✓</span>
+              )}
+            </h3>
+            <p className="text-gray-200 mt-1">
+              📍 {getCityLabel(profile.city)}
+              {!hideCompatibility && currentUserProfile?.latitude && profile.latitude && (
+                <> · {formatDistance(calculateDistance(currentUserProfile.latitude, currentUserProfile.longitude, profile.latitude, profile.longitude))}</>
+              )}
+            </p>
           </div>
-        )}
-        <div className="absolute inset-x-0 bottom-0 p-6 pt-16 bg-gradient-to-t from-black/80 to-transparent">
-          <h3 className="text-3xl font-bold text-white flex items-center gap-2">
-            {profile.name?.trim()}, {profile.age}
-            {profile.verified && (
-              <span className="inline-flex items-center justify-center w-6 h-6 bg-violet-500 rounded-full text-white text-sm font-bold">✓</span>
-            )}
-          </h3>
-          <p className="text-gray-200 mt-1">
-            📍 {getCityLabel(profile.city)}
-            {!isPreview && currentUserProfile?.latitude && profile.latitude && (
-              <> · {formatDistance(calculateDistance(currentUserProfile.latitude, currentUserProfile.longitude, profile.latitude, profile.longitude))}</>
-            )}
-          </p>
         </div>
-      </div>
+      )}
 
       {/* Bloc identité */}
       <div className="text-center space-y-1">
@@ -184,12 +170,16 @@ export const ProfileDetailView = ({
       <div>
         <h5 className="text-xs uppercase tracking-wide text-gray-500 font-semibold mb-2">Logement</h5>
         <div className="flex flex-wrap gap-2">
-          <span className="px-3 py-1.5 bg-violet-500/20 border border-violet-500/50 rounded-full text-sm text-violet-300">
-            ✓ {profile.seeking === 'room' ? t('lookingForRoommate') : t('lookingForStudio')}
-          </span>
-          <span className="px-3 py-1.5 bg-purple-500/20 border border-purple-500/50 rounded-full text-sm text-purple-300">
-            🎨 {profile.seeking === 'room' ? t('lookingForStudio') : t('lookingForRoommate')}
-          </span>
+          {profile.seeking_roommate && (
+            <span className="px-3 py-1.5 bg-violet-500/20 border border-violet-500/50 rounded-full text-sm text-violet-300">
+              ✓ {t('lookingForRoommate')}
+            </span>
+          )}
+          {profile.seeking_studio && (
+            <span className="px-3 py-1.5 bg-purple-500/20 border border-purple-500/50 rounded-full text-sm text-purple-300">
+              🎨 {t('lookingForStudio')}
+            </span>
+          )}
           <span className="px-3 py-1.5 bg-slate-700/50 rounded-full text-sm text-gray-200">
             💰 {profile.has_space ? `${t('roomPriceLabel')} ${profile.room_price}$/mois` : `${profile.budget_min}$ - ${profile.budget_max}$ CAD${t('perMonth')}`}
           </span>
@@ -291,11 +281,11 @@ export const ProfileDetailView = ({
           )}
 
           {/* Équipements */}
-          {getAmenitiesList(profile).length > 0 && (
+          {getDisplayAmenities(profile.amenities).length > 0 && (
             <div>
               <h5 className="text-xs uppercase tracking-wide text-gray-500 font-semibold mb-2">{t('amenities')}</h5>
               <div className="flex flex-wrap gap-2">
-                {getAmenitiesList(profile).map(amenity => (
+                {getDisplayAmenities(profile.amenities).map(amenity => (
                   <span key={amenity} className="px-3 py-1.5 bg-cyan-500/20 border border-cyan-500/50 rounded-full text-cyan-400 text-sm">
                     ✓ {t(amenity)}
                   </span>
@@ -325,7 +315,7 @@ export const ProfileDetailView = ({
       )}
 
       {/* Compatibilité, condensée en bas */}
-      {!isPreview && (
+      {!hideCompatibility && (
         <div className="bg-slate-800/60 rounded-2xl p-4">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm text-gray-300">{t('compatibility')}</span>

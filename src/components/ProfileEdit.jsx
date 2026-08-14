@@ -6,6 +6,7 @@ import { Geolocation } from '@capacitor/geolocation';
 import { Camera, X } from 'lucide-react';
 import { getNeighborhoodsForCity, getNeighborhoodCoordinates, neighborhoodGroups } from '../lib/neighborhoods';
 import { useTranslation } from 'react-i18next';
+import { parseAmenities } from '../lib/amenities';
 
 export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
   const { t } = useTranslation();
@@ -14,23 +15,6 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
   const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3000); };
   const [existingPhotos, setExistingPhotos] = useState([]);
   const [propertyPhotos, setPropertyPhotos] = useState([]);
-
-  // amenities est stocké en base comme une chaîne JSON (colonne text, pas un
-  // vrai tableau Postgres comme languages/creative_space_type). Il faut donc
-  // le parser explicitement, sinon "current || []" reste une chaîne truthy et
-  // [...current, x] corrompt les données en spreadant ses caractères.
-  const parseAmenities = (raw) => {
-    if (Array.isArray(raw)) return raw;
-    if (typeof raw === 'string' && raw) {
-      try {
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : [];
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  };
 
   const [profile, setProfile] = useState({
     name: userProfile.name || '',

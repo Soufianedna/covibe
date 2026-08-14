@@ -1,15 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { MessageCircle } from 'lucide-react';
-import { ProfileView } from './ProfileView';
+import { ProfileDetailView } from './ProfileDetailView';
+import { ProfileMatchActions } from './ProfileMatchActions';
+import { calculateCompatibility } from '../lib/matching';
 import { useTranslation } from 'react-i18next';
 import { Logo } from './Logo';
 
-export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch, mutualMatchProfiles = [], onSelectMatch, favorites = [], onToggleFavorite, likerProfiles = [], onViewLikes, searchPartnerships = [], onAcceptPartnership, onDeclinePartnership }) => {
+export const ConversationsList = ({ currentUserProfile, onClose, onOpenChat, onUnmatch, mutualMatchProfiles = [], onSelectMatch, favorites = [], onToggleFavorite, likerProfiles = [], onViewLikes, searchPartnerships = [], onAcceptPartnership, onDeclinePartnership, getPartnershipWith, renderPartnershipButton, onLeavePartnership, onToggleFlexible }) => {
   const { t } = useTranslation();
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [conversationData, setConversationData] = useState({});
   const [selectedProfile, setSelectedProfile] = useState(null);
+  const [selectedProfilePartner, setSelectedProfilePartner] = useState(null);
+  const [selectedProfilePhotos, setSelectedProfilePhotos] = useState([]);
   const [inviterProfiles, setInviterProfiles] = useState({});
   const conversationDataRef = useRef({});
 
@@ -17,7 +21,7 @@ export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch,
     conversationDataRef.current = conversationData;
   }, [conversationData]);
 
-  const pendingInvitesReceived = searchPartnerships.filter(p => p.status === 'pending' && p.partner_id === currentUser.user_id);
+  const pendingInvitesReceived = searchPartnerships.filter(p => p.status === 'pending' && p.partner_id === currentUserProfile.user_id);
 
   useEffect(() => {
     if (pendingInvitesReceived.length === 0) {
@@ -39,11 +43,45 @@ export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch,
         (data || []).forEach((p) => { map[p.user_id] = p; });
         setInviterProfiles(map);
       });
-  }, [searchPartnerships, currentUser.user_id]);
+  }, [searchPartnerships, currentUserProfile.user_id]);
+
+  useEffect(() => {
+    if (!selectedProfile) {
+      setSelectedProfilePartner(null);
+      setSelectedProfilePhotos([]);
+      return;
+    }
+
+    const partnership = searchPartnerships.find(p =>
+      p.status === 'accepted' && (p.requester_id === selectedProfile.user_id || p.partner_id === selectedProfile.user_id)
+    );
+    if (partnership) {
+      const partnerId = partnership.requester_id === selectedProfile.user_id ? partnership.partner_id : partnership.requester_id;
+      supabase
+        .from('profiles')
+        .select('user_id, name, photo_url')
+        .eq('user_id', partnerId)
+        .maybeSingle()
+        .then(({ data }) => setSelectedProfilePartner(data || null));
+    } else {
+      setSelectedProfilePartner(null);
+    }
+
+    if (selectedProfile.has_space) {
+      supabase
+        .from('property_photos')
+        .select('*')
+        .eq('user_id', selectedProfile.user_id)
+        .order('position')
+        .then(({ data }) => setSelectedProfilePhotos(data || []));
+    } else {
+      setSelectedProfilePhotos([]);
+    }
+  }, [selectedProfile, searchPartnerships]);
 
   const fetchConversationEntry = async (matchUserId) => {
-    const user1 = currentUser.user_id < matchUserId ? currentUser.user_id : matchUserId;
-    const user2 = currentUser.user_id < matchUserId ? matchUserId : currentUser.user_id;
+    const user1 = currentUserProfile.user_id < matchUserId ? currentUserProfile.user_id : matchUserId;
+    const user2 = currentUserProfile.user_id < matchUserId ? matchUserId : currentUserProfile.user_id;
 
     const { data: conversation } = await supabase
       .from('conversations')
@@ -68,7 +106,7 @@ export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch,
         .from('messages')
         .select('*', { count: 'exact', head: true })
         .eq('conversation_id', conversation.id)
-        .neq('sender_id', currentUser.user_id)
+        .neq('sender_id', currentUserProfile.user_id)
         .eq('read', false),
     ]);
 
@@ -114,7 +152,7 @@ export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch,
           .eq('id', message.conversation_id)
           .maybeSingle();
         if (!conversation) return;
-        const otherUserId = conversation.user1_id === currentUser.user_id ? conversation.user2_id : conversation.user1_id;
+        const otherUserId = conversation.user1_id === currentUserProfile.user_id ? conversation.user2_id : conversation.user1_id;
         const isKnownMatch = mutualMatchProfiles.some((m) => m.user_id === otherUserId);
         if (!isKnownMatch) return;
         matchUserId = otherUserId;
@@ -131,7 +169,7 @@ export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch,
       .subscribe();
 
     return () => channel.unsubscribe();
-  }, [mutualMatchProfiles, currentUser.user_id]);
+  }, [mutualMatchProfiles, currentUserProfile.user_id]);
 
   const getPreviewText = (matchUserId) => {
     const convData = conversationData[matchUserId];
@@ -142,12 +180,12 @@ export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch,
       return `${convData.unreadCount} nouveau${convData.unreadCount > 1 ? 'x' : ''} message${convData.unreadCount > 1 ? 's' : ''}`;
     }
 
-    if (convData.lastMessage && convData.lastMessage.sender_id !== currentUser.user_id && !convData.lastMessage.read) {
+    if (convData.lastMessage && convData.lastMessage.sender_id !== currentUserProfile.user_id && !convData.lastMessage.read) {
       return '💬 À ton tour de répondre';
     }
 
     if (convData.lastMessage) {
-      const isMe = convData.lastMessage.sender_id === currentUser.user_id;
+      const isMe = convData.lastMessage.sender_id === currentUserProfile.user_id;
       const prefix = isMe ? 'Toi: ' : '';
       const preview = convData.lastMessage.content.substring(0, 40);
       return prefix + (preview.length < convData.lastMessage.content.length ? `${preview}...` : preview);
@@ -212,7 +250,7 @@ export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch,
             </div>
           )}
 
-          {railMatches.length > 0 && (
+          {!loadingConversations && railMatches.length > 0 && (
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2"><Logo size={28} /> Tes VibeMatches</h2>
               <div className="flex gap-3 overflow-x-auto pb-4">
@@ -295,7 +333,7 @@ export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch,
                       <div
                         onClick={(e) => {
                           e.stopPropagation();
-                          setSelectedProfile(match);
+                          setSelectedProfile({ ...match, compatibility: calculateCompatibility(currentUserProfile, match) });
                         }}
                         className="relative hover:opacity-80 transition-all shrink-0"
                       >
@@ -334,17 +372,33 @@ export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch,
       </div>
 
       {selectedProfile && (
-        <ProfileView
+        <ProfileDetailView
           profile={selectedProfile}
-          currentUser={currentUser}
+          currentUserProfile={currentUserProfile}
+          searchPartnerships={searchPartnerships}
+          partnerProfile={selectedProfilePartner}
+          propertyPhotos={selectedProfilePhotos}
           onClose={() => setSelectedProfile(null)}
-          onUnmatch={onUnmatch}
-          onOpenChat={(profile) => {
-            setSelectedProfile(null);
-            onOpenChat(profile);
-            onClose();
-          }}
-        />
+          onToggleFlexible={onToggleFlexible}
+        >
+          <ProfileMatchActions
+            onSendMessage={() => {
+              setSelectedProfile(null);
+              onOpenChat(selectedProfile);
+              onClose();
+            }}
+            onUnmatch={() => {
+              onUnmatch(selectedProfile.user_id);
+              setSelectedProfile(null);
+            }}
+            partnershipSlot={renderPartnershipButton && renderPartnershipButton(selectedProfile)}
+            onLeavePartnership={
+              getPartnershipWith?.(selectedProfile.user_id)?.status === 'accepted'
+                ? () => onLeavePartnership(getPartnershipWith(selectedProfile.user_id))
+                : undefined
+            }
+          />
+        </ProfileDetailView>
       )}
     </>
   );
