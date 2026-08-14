@@ -316,7 +316,7 @@ export const Onboarding = ({ user, onComplete }) => {
                     } else {
                       setProfile({ ...profile, [currentQuestion.field.name]: opt.value });
                     }
-                  }} className={`p-6 rounded-2xl text-lg font-bold transition-all break-words overflow-wrap-anywhere text-center leading-snug ${isSelected ? 'bg-gradient-to-r from-violet-600 to-indigo-500 text-white scale-105' : 'bg-slate-700/50 text-gray-300 hover:bg-slate-700'}`}>
+                  }} className={`p-4 rounded-2xl text-sm font-bold transition-all hyphens-auto text-center leading-snug ${isSelected ? 'bg-gradient-to-r from-violet-600 to-indigo-500 text-white scale-105' : 'bg-slate-700/50 text-gray-300 hover:bg-slate-700'}`}>
                     {opt.label}
                   </button>
                 );
