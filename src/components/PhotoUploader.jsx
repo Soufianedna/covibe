@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Upload, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Camera as CameraIcon, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 
@@ -259,14 +259,11 @@ export const PhotoUploader = ({ userId, existingPhotos = [], onPhotosChange }) =
               className="hidden"
             />
             {uploading ? (
-              <div className="text-center">
-                <div className="animate-spin text-violet-500 mb-2">⏳</div>
-                <p className="text-sm text-gray-400">Upload...</p>
-              </div>
+              <div className="animate-spin text-violet-500">⏳</div>
             ) : (
               <>
-                <Upload size={32} className="text-gray-400" />
-                <p className="text-sm text-gray-400">Ajouter une photo</p>
+                <CameraIcon size={32} className="text-gray-400 mb-2" />
+                <span className="text-2xl text-gray-400 font-bold leading-none">+</span>
               </>
             )}
           </label>

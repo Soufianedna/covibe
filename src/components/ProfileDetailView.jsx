@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { getCompatibilityLevel } from '../lib/matching';
 import { calculateDistance, formatDistance } from '../lib/distance';
 import { getDisplayAmenities } from '../lib/amenities';
+import { getCreativeTypeKey } from '../lib/creativeType';
 
 export const ProfileDetailView = ({
   profile,
@@ -23,7 +24,6 @@ export const ProfileDetailView = ({
 
   const getGenderLabel = (gender) => gender;
   const getCityLabel = (city) => city;
-  const getCreativeTypeLabel = (type) => type;
   const getProductiveTimeLabel = (time) => time;
   const getReligionLabel = (religion) => {
     const labels = {
@@ -89,7 +89,7 @@ export const ProfileDetailView = ({
 
       {/* Bloc identité */}
       <div className="text-center space-y-1">
-        <p className="text-gray-300">{t(getGenderLabel(profile.gender))} · <span className="text-violet-400 font-semibold">{t(getCreativeTypeLabel(profile.creative_type))}</span></p>
+        <p className="text-gray-300">{t(getGenderLabel(profile.gender))} · <span className="text-violet-400 font-semibold">{t(getCreativeTypeKey(profile.creative_type, profile.gender))}</span></p>
       </div>
 
       {partnerProfile && (

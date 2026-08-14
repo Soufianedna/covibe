@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { X, Star, Heart, MessageCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getCompatibilityLevel } from '../lib/matching';
+import { getCreativeTypeKey } from '../lib/creativeType';
 
 export const Favorites = ({ currentUser, onClose, onOpenChat, onLike, mutualMatches }) => {
   const { t } = useTranslation();
@@ -69,11 +70,6 @@ export const Favorites = ({ currentUser, onClose, onOpenChat, onLike, mutualMatc
 
   const getCityLabel = (city) => city === 'vancouver' ? 'Vancouver' : 'Montréal';
 
-  const getCreativeTypeLabel = (type) => {
-    const labels = { musician: 'Musicien·ne', artist: 'Artiste visuel·le', content_creator: 'Créateur·rice de contenu', photographer: 'Photographe', developer: 'Développeur·se', writer: 'Écrivain·e', entrepreneur: 'Entrepreneur·e', other: 'Autre' };
-    return labels[type] || type;
-  };
-
   return (
     <div className="fixed inset-0 z-40 overflow-y-auto bg-slate-900 pb-24">
       <div className="p-6 pt-16">
@@ -117,7 +113,7 @@ export const Favorites = ({ currentUser, onClose, onOpenChat, onLike, mutualMatc
                     <div className="text-center mb-4">
                       <h3 className="text-xl font-bold text-white mb-1">{profile.name}</h3>
                       <p className="text-gray-400 text-sm mb-2">{profile.age} ans • {getGenderLabel(profile.gender)} • {getCityLabel(profile.city)}</p>
-                      <p className="text-violet-400 font-semibold">{getCreativeTypeLabel(profile.creative_type)}</p>
+                      <p className="text-violet-400 font-semibold">{t(getCreativeTypeKey(profile.creative_type, profile.gender))}</p>
                     </div>
                     {mutualMatches && mutualMatches.includes(profile.user_id) ? (
                       <button

@@ -73,7 +73,7 @@ export const PropertyPhotosUploader = ({ userId, existingPhotos, onPhotosChange 
         {existingPhotos.length < 5 && (
           <label className="w-full h-32 bg-slate-700/50 border-2 border-dashed border-gray-600 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-slate-700 transition-all">
             <Camera size={32} className="text-gray-400 mb-2" />
-            <span className="text-sm text-gray-400">{uploading ? 'Upload...' : t('uploadPropertyPhotos')}</span>
+            <span className="text-2xl text-gray-400 font-bold leading-none">{uploading ? '…' : '+'}</span>
             <input type="file" accept="image/*" onChange={uploadPhoto} className="hidden" disabled={uploading} />
           </label>
         )}

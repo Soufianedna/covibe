@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { Logo } from './Logo';
 import { PropertyPhotosUploader } from './PropertyPhotosUploader';
 import { getNeighborhoodCoordinates, neighborhoodGroups } from '../lib/neighborhoods';
 
 export const Onboarding = ({ user, onComplete }) => {
+  const { t } = useTranslation();
   const [step, setStep] = useState(0);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [propertyPhotos, setPropertyPhotos] = useState([]);
@@ -353,7 +355,7 @@ export const Onboarding = ({ user, onComplete }) => {
                   <PropertyPhotosUploader userId={user.id} existingPhotos={propertyPhotos} onPhotosChange={setPropertyPhotos} />
                   <div className="grid grid-cols-2 gap-4 mt-4">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-300 mb-2">Prix de la chambre ($/mois)</label>
+                      <label className="block text-sm font-semibold text-gray-300 mb-2">{t('roomPrice')}</label>
                       <input type="number" value={profile.room_price || ''} onChange={(e) => setProfile({ ...profile, room_price: parseInt(e.target.value) || null })} className={inputClass} placeholder="800" />
                     </div>
                     <div>

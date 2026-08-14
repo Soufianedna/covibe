@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Heart, X, MapPin } from 'lucide-react';
 import { getCompatibilityLevel } from '../lib/matching';
+import { getCreativeTypeKey } from '../lib/creativeType';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 
 export default function SwipeView({ profiles, onSwipe, onViewProfile, currentUser }) {
@@ -128,7 +129,7 @@ export default function SwipeView({ profiles, onSwipe, onViewProfile, currentUse
                     <h2 className="text-4xl font-bold mb-2">{profile.name}, {profile.age}</h2>
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-1"><MapPin size={18} className="text-violet-400"/><span className="text-lg">{profile.distance_text || "< 1 km"}</span></div>
-                      <span className="text-lg">🎨 {t(profile.creative_type)}</span>
+                      <span className="text-lg">🎨 {t(getCreativeTypeKey(profile.creative_type, profile.gender))}</span>
                     </div>
                   </div>
                 </div>

@@ -3,6 +3,7 @@ import { LazyLoadImage } from 'react-lazy-load-image-component';
 import { supabase } from '../lib/supabase';
 import { getTopMatches, getCompatibilityLevel, calculateCompatibility } from '../lib/matching';
 import { calculateDistance, formatDistance } from '../lib/distance';
+import { getCreativeTypeKey } from '../lib/creativeType';
 import { Logo } from './Logo';
 import { MessageNotification } from './MessageNotification';
 import { ProfilePage } from './ProfilePage';
@@ -532,7 +533,6 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
 
   const getGenderLabel = (gender) => gender;
   const getCityLabel = (city) => city;
-  const getCreativeTypeLabel = (type) => type;
   const getProductiveTimeLabel = (time) => time;
   const isMutualMatch = (matchId) => mutualMatches.includes(matchId);
 
@@ -937,7 +937,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
                       )}
                     </p>
                     </div>
-                    <p className="text-violet-400 font-semibold">{t(getCreativeTypeLabel(match.creative_type))}</p>
+                    <p className="text-violet-400 font-semibold">{t(getCreativeTypeKey(match.creative_type, match.gender))}</p>
                   </div>
                   <div className="bg-slate-700/50 rounded-xl p-4 mb-4">
                     <div className="flex items-center justify-between mb-2">
