@@ -32,10 +32,30 @@ export const ProfileDetailView = ({
   };
   const getWorkLocationLabel = (w) => ({ remote: 'remote', office: 'office', hybrid: 'hybrid', freelance: 'freelance', student: 'student', other: 'other' }[w] || w);
   const getRelationshipLabel = (r) => ({ single: 'single', couple: 'couple', married: 'married' }[r] || r);
+  const getLeaseDurationLabel = (d) => ({ monthly: 'monthToMonth', '3months': 'threeMonths', '6months': 'sixMonths', '1year': 'oneYear' }[d] || d);
   const getLanguageLabel = (l) => ({ french: 'Français', english: 'Anglais', spanish: 'Espagnol', arabic: 'Arabe', portuguese: 'Portugais', mandarin: 'Mandarin', hindi: 'Hindi', farsi: 'Farsi', cantonese: 'Cantonais', other: 'Autre' }[l] || l);
   const getProfilePhotoUrls = (p) => {
     const raw = p?.photos && p.photos.length > 0 ? p.photos : [p?.photo_url];
     return raw.map((photo) => (typeof photo === 'string' ? photo : photo?.photo_url)).filter(Boolean);
+  };
+  // amenities est stocké en base comme une chaîne JSON (colonne text) plutôt
+  // qu'un vrai tableau Postgres. On parse défensivement et on filtre les
+  // entrées non-alphanumériques (ex: "[", "]") issues de données déjà
+  // corrompues par un ancien bug de sauvegarde, sans planter sur du JSON invalide.
+  const getAmenitiesList = (p) => {
+    const raw = p?.amenities;
+    let parsed = [];
+    if (Array.isArray(raw)) {
+      parsed = raw;
+    } else if (typeof raw === 'string' && raw) {
+      try {
+        const result = JSON.parse(raw);
+        parsed = Array.isArray(result) ? result : [];
+      } catch {
+        parsed = [];
+      }
+    }
+    return parsed.filter((a) => typeof a === 'string' && /[a-zA-Z0-9]/.test(a));
   };
 
   if (!profile) return null;
@@ -217,65 +237,66 @@ export const ProfileDetailView = ({
 
       {/* SECTION ESPACE DISPONIBLE */}
       {profile.has_space && (
-        <div className="bg-slate-800 rounded-2xl p-6 space-y-4">
+        <div className="bg-slate-800 rounded-2xl p-6 space-y-5">
           <h4 className="text-lg font-bold text-white">🏠 {t('availableSpace')}</h4>
 
-          {/* Prix */}
-          <div className="bg-gradient-to-r from-violet-600/20 to-indigo-500/20 border border-violet-500/30 rounded-xl p-4">
-            <p className="text-2xl font-bold text-white text-center">
-              {profile.room_price}$ {t('perMonth')}
+          {/* Prix — information principale de la section */}
+          <div className="bg-gradient-to-r from-violet-600/20 to-indigo-500/20 border border-violet-500/30 rounded-2xl p-6 text-center">
+            <p className="text-4xl font-bold text-white">
+              {profile.room_price}$ <span className="text-lg font-semibold text-gray-300">{t('perMonth')}</span>
             </p>
           </div>
 
-          {/* Photos de l'appart */}
-          {propertyPhotos.length > 0 && (
-            <div>
-              <p className="text-sm font-semibold text-gray-300 mb-2">{t('propertyPhotos')}</p>
-              <div className="grid grid-cols-2 gap-2">
-                {propertyPhotos.map((photo) => (
-                  <img
-                    key={photo.id}
-                    src={photo.url}
-                    alt="Property"
-                    onClick={onPropertyPhotoClick ? () => onPropertyPhotoClick(photo.url) : undefined}
-                    className={`w-full h-32 object-cover rounded-xl transition-all ${onPropertyPhotoClick ? 'cursor-pointer hover:opacity-90' : ''}`}
-                  />
-                ))}
-              </div>
+          {/* Photo du logement */}
+          {propertyPhotos[0] && (
+            <img
+              src={propertyPhotos[0].url}
+              alt="Property"
+              onClick={onPropertyPhotoClick ? () => onPropertyPhotoClick(propertyPhotos[0].url) : undefined}
+              className={`w-full aspect-[4/5] object-cover rounded-2xl transition-all ${onPropertyPhotoClick ? 'cursor-pointer hover:opacity-90' : ''}`}
+            />
+          )}
+
+          {/* Caractéristiques */}
+          {(profile.property_type || profile.is_furnished !== null || profile.lease_duration) && (
+            <div className="flex flex-wrap gap-2">
+              {profile.property_type && (
+                <span className="px-3 py-1.5 bg-slate-700/50 rounded-full text-sm text-gray-200">🏠 {t(profile.property_type)}</span>
+              )}
+              {profile.is_furnished !== null && (
+                <span className="px-3 py-1.5 bg-slate-700/50 rounded-full text-sm text-gray-200">{profile.is_furnished ? '✅' : '❌'} {profile.is_furnished ? t('furnished') : t('unfurnished')}</span>
+              )}
+              {profile.lease_duration && (
+                <span className="px-3 py-1.5 bg-slate-700/50 rounded-full text-sm text-gray-200">📅 {t(getLeaseDurationLabel(profile.lease_duration))}</span>
+              )}
             </div>
           )}
 
-          {/* Type + Meublé */}
-          <div className="grid grid-cols-2 gap-4">
-            {profile.property_type && (
-              <div>
-                <p className="text-xs text-gray-400 mb-1">{t('propertyType')}</p>
-                <p className="text-white font-semibold">{t(profile.property_type)}</p>
-              </div>
-            )}
-            {profile.is_furnished !== null && (
-              <div>
-                <p className="text-xs text-gray-400 mb-1">{t('isFurnished')}</p>
-                <p className="text-white font-semibold">{profile.is_furnished ? '✅ ' + t('furnished') : t('unfurnished')}</p>
-              </div>
-            )}
-          </div>
+          {/* Deuxième photo du logement */}
+          {propertyPhotos[1] && (
+            <img
+              src={propertyPhotos[1].url}
+              alt="Property"
+              onClick={onPropertyPhotoClick ? () => onPropertyPhotoClick(propertyPhotos[1].url) : undefined}
+              className={`w-full aspect-[4/5] object-cover rounded-2xl transition-all ${onPropertyPhotoClick ? 'cursor-pointer hover:opacity-90' : ''}`}
+            />
+          )}
 
           {/* Description */}
           {profile.property_description && (
             <div>
-              <p className="text-xs text-gray-400 mb-1">{t('propertyDescription')}</p>
-              <p className="text-gray-300 bg-slate-700/50 rounded-xl p-3 text-sm">{profile.property_description}</p>
+              <h5 className="text-xs uppercase tracking-wide text-gray-500 font-semibold mb-2">{t('propertyDescription')}</h5>
+              <p className="text-gray-200 bg-slate-700/50 rounded-2xl p-6 text-lg leading-relaxed">{profile.property_description}</p>
             </div>
           )}
 
           {/* Équipements */}
-          {profile.amenities && (Array.isArray(profile.amenities) ? profile.amenities : JSON.parse(profile.amenities || "[]")).length > 0 && (
+          {getAmenitiesList(profile).length > 0 && (
             <div>
-              <p className="text-xs text-gray-400 mb-2">{t('amenities')}</p>
+              <h5 className="text-xs uppercase tracking-wide text-gray-500 font-semibold mb-2">{t('amenities')}</h5>
               <div className="flex flex-wrap gap-2">
-                {(Array.isArray(profile.amenities) ? profile.amenities : JSON.parse(profile.amenities || "[]")).map(amenity => (
-                  <span key={amenity} className="px-3 py-1 bg-cyan-500/20 border border-cyan-500/50 rounded-full text-cyan-400 text-xs">
+                {getAmenitiesList(profile).map(amenity => (
+                  <span key={amenity} className="px-3 py-1.5 bg-cyan-500/20 border border-cyan-500/50 rounded-full text-cyan-400 text-sm">
                     ✓ {t(amenity)}
                   </span>
                 ))}
@@ -285,10 +306,21 @@ export const ProfileDetailView = ({
 
           {/* Badge espace créatif */}
           {profile.has_creative_space && (
-            <div className="p-3 bg-purple-500/20 border border-purple-500/50 rounded-xl text-center">
+            <div className="p-3 bg-purple-500/20 border border-purple-500/50 rounded-2xl text-center">
               <p className="text-purple-400 font-semibold">🎨 {t('creativeSpaceAvailable')}</p>
             </div>
           )}
+
+          {/* Photos du logement supplémentaires */}
+          {propertyPhotos.slice(2).map((photo) => (
+            <img
+              key={photo.id}
+              src={photo.url}
+              alt="Property"
+              onClick={onPropertyPhotoClick ? () => onPropertyPhotoClick(photo.url) : undefined}
+              className={`w-full aspect-[4/5] object-cover rounded-2xl transition-all ${onPropertyPhotoClick ? 'cursor-pointer hover:opacity-90' : ''}`}
+            />
+          ))}
         </div>
       )}
 

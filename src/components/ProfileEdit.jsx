@@ -14,6 +14,24 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
   const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3000); };
   const [existingPhotos, setExistingPhotos] = useState([]);
   const [propertyPhotos, setPropertyPhotos] = useState([]);
+
+  // amenities est stocké en base comme une chaîne JSON (colonne text, pas un
+  // vrai tableau Postgres comme languages/creative_space_type). Il faut donc
+  // le parser explicitement, sinon "current || []" reste une chaîne truthy et
+  // [...current, x] corrompt les données en spreadant ses caractères.
+  const parseAmenities = (raw) => {
+    if (Array.isArray(raw)) return raw;
+    if (typeof raw === 'string' && raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  };
+
   const [profile, setProfile] = useState({
     name: userProfile.name || '',
     age: userProfile.age || '',
@@ -51,7 +69,7 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
     property_type: userProfile.property_type || null,
     property_description: userProfile.property_description || null,
     is_furnished: userProfile.is_furnished || false,
-    amenities: userProfile.amenities || [],
+    amenities: parseAmenities(userProfile.amenities),
     has_creative_space: userProfile.has_creative_space || false,
     creative_space_type: userProfile.creative_space_type || [],
     open_to_group_search: userProfile.open_to_group_search || false,
