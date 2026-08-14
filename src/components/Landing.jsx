@@ -36,6 +36,9 @@ export const Landing = ({ onGetStarted }) => {
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Logo size={40} />
+            <span className="text-2xl bg-gradient-to-r from-violet-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent" style={{fontFamily: "'Pacifico', cursive"}}>
+              CoVibe
+            </span>
           </div>
           <LanguageSwitcher />
         </div>
