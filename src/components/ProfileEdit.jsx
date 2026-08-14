@@ -51,6 +51,7 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
     neighborhood: userProfile.neighborhood || null,
     room_price: userProfile.room_price || null,
     property_type: userProfile.property_type || null,
+    lease_duration: userProfile.lease_duration || null,
     property_description: userProfile.property_description || null,
     is_furnished: userProfile.is_furnished || false,
     amenities: parseAmenities(userProfile.amenities),

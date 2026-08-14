@@ -3,12 +3,14 @@ import { supabase } from '../lib/supabase';
 import { calculateCompatibility, getCompatibilityLevel } from '../lib/matching';
 import { Heart, X } from 'lucide-react';
 import { ProfileDetailView } from './ProfileDetailView';
+import { usePropertyPhotos } from '../lib/usePropertyPhotos';
 
 export const TopVibes = ({ currentUserProfile, onLike, onPass }) => {
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [photoIndex, setPhotoIndex] = useState(0);
+  const [lightboxPhoto, setLightboxPhoto] = useState(null);
 
   useEffect(() => {
     loadTopVibes();
@@ -55,6 +57,7 @@ export const TopVibes = ({ currentUserProfile, onLike, onPass }) => {
   const current = profiles[currentIndex];
   const photos = current ? (current.photos?.length > 0 ? current.photos.map(p => p.photo_url) : [current.photo_url]) : [];
   const { color, emoji } = current ? getCompatibilityLevel(current.compatibility) : {};
+  const currentPropertyPhotos = usePropertyPhotos(current?.user_id, current?.has_space);
 
   if (loading) return (
     <div className="fixed inset-0 z-40 bg-slate-900 flex items-center justify-center pb-24">
@@ -128,6 +131,8 @@ export const TopVibes = ({ currentUserProfile, onLike, onPass }) => {
             hideCompatibility={false}
             hideHeroPhoto={true}
             currentUserProfile={currentUserProfile}
+            propertyPhotos={currentPropertyPhotos}
+            onPropertyPhotoClick={(url) => setLightboxPhoto(url)}
           />
         </div>
       </div>
@@ -141,6 +146,13 @@ export const TopVibes = ({ currentUserProfile, onLike, onPass }) => {
           <Heart size={22} /> Liker
         </button>
       </div>
+
+      {lightboxPhoto && (
+        <div onClick={() => setLightboxPhoto(null)} className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 cursor-pointer">
+          <img src={lightboxPhoto} alt="Photo" className="max-w-full max-h-screen object-contain rounded-2xl" />
+          <button onClick={() => setLightboxPhoto(null)} className="absolute top-4 right-4 text-white text-3xl font-bold">✕</button>
+        </div>
+      )}
     </div>
   );
 };

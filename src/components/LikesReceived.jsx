@@ -4,13 +4,15 @@ import { Heart, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { calculateCompatibility, getCompatibilityLevel } from '../lib/matching';
 import { ProfileDetailView } from './ProfileDetailView';
 import { useTranslation } from 'react-i18next';
+import { usePropertyPhotos } from '../lib/usePropertyPhotos';
 
 export const LikesReceived = ({ currentUserProfile, onClose, onLike, onViewLikes, initialLikes = [] }) => {
   const { t } = useTranslation();
   const [likes, setLikes] = useState(initialLikes);
-  const [loading, setLoading] = useState(initialLikes.length === 0);
+  const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [photoIndex, setPhotoIndex] = useState(0);
+  const [lightboxPhoto, setLightboxPhoto] = useState(null);
 
   useEffect(() => {
     loadLikes();
@@ -70,6 +72,7 @@ export const LikesReceived = ({ currentUserProfile, onClose, onLike, onViewLikes
   const photos = current ? (current.photos?.length > 0 ? current.photos.map(p => p.photo_url) : [current.photo_url]) : [];
   const compatibility = current && currentUserProfile ? calculateCompatibility(currentUserProfile, current) : 0;
   const { color, emoji } = getCompatibilityLevel(compatibility);
+  const currentPropertyPhotos = usePropertyPhotos(current?.user_id, current?.has_space);
 
   if (loading) return (
     <div className="fixed inset-0 z-40 bg-slate-900 flex items-center justify-center pb-24">
@@ -141,6 +144,8 @@ export const LikesReceived = ({ currentUserProfile, onClose, onLike, onViewLikes
           hideCompatibility={false}
           hideHeroPhoto={true}
           currentUserProfile={currentUserProfile}
+          propertyPhotos={currentPropertyPhotos}
+          onPropertyPhotoClick={(url) => setLightboxPhoto(url)}
         />
       </div>
 
@@ -160,6 +165,13 @@ export const LikesReceived = ({ currentUserProfile, onClose, onLike, onViewLikes
           <Heart size={22} /> Like Back
         </button>
       </div>
+
+      {lightboxPhoto && (
+        <div onClick={() => setLightboxPhoto(null)} className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 cursor-pointer">
+          <img src={lightboxPhoto} alt="Photo" className="max-w-full max-h-screen object-contain rounded-2xl" />
+          <button onClick={() => setLightboxPhoto(null)} className="absolute top-4 right-4 text-white text-3xl font-bold">✕</button>
+        </div>
+      )}
     </div>
   );
 };

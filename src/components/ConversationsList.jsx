@@ -14,6 +14,7 @@ export const ConversationsList = ({ currentUserProfile, onClose, onOpenChat, onU
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [selectedProfilePartner, setSelectedProfilePartner] = useState(null);
   const [selectedProfilePhotos, setSelectedProfilePhotos] = useState([]);
+  const [lightboxPhoto, setLightboxPhoto] = useState(null);
   const [inviterProfiles, setInviterProfiles] = useState({});
   const conversationDataRef = useRef({});
 
@@ -73,7 +74,10 @@ export const ConversationsList = ({ currentUserProfile, onClose, onOpenChat, onU
         .select('*')
         .eq('user_id', selectedProfile.user_id)
         .order('position')
-        .then(({ data }) => setSelectedProfilePhotos(data || []));
+        .then(({ data, error }) => {
+          if (error) console.error('Error loading property photos:', error);
+          setSelectedProfilePhotos(data || []);
+        });
     } else {
       setSelectedProfilePhotos([]);
     }
@@ -377,6 +381,7 @@ export const ConversationsList = ({ currentUserProfile, onClose, onOpenChat, onU
           propertyPhotos={selectedProfilePhotos}
           onClose={() => setSelectedProfile(null)}
           onToggleFlexible={onToggleFlexible}
+          onPropertyPhotoClick={(url) => setLightboxPhoto(url)}
         >
           <ProfileMatchActions
             onSendMessage={() => {
@@ -396,6 +401,13 @@ export const ConversationsList = ({ currentUserProfile, onClose, onOpenChat, onU
             }
           />
         </ProfileDetailView>
+      )}
+
+      {lightboxPhoto && (
+        <div onClick={() => setLightboxPhoto(null)} className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 cursor-pointer">
+          <img src={lightboxPhoto} alt="Photo" className="max-w-full max-h-screen object-contain rounded-2xl" />
+          <button onClick={() => setLightboxPhoto(null)} className="absolute top-4 right-4 text-white text-3xl font-bold">✕</button>
+        </div>
       )}
     </>
   );

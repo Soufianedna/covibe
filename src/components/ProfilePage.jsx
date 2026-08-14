@@ -15,6 +15,8 @@ export const ProfilePage = ({ currentUser, onSave, onLogout, onDeleteAccount, se
   const [activeSection, setActiveSection] = useState('view');
   const [partnerProfile, setPartnerProfile] = useState(null);
   const [propertyPhotos, setPropertyPhotos] = useState([]);
+  const [loadingPropertyPhotos, setLoadingPropertyPhotos] = useState(true);
+  const [lightboxPhoto, setLightboxPhoto] = useState(null);
 
   const myPartnership = searchPartnerships.find(p =>
     p.status === 'accepted' && (p.requester_id === currentUser?.user_id || p.partner_id === currentUser?.user_id)
@@ -46,14 +48,20 @@ export const ProfilePage = ({ currentUser, onSave, onLogout, onDeleteAccount, se
   useEffect(() => {
     if (!currentUser?.has_space) {
       setPropertyPhotos([]);
+      setLoadingPropertyPhotos(false);
       return;
     }
+    setLoadingPropertyPhotos(true);
     supabase
       .from('property_photos')
       .select('*')
       .eq('user_id', currentUser.user_id)
       .order('position')
-      .then(({ data }) => setPropertyPhotos(data || []));
+      .then(({ data, error }) => {
+        if (error) console.error('Error loading property photos:', error);
+        setPropertyPhotos(data || []);
+        setLoadingPropertyPhotos(false);
+      });
   }, [currentUser?.user_id, currentUser?.has_space, activeSection]);
 
   const togglePause = async () => {
@@ -155,7 +163,7 @@ export const ProfilePage = ({ currentUser, onSave, onLogout, onDeleteAccount, se
         ) : (
         <>
         {/* Alerte espace sans photo */}
-        {currentUser?.has_space && propertyPhotos.length === 0 && (
+        {currentUser?.has_space && !loadingPropertyPhotos && propertyPhotos.length === 0 && (
           <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-start gap-3">
             <span className="text-2xl">⚠️</span>
             <div>
@@ -181,10 +189,18 @@ export const ProfilePage = ({ currentUser, onSave, onLogout, onDeleteAccount, se
           searchPartnerships={searchPartnerships}
           partnerProfile={partnerProfile}
           propertyPhotos={propertyPhotos}
+          onPropertyPhotoClick={(url) => setLightboxPhoto(url)}
         />
         </>
         )}
       </div>
+
+      {lightboxPhoto && (
+        <div onClick={() => setLightboxPhoto(null)} className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 cursor-pointer">
+          <img src={lightboxPhoto} alt="Photo" className="max-w-full max-h-screen object-contain rounded-2xl" />
+          <button onClick={() => setLightboxPhoto(null)} className="absolute top-4 right-4 text-white text-3xl font-bold">✕</button>
+        </div>
+      )}
     </div>
   );
 };

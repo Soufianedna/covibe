@@ -1152,7 +1152,10 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
           onUnmatch={handleUnmatch}
           onOpenChat={openChatWithMatch}
           mutualMatchProfiles={mutualMatchProfiles}
-          onSelectMatch={(match) => setSelectedMatch({ ...match, compatibility: match.compatibility || calculateCompatibility(currentUserProfile, match) })}
+          onSelectMatch={(match) => {
+            setSelectedMatch({ ...match, compatibility: match.compatibility || calculateCompatibility(currentUserProfile, match) });
+            if (match.has_space) loadPropertyPhotos(match.user_id);
+          }}
           favorites={favorites}
           onToggleFavorite={toggleFavorite}
           likerProfiles={likerProfiles}

@@ -17,6 +17,7 @@ export const Chat = ({ currentUserProfile, matchedUser, onClose, onUnmatch, onMe
   const [isOtherTyping, setIsOtherTyping] = useState(false);
   const [matchedUserPartner, setMatchedUserPartner] = useState(null);
   const [matchedUserPhotos, setMatchedUserPhotos] = useState([]);
+  const [lightboxPhoto, setLightboxPhoto] = useState(null);
   const messagesEndRef = useRef(null);
   const typingChannelRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -466,12 +467,20 @@ export const Chat = ({ currentUserProfile, matchedUser, onClose, onUnmatch, onMe
           partnerProfile={matchedUserPartner}
           propertyPhotos={matchedUserPhotos}
           onClose={() => setShowProfile(false)}
+          onPropertyPhotoClick={(url) => setLightboxPhoto(url)}
         >
           <ProfileMatchActions
             onSendMessage={() => setShowProfile(false)}
             onUnmatch={() => { onUnmatch(matchedUser.user_id); setShowProfile(false); onClose(); }}
           />
         </ProfileDetailView>
+      )}
+
+      {lightboxPhoto && (
+        <div onClick={() => setLightboxPhoto(null)} className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 cursor-pointer">
+          <img src={lightboxPhoto} alt="Photo" className="max-w-full max-h-screen object-contain rounded-2xl" />
+          <button onClick={() => setLightboxPhoto(null)} className="absolute top-4 right-4 text-white text-3xl font-bold">✕</button>
+        </div>
       )}
     </>
   );
