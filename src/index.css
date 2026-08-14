@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Résolu une seule fois ici plutôt que via env() en ligne dans des éléments
+     position:absolute imbriqués dans un ancêtre fixed+overflow-y:auto — ce
+     dernier cas est connu pour mal résoudre env(safe-area-inset-*) sous
+     WebKit. Une custom property, elle, s'hérite normalement. */
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+
 html, body {
   width: 100%;
   min-height: 100vh;
@@ -47,6 +55,14 @@ input, select, textarea {
 @layer utilities {
   .bg-gradient-covibe {
     background: linear-gradient(135deg, #1e293b 0%, #7e22ce 50%, #1e293b 100%);
+  }
+
+  /* Padding-top pour les écrans plein écran (position: fixed), qui n'héritent
+     pas du padding-top: env(safe-area-inset-top) défini sur body puisque
+     `fixed` positionne par rapport au viewport, pas au parent. Même valeur
+     (+16px) que celle déjà utilisée par ProfileDetailView.jsx. */
+  .pt-safe-screen {
+    padding-top: calc(env(safe-area-inset-top) + 16px);
   }
 }
 

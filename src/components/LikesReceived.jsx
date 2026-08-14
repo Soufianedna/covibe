@@ -96,7 +96,7 @@ export const LikesReceived = ({ currentUserProfile, onClose, onLike, onViewLikes
   return (
     <div className="fixed inset-0 z-40 bg-slate-900 flex flex-col">
       {/* Header fixe */}
-      <div className="flex-shrink-0 flex items-center justify-between px-6 pt-16 pb-4">
+      <div className="flex-shrink-0 flex items-center justify-between px-6 pt-safe-screen pb-4">
         <h2 className="text-xl font-bold text-white">💙 {likes.length} like{likes.length > 1 ? "s" : ""} reçu{likes.length > 1 ? "s" : ""}</h2>
         <div className="flex items-center gap-2">
           <button onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))} disabled={currentIndex === 0} className="p-2 bg-slate-700 rounded-full disabled:opacity-30">

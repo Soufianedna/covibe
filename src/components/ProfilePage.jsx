@@ -5,6 +5,7 @@ import { ProfileScore } from './ProfileScore';
 import { ProfileEdit } from './ProfileEdit';
 import { ProfileDetailView } from './ProfileDetailView';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { SafeAreaTop } from './SafeAreaTop';
 import { useTranslation } from 'react-i18next';
 
 export const ProfilePage = ({ currentUser, onSave, onLogout, onDeleteAccount, searchPartnerships = [] }) => {
@@ -74,7 +75,8 @@ export const ProfilePage = ({ currentUser, onSave, onLogout, onDeleteAccount, se
   if (showSettings) {
     return (
       <div className="fixed inset-0 z-40 bg-slate-900 overflow-y-auto pb-24">
-        <div className="p-6 pt-16">
+        <SafeAreaTop />
+        <div className="p-6 pt-safe-screen">
           <div className="flex items-center gap-3 mb-8">
             <button onClick={() => setShowSettings(false)} className="p-2 hover:bg-slate-700 rounded-xl transition-all">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
@@ -136,7 +138,8 @@ export const ProfilePage = ({ currentUser, onSave, onLogout, onDeleteAccount, se
 
   return (
     <div className="fixed inset-0 z-40 bg-slate-900 overflow-y-auto pb-24">
-      <div className="p-6 pt-16">
+      <SafeAreaTop />
+      <div className="p-6 pt-safe-screen">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-white">{activeSection === 'view' ? 'Mon Profil' : 'Modifier'}</h2>

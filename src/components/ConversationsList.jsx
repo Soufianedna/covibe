@@ -6,6 +6,7 @@ import { ProfileMatchActions } from './ProfileMatchActions';
 import { calculateCompatibility } from '../lib/matching';
 import { useTranslation } from 'react-i18next';
 import { Logo } from './Logo';
+import { SafeAreaTop } from './SafeAreaTop';
 
 export const ConversationsList = ({ currentUserProfile, onClose, onOpenChat, onUnmatch, mutualMatchProfiles = [], onSelectMatch, favorites = [], onToggleFavorite, likerProfiles = [], onViewLikes, searchPartnerships = [], onAcceptPartnership, onDeclinePartnership, getPartnershipWith, renderPartnershipButton, onLeavePartnership, onToggleFlexible }) => {
   const { t } = useTranslation();
@@ -224,7 +225,9 @@ export const ConversationsList = ({ currentUserProfile, onClose, onOpenChat, onU
         <div className="fixed -bottom-20 -right-20 w-96 h-96 bg-cyan-500 rounded-full blur-3xl opacity-[0.18] pointer-events-none z-0" />
         <div className="fixed top-1/3 right-0 w-80 h-80 bg-violet-600 rounded-full blur-3xl opacity-[0.18] pointer-events-none z-0" />
 
-        <div className="p-6 pt-16">
+        <SafeAreaTop className="bg-gradient-to-br from-slate-950 via-purple-950 to-indigo-950" />
+
+        <div className="p-6 pt-safe-screen">
           {pendingInvitesReceived.length > 0 && (
             <div className="mb-6 space-y-3">
               {pendingInvitesReceived.map((invite) => {

@@ -80,7 +80,7 @@ export const TopVibes = ({ currentUserProfile, onLike, onPass }) => {
   return (
     <div className="fixed inset-0 z-40 bg-slate-900 flex flex-col">
       {/* Header */}
-      <div className="flex-shrink-0 flex items-center justify-between px-6 pt-16 pb-4">
+      <div className="flex-shrink-0 flex items-center justify-between px-6 pt-safe-screen pb-4">
         <div>
           <h2 className="text-xl font-bold text-white">⚡️ Top Vibes</h2>
           <p className="text-gray-400 text-sm">{profiles.length} profil{profiles.length > 1 ? 's' : ''} à 90%+</p>

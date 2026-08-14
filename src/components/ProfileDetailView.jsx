@@ -66,7 +66,7 @@ export const ProfileDetailView = ({
             <div className="w-full h-full flex items-center justify-center text-8xl">👤</div>
           )}
           {!hideCompatibility && (
-            <div className="absolute left-4 px-3 py-1 bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-lg rounded-full" style={{ top: 'calc(env(safe-area-inset-top) + 16px)' }}>
+            <div className="absolute left-4 top-4 z-20 px-3 py-1 bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-lg rounded-full">
               <span className={`text-sm font-bold ${getCompatibilityLevel(profile.compatibility).color}`}>{getCompatibilityLevel(profile.compatibility).emoji} {profile.compatibility}%</span>
             </div>
           )}
@@ -349,22 +349,28 @@ export const ProfileDetailView = ({
   }
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-slate-950 via-purple-950 to-indigo-950 z-[100] overflow-y-auto">
+    <div className="fixed inset-0 bg-gradient-to-br from-slate-950 via-purple-950 to-indigo-950 z-[110]">
       <div className="fixed -top-20 -left-20 w-80 h-80 bg-violet-600 rounded-full blur-3xl opacity-[0.18] pointer-events-none z-0" />
       <div className="fixed -bottom-20 -right-20 w-96 h-96 bg-cyan-500 rounded-full blur-3xl opacity-[0.18] pointer-events-none z-0" />
       <div className="fixed top-1/3 right-0 w-80 h-80 bg-violet-600 rounded-full blur-3xl opacity-[0.18] pointer-events-none z-0" />
 
-      <button onClick={onClose} className="fixed right-4 z-20 p-2 bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-lg hover:bg-slate-900/80 rounded-full transition-all" style={{ top: 'calc(env(safe-area-inset-top) + 16px)' }}>
+      {/* Bandeau opaque fixe au-dessus de la safe area : indépendant du scroll, reste toujours visible au-dessus du contenu */}
+      <div className="fixed top-0 inset-x-0 z-10 bg-gradient-to-br from-slate-950 via-purple-950 to-indigo-950" style={{ height: 'var(--safe-top)' }} />
+
+      <button onClick={onClose} className="fixed right-4 z-20 p-2 bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-lg hover:bg-slate-900/80 rounded-full transition-all" style={{ top: 'calc(var(--safe-top) + 16px)' }}>
         <X size={24} className="text-white" />
       </button>
 
-      {body}
+      {/* Conteneur scrollable séparé du conteneur fixe : commence sous la safe area, indépendamment du scroll */}
+      <div className="absolute inset-x-0 bottom-0 overflow-y-auto" style={{ top: 'var(--safe-top)' }}>
+        {body}
 
-      {children && (
-        <div className="sticky bottom-0 bg-white/5 backdrop-blur-xl border-t border-white/10 shadow-[0_-4px_24px_rgba(0,0,0,0.25)] p-3">
-          {children}
-        </div>
-      )}
+        {children && (
+          <div className="sticky bottom-0 bg-white/5 backdrop-blur-xl border-t border-white/10 shadow-[0_-4px_24px_rgba(0,0,0,0.25)] p-3">
+            {children}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

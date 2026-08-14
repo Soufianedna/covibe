@@ -5,6 +5,7 @@ import { getTopMatches, getCompatibilityLevel, calculateCompatibility } from '..
 import { calculateDistance, formatDistance } from '../lib/distance';
 import { getCreativeTypeKey } from '../lib/creativeType';
 import { Logo } from './Logo';
+import { SafeAreaTop } from './SafeAreaTop';
 import { MessageNotification } from './MessageNotification';
 import { ProfilePage } from './ProfilePage';
 import { MatchModal } from './MatchModal';
@@ -857,7 +858,9 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
       <div className="fixed -bottom-20 -right-20 w-96 h-96 bg-cyan-500 rounded-full blur-3xl opacity-[0.18] pointer-events-none z-0" />
       <div className="fixed top-1/3 right-0 w-80 h-80 bg-violet-600 rounded-full blur-3xl opacity-[0.18] pointer-events-none z-0" />
 
-      <main className="max-w-7xl mx-auto px-6 py-8 pb-24">
+      <SafeAreaTop className="bg-gradient-to-br from-slate-950 via-purple-950 to-indigo-950" />
+
+      <main className="max-w-7xl mx-auto px-6 pt-safe-screen pb-24">
         {/* {t('filters')} */}
         <FilterPills onFilterChange={setFilters} hasSpace={currentUserProfile?.has_space} />
                 {loading ? (

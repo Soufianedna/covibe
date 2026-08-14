@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { SlidersHorizontal, X } from 'lucide-react';
+import { SafeAreaTop } from './SafeAreaTop';
 
 export const FilterPills = ({ onFilterChange, hasSpace }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -80,7 +81,8 @@ export const FilterPills = ({ onFilterChange, hasSpace }) => {
   if (showAdvanced) {
     return (
       <div className="fixed inset-0 z-50 bg-slate-900 overflow-y-auto pb-32 overflow-x-hidden">
-        <div className="p-6 pt-16">
+        <SafeAreaTop />
+        <div className="p-6 pt-safe-screen">
           <div className="flex items-center justify-between mb-8">
             <button onClick={() => setShowAdvanced(false)} className="p-2 hover:bg-slate-700 rounded-xl">
               <X size={24} className="text-white" />
