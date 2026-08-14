@@ -1,18 +1,21 @@
-import { useState, useEffect } from 'react';
-import { LazyLoadImage } from 'react-lazy-load-image-component';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import { X, MessageCircle } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 import { ProfileView } from './ProfileView';
 import { useTranslation } from 'react-i18next';
 import { Logo } from './Logo';
 
 export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch, mutualMatchProfiles = [], onSelectMatch, favorites = [], onToggleFavorite, likerProfiles = [], onViewLikes, searchPartnerships = [], onAcceptPartnership, onDeclinePartnership }) => {
   const { t } = useTranslation();
-  const [matches, setMatches] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingConversations, setLoadingConversations] = useState(true);
   const [conversationData, setConversationData] = useState({});
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [inviterProfiles, setInviterProfiles] = useState({});
+  const conversationDataRef = useRef({});
+
+  useEffect(() => {
+    conversationDataRef.current = conversationData;
+  }, [conversationData]);
 
   const pendingInvitesReceived = searchPartnerships.filter(p => p.status === 'pending' && p.partner_id === currentUser.user_id);
 
@@ -38,132 +41,147 @@ export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch,
       });
   }, [searchPartnerships, currentUser.user_id]);
 
+  const fetchConversationEntry = async (matchUserId) => {
+    const user1 = currentUser.user_id < matchUserId ? currentUser.user_id : matchUserId;
+    const user2 = currentUser.user_id < matchUserId ? matchUserId : currentUser.user_id;
+
+    const { data: conversation } = await supabase
+      .from('conversations')
+      .select('id')
+      .eq('user1_id', user1)
+      .eq('user2_id', user2)
+      .maybeSingle();
+
+    if (!conversation) {
+      return { conversationId: null, unreadCount: 0, lastMessage: null };
+    }
+
+    const [{ data: lastMessage }, { count }] = await Promise.all([
+      supabase
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', conversation.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('conversation_id', conversation.id)
+        .neq('sender_id', currentUser.user_id)
+        .eq('read', false),
+    ]);
+
+    return { conversationId: conversation.id, unreadCount: count || 0, lastMessage: lastMessage || null };
+  };
+
   useEffect(() => {
-    loadMatches();
-    
-    const interval = setInterval(() => {
-      if (matches.length > 0) {
-        loadConversationData(matches);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [matches.length]);
-
-  const loadMatches = async () => {
-    try {
-      const { data: myLikes, error: myError } = await supabase
-        .from('swipes')
-        .select('swiped_user_id')
-        .eq('user_id', currentUser.user_id)
-        .eq('is_like', true);
-
-      if (myError) throw myError;
-
-      const { data: theirLikes, error: theirError } = await supabase
-        .from('swipes')
-        .select('user_id')
-        .eq('swiped_user_id', currentUser.user_id)
-        .eq('is_like', true);
-
-      if (theirError) throw theirError;
-
-      const mutualIds = myLikes
-        .filter(like => theirLikes.some(their => their.user_id === like.swiped_user_id))
-        .map(like => like.swiped_user_id);
-
-      if (mutualIds.length === 0) {
-        setLoading(false);
-        return;
-      }
-
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*, profile_photos(photo_url, position)')
-        .in('user_id', mutualIds);
-
-      if (profilesError) throw profilesError;
-
-      setMatches(profiles || []);
-      await loadConversationData(profiles || []);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error loading matches:', error);
-      setLoading(false);
+    if (mutualMatchProfiles.length === 0) {
+      setConversationData({});
+      setLoadingConversations(false);
+      return;
     }
-  };
 
-  const loadConversationData = async (matchProfiles) => {
-    const data = {};
-    
-    for (const match of matchProfiles) {
-      const user1 = currentUser.user_id < match.user_id ? currentUser.user_id : match.user_id;
-      const user2 = currentUser.user_id < match.user_id ? match.user_id : currentUser.user_id;
+    let cancelled = false;
+    setLoadingConversations(true);
 
-      const { data: conversation } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('user1_id', user1)
-        .eq('user2_id', user2)
-        .maybeSingle();
+    Promise.all(mutualMatchProfiles.map(async (m) => [m.user_id, await fetchConversationEntry(m.user_id)]))
+      .then((entries) => {
+        if (cancelled) return;
+        setConversationData(Object.fromEntries(entries));
+      })
+      .catch((error) => {
+        console.error('Error loading conversation data:', error);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingConversations(false);
+      });
 
-      if (conversation) {
-        const { data: lastMessage } = await supabase
-          .from('messages')
-          .select('*')
-          .eq('conversation_id', conversation.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
+    return () => { cancelled = true; };
+  }, [mutualMatchProfiles]);
+
+  useEffect(() => {
+    if (mutualMatchProfiles.length === 0) return;
+
+    const handleMessageChange = async (message) => {
+      const known = Object.entries(conversationDataRef.current).find(([, v]) => v.conversationId === message.conversation_id);
+      let matchUserId = known?.[0];
+
+      if (!matchUserId) {
+        const { data: conversation } = await supabase
+          .from('conversations')
+          .select('user1_id, user2_id')
+          .eq('id', message.conversation_id)
           .maybeSingle();
-
-        const { count } = await supabase
-          .from('messages')
-          .select('*', { count: 'exact', head: true })
-          .eq('conversation_id', conversation.id)
-          .neq('sender_id', currentUser.user_id)
-          .eq('read', false);
-
-        data[match.user_id] = {
-          unreadCount: count || 0,
-          lastMessage: lastMessage
-        };
-      } else {
-        data[match.user_id] = {
-          unreadCount: 0,
-          lastMessage: null
-        };
+        if (!conversation) return;
+        const otherUserId = conversation.user1_id === currentUser.user_id ? conversation.user2_id : conversation.user1_id;
+        const isKnownMatch = mutualMatchProfiles.some((m) => m.user_id === otherUserId);
+        if (!isKnownMatch) return;
+        matchUserId = otherUserId;
       }
-    }
 
-    setConversationData(data);
-  };
+      const entry = await fetchConversationEntry(matchUserId);
+      setConversationData((prev) => ({ ...prev, [matchUserId]: entry }));
+    };
+
+    const channel = supabase
+      .channel('conversations-list-messages')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => handleMessageChange(payload.new))
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, (payload) => handleMessageChange(payload.new))
+      .subscribe();
+
+    return () => channel.unsubscribe();
+  }, [mutualMatchProfiles, currentUser.user_id]);
 
   const getPreviewText = (matchUserId) => {
     const convData = conversationData[matchUserId];
-    
+
     if (!convData) return 'Match CoVibe ✨';
-    
+
     if (convData.unreadCount > 0) {
       return `${convData.unreadCount} nouveau${convData.unreadCount > 1 ? 'x' : ''} message${convData.unreadCount > 1 ? 's' : ''}`;
     }
-    
+
     if (convData.lastMessage && convData.lastMessage.sender_id !== currentUser.user_id && !convData.lastMessage.read) {
       return '💬 À ton tour de répondre';
     }
-    
+
     if (convData.lastMessage) {
       const isMe = convData.lastMessage.sender_id === currentUser.user_id;
       const prefix = isMe ? 'Toi: ' : '';
       const preview = convData.lastMessage.content.substring(0, 40);
       return prefix + (preview.length < convData.lastMessage.content.length ? `${preview}...` : preview);
     }
-    
+
     return 'Match CoVibe ✨';
   };
 
+  const formatRelativeTime = (dateStr) => {
+    const date = new Date(dateStr);
+    const diffMs = Date.now() - date.getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin < 1) return "à l'instant";
+    if (diffMin < 60) return `il y a ${diffMin} min`;
+    const diffH = Math.floor(diffMin / 60);
+    if (diffH < 24) return `il y a ${diffH}h`;
+    const diffDays = Math.floor(diffH / 24);
+    if (diffDays === 1) return 'hier';
+    if (diffDays < 7) return `il y a ${diffDays}j`;
+    return date.toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' });
+  };
+
+  const railMatches = mutualMatchProfiles.filter((m) => !conversationData[m.user_id]?.lastMessage);
+  const listMatches = mutualMatchProfiles
+    .filter((m) => conversationData[m.user_id]?.lastMessage)
+    .sort((a, b) => new Date(conversationData[b.user_id].lastMessage.created_at) - new Date(conversationData[a.user_id].lastMessage.created_at));
+
   return (
     <>
-      <div className="fixed inset-0 z-40 overflow-y-auto bg-slate-900 pb-24">
+      <div className="fixed inset-0 z-40 overflow-y-auto bg-gradient-to-br from-slate-950 via-purple-950 to-indigo-950 pb-24">
+        <div className="fixed -top-20 -left-20 w-80 h-80 bg-violet-600 rounded-full blur-3xl opacity-[0.18] pointer-events-none z-0" />
+        <div className="fixed -bottom-20 -right-20 w-96 h-96 bg-cyan-500 rounded-full blur-3xl opacity-[0.18] pointer-events-none z-0" />
+        <div className="fixed top-1/3 right-0 w-80 h-80 bg-violet-600 rounded-full blur-3xl opacity-[0.18] pointer-events-none z-0" />
+
         <div className="p-6 pt-16">
           {pendingInvitesReceived.length > 0 && (
             <div className="mb-6 space-y-3">
@@ -193,25 +211,30 @@ export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch,
               })}
             </div>
           )}
-          <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2"><Logo size={28} /> Tes VibeMatches</h2>
-          {mutualMatchProfiles.length > 0 && (
-            <div className="flex gap-4 overflow-x-auto pb-4 mb-6">
-              {mutualMatchProfiles.map((match) => (
-                <div key={match.user_id} className="flex-shrink-0 text-center relative">
-                  <button onClick={() => onSelectMatch && onSelectMatch(match)} className="hover:scale-105 transition-transform">
-                    <div className="relative">
-                      {match.photo_url ? (
-                        <img src={match.photo_url} alt={match.name} className="w-20 h-20 rounded-full object-cover border-4 border-violet-500 mb-1" />
-                      ) : (
-                        <div className="w-20 h-20 rounded-full bg-slate-700 flex items-center justify-center text-3xl border-4 border-violet-500 mb-1">👤</div>
-                      )}
-                    </div>
-                    <p className="text-white text-xs font-semibold max-w-[80px] truncate">{match.name}</p>
-                  </button>
-                </div>
-              ))}
+
+          {railMatches.length > 0 && (
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2"><Logo size={28} /> Tes VibeMatches</h2>
+              <div className="flex gap-3 overflow-x-auto pb-4">
+                {railMatches.map((match) => (
+                  <div key={match.user_id} className="flex-shrink-0 text-center relative">
+                    <button onClick={() => onSelectMatch && onSelectMatch(match)} className="hover:scale-105 transition-transform">
+                      <div className="relative">
+                        {match.photo_url ? (
+                          <img src={match.photo_url} alt={match.name} className="w-24 h-24 rounded-full object-cover border-4 border-violet-500 mb-1" />
+                        ) : (
+                          <div className="w-24 h-24 rounded-full bg-slate-700 flex items-center justify-center text-4xl border-4 border-violet-500 mb-1">👤</div>
+                        )}
+                        <span className="absolute top-0 right-0 w-4 h-4 bg-cyan-400 rounded-full border-2 border-slate-900" />
+                      </div>
+                      <p className="text-white text-xs font-semibold max-w-[88px] truncate">{match.name}</p>
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
+
           {likerProfiles.length > 0 && (
             <div className="mb-6">
               <h3 className="text-lg font-bold text-white mb-3">💙 Nouveau Like</h3>
@@ -234,24 +257,32 @@ export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch,
               </div>
             </div>
           )}
+
           <h2 className="text-2xl font-bold text-white mb-4">💬 Mes Conversations</h2>
           <div>
-            {loading ? (
+            {loadingConversations ? (
               <div className="text-center py-10">
                 <div className="space-y-3 w-full"><div className="h-16 bg-slate-800 rounded-2xl animate-pulse"></div><div className="h-16 bg-slate-800 rounded-2xl animate-pulse"></div><div className="h-16 bg-slate-800 rounded-2xl animate-pulse"></div></div>
               </div>
-            ) : matches.length === 0 ? (
+            ) : mutualMatchProfiles.length === 0 ? (
               <div className="text-center py-10">
                 <div className="mb-4 flex justify-center"><Logo size={64} /></div>
                 <h3 className="text-xl font-bold text-white mb-2">Aucun match pour l'instant</h3>
                 <p className="text-gray-400">{t('keepSwiping')}</p>
               </div>
+            ) : listMatches.length === 0 ? (
+              <div className="text-center py-10">
+                <div className="mb-4 flex justify-center"><Logo size={64} /></div>
+                <h3 className="text-xl font-bold text-white mb-2">Aucune conversation pour l'instant</h3>
+                <p className="text-gray-400">Envoie un message à l'un de tes matchs ci-dessus pour démarrer !</p>
+              </div>
             ) : (
               <div className="space-y-3">
-                {matches.map((match) => {
+                {listMatches.map((match) => {
                   const convData = conversationData[match.user_id];
                   const unreadCount = convData?.unreadCount || 0;
-                  
+                  const hasUnread = unreadCount > 0;
+
                   return (
                     <button
                       key={match.user_id}
@@ -259,33 +290,40 @@ export const ConversationsList = ({ currentUser, onClose, onOpenChat, onUnmatch,
                         onOpenChat(match);
                         onClose();
                       }}
-                      className="w-full flex items-center gap-4 p-4 bg-slate-700/50 hover:bg-slate-700 rounded-xl transition-all relative"
+                      className="w-full flex items-center gap-4 p-4 bg-slate-800/60 backdrop-blur-sm hover:bg-slate-700/60 rounded-2xl transition-all relative"
                     >
                       <div
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedProfile(match);
                         }}
-                        className="relative hover:opacity-80 transition-all"
+                        className="relative hover:opacity-80 transition-all shrink-0"
                       >
                         {match.photo_url ? (
                           <img src={match.photo_url} alt={match.name} className="w-16 h-16 rounded-full object-cover border-2 border-violet-500" />
                         ) : (
                           <div className="w-16 h-16 rounded-full bg-slate-600 flex items-center justify-center text-3xl">👤</div>
                         )}
-                        {unreadCount > 0 && (
+                        {hasUnread && (
                           <span className="absolute -top-1 -right-1 bg-gradient-to-r from-violet-600 to-red-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-lg">
                             {unreadCount > 9 ? '9+' : unreadCount}
                           </span>
                         )}
                       </div>
-                      <div className="flex-1 text-left">
-                        <h3 className="text-lg font-bold text-white">{match.name}</h3>
-                        <p className="text-sm text-gray-400">
+                      <div className="flex-1 text-left min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <h3 className={`truncate ${hasUnread ? 'text-lg font-bold text-white' : 'text-lg font-semibold text-gray-200'}`}>{match.name}</h3>
+                          {convData?.lastMessage && (
+                            <span className={`text-xs shrink-0 ${hasUnread ? 'text-violet-400 font-semibold' : 'text-gray-500'}`}>
+                              {formatRelativeTime(convData.lastMessage.created_at)}
+                            </span>
+                          )}
+                        </div>
+                        <p className={`text-sm truncate ${hasUnread ? 'text-gray-200 font-medium' : 'text-gray-400'}`}>
                           {getPreviewText(match.user_id)}
                         </p>
                       </div>
-                      <MessageCircle size={24} className={unreadCount > 0 ? 'text-violet-400' : 'text-gray-400'} />
+                      <MessageCircle size={22} className={hasUnread ? 'text-violet-400 shrink-0' : 'text-gray-500 shrink-0'} />
                     </button>
                   );
                 })}
