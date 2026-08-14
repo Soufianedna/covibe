@@ -123,6 +123,11 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
       return;
     }
 
+    if (profile.has_space && propertyPhotos.length === 0) {
+      showToast('📸 Ajoute au moins une photo de ton espace pour le partager', 'warning');
+      return;
+    }
+
     setLoading(true);
     try {
       const cleanProfile = {

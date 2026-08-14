@@ -4,6 +4,7 @@ import { Settings, LogOut, FileText, Shield, Edit3 } from 'lucide-react';
 import { ProfileScore } from './ProfileScore';
 import { ProfileEdit } from './ProfileEdit';
 import { ProfileDetailView } from './ProfileDetailView';
+import { LanguageSwitcher } from './LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
 
 export const ProfilePage = ({ currentUser, onSave, onLogout, onDeleteAccount, searchPartnerships = [] }) => {
@@ -53,7 +54,7 @@ export const ProfilePage = ({ currentUser, onSave, onLogout, onDeleteAccount, se
       .eq('user_id', currentUser.user_id)
       .order('position')
       .then(({ data }) => setPropertyPhotos(data || []));
-  }, [currentUser?.user_id, currentUser?.has_space]);
+  }, [currentUser?.user_id, currentUser?.has_space, activeSection]);
 
   const togglePause = async () => {
     const newVal = !isPaused;
@@ -95,6 +96,9 @@ export const ProfilePage = ({ currentUser, onSave, onLogout, onDeleteAccount, se
                 <div className={`w-6 h-6 bg-white rounded-full shadow transition-all ${isPaused ? 'translate-x-6' : 'translate-x-0'}`} />
               </div>
             </button>
+
+            {/* Langue */}
+            <LanguageSwitcher variant="settings" />
 
             <button onClick={onLogout} className="w-full flex items-center gap-4 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl hover:bg-red-500/20 transition-all">
               <LogOut size={22} className="text-red-400" />
@@ -150,6 +154,20 @@ export const ProfilePage = ({ currentUser, onSave, onLogout, onDeleteAccount, se
           />
         ) : (
         <>
+        {/* Alerte espace sans photo */}
+        {currentUser?.has_space && propertyPhotos.length === 0 && (
+          <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-start gap-3">
+            <span className="text-2xl">⚠️</span>
+            <div>
+              <p className="text-amber-400 font-semibold">Ton espace n'est pas mis en valeur</p>
+              <p className="text-amber-200/70 text-sm mt-1">Ajoute au moins une photo de ton logement pour qu'il inspire confiance dans Discover.</p>
+              <button onClick={() => setActiveSection('edit')} className="mt-3 text-sm font-semibold text-amber-400 hover:text-amber-300 transition-all underline">
+                Ajouter une photo →
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Score */}
         <div className="mb-6">
           <ProfileScore profile={currentUser} />

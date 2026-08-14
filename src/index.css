@@ -35,6 +35,15 @@ body {
   min-height: 100vh;
 }
 
+/* iOS/WebKit zoome automatiquement le WebView au focus sur un input dont le
+   font-size calculé est < 16px, et ne dézoome jamais tout seul. On force donc
+   16px minimum sur tous les champs de saisie, quelle que soit la classe
+   Tailwind appliquée (une classe text-sm a une spécificité CSS plus forte
+   qu'un sélecteur d'élément, d'où le !important). */
+input, select, textarea {
+  font-size: 16px !important;
+}
+
 @layer utilities {
   .bg-gradient-covibe {
     background: linear-gradient(135deg, #1e293b 0%, #7e22ce 50%, #1e293b 100%);
@@ -54,4 +63,19 @@ body {
 
 .animate-slide-in {
   animation: slide-in 0.3s ease-out;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out both;
 }

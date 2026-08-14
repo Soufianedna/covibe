@@ -11,17 +11,20 @@ export const Landing = ({ onGetStarted }) => {
   const sampleProfiles = [
     {
       name: "Sarah",
-      type: "🎨 Artist",
+      emoji: "🎨",
+      typeKey: "artistShort",
       image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop"
     },
     {
       name: "Marc",
-      type: "🎵 Musician",
+      emoji: "🎵",
+      typeKey: "musicianShort",
       image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop"
     },
     {
       name: "Léa",
-      type: "💻 Developer",
+      emoji: "💻",
+      typeKey: "developerShort",
       image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop"
     }
   ];
@@ -59,12 +62,12 @@ export const Landing = ({ onGetStarted }) => {
           </p>
 
           {/* Profils en bulles */}
-          <div className="flex justify-center items-center gap-4 mb-12">
+          <div className="flex justify-center items-center gap-6 mb-12">
             {sampleProfiles.map((profile, idx) => (
               <div
                 key={idx}
-                className="relative animate-bounce"
-                style={{ animationDelay: `${idx * 0.2}s` }}
+                className="relative animate-fade-in-up"
+                style={{ animationDelay: `${idx * 0.15}s` }}
               >
                 <div className="w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-violet-500 overflow-hidden shadow-2xl">
                   <img
@@ -73,8 +76,8 @@ export const Landing = ({ onGetStarted }) => {
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full whitespace-nowrap">
-                  {profile.type}
+                <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-purple-600 text-white text-xs px-3 py-1 rounded-full whitespace-nowrap">
+                  {profile.emoji} {t(profile.typeKey)}
                 </div>
               </div>
             ))}

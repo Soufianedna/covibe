@@ -123,10 +123,10 @@ export const FilterPills = ({ onFilterChange, hasSpace }) => {
             <div className="flex gap-3">
               <input type="number" placeholder="Min" value={tempFilters.budgetMin}
                 onChange={e => setTempFilters({...tempFilters, budgetMin: e.target.value})}
-                className="flex-1 bg-slate-700 text-white rounded-xl px-3 py-2 outline-none text-sm" />
+                className="flex-1 min-w-0 bg-slate-700 text-white rounded-xl px-3 py-2 outline-none text-base" />
               <input type="number" placeholder="Max" value={tempFilters.budgetMax}
                 onChange={e => setTempFilters({...tempFilters, budgetMax: e.target.value})}
-                className="flex-1 bg-slate-700 text-white rounded-xl px-3 py-2 outline-none text-sm" />
+                className="flex-1 min-w-0 bg-slate-700 text-white rounded-xl px-3 py-2 outline-none text-base" />
             </div>
           </div>
 
@@ -136,10 +136,10 @@ export const FilterPills = ({ onFilterChange, hasSpace }) => {
             <div className="flex gap-3">
               <input type="number" placeholder="Min" value={tempFilters.ageMin}
                 onChange={e => setTempFilters({...tempFilters, ageMin: e.target.value})}
-                className="flex-1 bg-slate-700 text-white rounded-xl px-3 py-2 outline-none text-sm" />
+                className="flex-1 min-w-0 bg-slate-700 text-white rounded-xl px-3 py-2 outline-none text-base" />
               <input type="number" placeholder="Max" value={tempFilters.ageMax}
                 onChange={e => setTempFilters({...tempFilters, ageMax: e.target.value})}
-                className="flex-1 bg-slate-700 text-white rounded-xl px-3 py-2 outline-none text-sm" />
+                className="flex-1 min-w-0 bg-slate-700 text-white rounded-xl px-3 py-2 outline-none text-base" />
             </div>
           </div>
 

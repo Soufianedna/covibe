@@ -162,6 +162,11 @@ export const Onboarding = ({ user, onComplete }) => {
   };
 
   const handleSubmit = async () => {
+    if (profile.has_space && propertyPhotos.length === 0) {
+      alert('Ajoute au moins une photo de ton espace pour le partager');
+      return;
+    }
+
     const missing = [];
     if (!profile.name) missing.push('Nom');
     if (!profile.age) missing.push('Âge');
