@@ -1234,9 +1234,9 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
         />
       ))}
       {lightboxPhoto && (
-        <div onClick={() => setLightboxPhoto(null)} className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 cursor-pointer">
+        <div onClick={() => setLightboxPhoto(null)} className="fixed inset-0 z-[120] bg-black/95 flex items-center justify-center p-4 cursor-pointer">
           <img src={lightboxPhoto} alt="Photo" className="max-w-full max-h-screen object-contain rounded-2xl" />
-          <button onClick={() => setLightboxPhoto(null)} className="absolute top-4 right-4 text-white text-3xl font-bold">✕</button>
+          <button onClick={() => setLightboxPhoto(null)} className="absolute right-4 text-white text-3xl font-bold" style={{ top: 'calc(var(--safe-top) + 16px)' }}>✕</button>
         </div>
       )}
 
