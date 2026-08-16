@@ -1242,25 +1242,25 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
 
       {/* BARRE DE NAVIGATION EN BAS */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/5 backdrop-blur-xl border-t border-white/10 shadow-[0_-4px_24px_rgba(0,0,0,0.25)] flex items-center justify-around px-2" style={{paddingBottom: 'calc(env(safe-area-inset-bottom) + 8px)'}}>
-        <button onClick={() => { setActiveTab('discover'); setShowFavorites(false); setShowLikesReceived(false); setShowConversations(false); setShowProfile(false); }} className={`flex flex-col items-center gap-1 py-3 px-4 transition-all ${activeTab === 'discover' ? 'text-violet-400' : 'text-gray-500'}`}>
+        <button onClick={() => { setActiveTab('discover'); setShowFavorites(false); setShowLikesReceived(false); setShowConversations(false); setShowProfile(false); }} className={`flex flex-col items-center gap-1 pt-3 pb-1 px-4 transition-all ${activeTab === 'discover' ? 'text-violet-400' : 'text-gray-500'}`}>
           <Logo size={32} />
           <span className="text-xs font-medium">Discover</span>
         </button>
-        <button onClick={() => { setActiveTab('favorites'); setShowFavorites(true); setShowLikesReceived(false); setShowConversations(false); setShowProfile(false); }} className={`flex flex-col items-center gap-1 py-3 px-4 transition-all relative ${activeTab === 'favorites' ? 'text-violet-400' : 'text-gray-500'}`}>
+        <button onClick={() => { setActiveTab('favorites'); setShowFavorites(true); setShowLikesReceived(false); setShowConversations(false); setShowProfile(false); }} className={`flex flex-col items-center gap-1 pt-3 pb-1 px-4 transition-all relative ${activeTab === 'favorites' ? 'text-violet-400' : 'text-gray-500'}`}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
           <span className="text-xs font-medium">Top Vibes</span>
         </button>
-        <button onClick={() => { setActiveTab('likes'); setShowLikesReceived(true); setShowFavorites(false); setShowConversations(false); setShowProfile(false); }} className={`flex flex-col items-center gap-1 py-3 px-4 transition-all relative ${activeTab === 'likes' ? 'text-pink-400' : 'text-gray-500'}`}>
+        <button onClick={() => { setActiveTab('likes'); setShowLikesReceived(true); setShowFavorites(false); setShowConversations(false); setShowProfile(false); }} className={`flex flex-col items-center gap-1 pt-3 pb-1 px-4 transition-all relative ${activeTab === 'likes' ? 'text-pink-400' : 'text-gray-500'}`}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
           <span className="text-xs font-medium">Likes</span>
           {unviewedLikesCount > 0 && <span className="absolute top-2 right-2 bg-pink-500 text-white text-xs font-bold w-4 h-4 rounded-full flex items-center justify-center">{unviewedLikesCount > 9 ? '9+' : unviewedLikesCount}</span>}
         </button>
-        <button onClick={() => { setActiveTab('vibes'); setShowConversations(true); setUnreadCount(0); setShowFavorites(false); setShowLikesReceived(false); setShowProfile(false); }} className={`flex flex-col items-center gap-1 py-3 px-4 transition-all relative ${activeTab === 'vibes' ? 'text-violet-400' : 'text-gray-500'}`}>
+        <button onClick={() => { setActiveTab('vibes'); setShowConversations(true); setUnreadCount(0); setShowFavorites(false); setShowLikesReceived(false); setShowProfile(false); }} className={`flex flex-col items-center gap-1 pt-3 pb-1 px-4 transition-all relative ${activeTab === 'vibes' ? 'text-violet-400' : 'text-gray-500'}`}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
           <span className="text-xs font-medium">Mes Vibes</span>
           {unreadCount > 0 && <span className="absolute top-2 right-2 bg-violet-500 text-white text-xs font-bold w-4 h-4 rounded-full flex items-center justify-center">{unreadCount > 9 ? '9+' : unreadCount}</span>}
         </button>
-        <button onClick={() => { setActiveTab('profile'); setShowProfile(true); setShowFavorites(false); setShowLikesReceived(false); setShowConversations(false); }} className={`flex flex-col items-center gap-1 py-3 px-4 transition-all ${activeTab === 'profile' ? 'text-violet-400' : 'text-gray-500'}`}>
+        <button onClick={() => { setActiveTab('profile'); setShowProfile(true); setShowFavorites(false); setShowLikesReceived(false); setShowConversations(false); }} className={`flex flex-col items-center gap-1 pt-3 pb-1 px-4 transition-all ${activeTab === 'profile' ? 'text-violet-400' : 'text-gray-500'}`}>
           {currentUserProfile?.photo_url ? (
             <img src={currentUserProfile.photo_url} className={`w-7 h-7 rounded-full object-cover border-2 ${activeTab === 'profile' ? 'border-violet-400' : 'border-gray-500'}`} />
           ) : (
