@@ -9,7 +9,7 @@ CREATE TABLE profiles (
   email TEXT UNIQUE NOT NULL,
   full_name TEXT NOT NULL,
   age INTEGER NOT NULL CHECK (age >= 18 AND age <= 35),
-  city TEXT NOT NULL CHECK (city IN ('Vancouver', 'Montreal')),
+  city TEXT NOT NULL CHECK (city IN ('Vancouver', 'Montreal', 'Toronto')),
   phone TEXT,
   bio TEXT,
   

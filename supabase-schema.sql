@@ -13,7 +13,7 @@ CREATE TABLE profiles (
   name TEXT NOT NULL,
   age INTEGER NOT NULL CHECK (age >= 18 AND age <= 100),
   gender TEXT NOT NULL CHECK (gender IN ('man', 'woman', 'non_binary', 'prefer_not_to_say')),
-  city TEXT NOT NULL CHECK (city IN ('vancouver', 'montreal')),
+  city TEXT NOT NULL CHECK (city IN ('vancouver', 'montreal', 'toronto')),
   bio TEXT NOT NULL,
   photo_url TEXT,
   

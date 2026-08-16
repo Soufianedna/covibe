@@ -4,6 +4,7 @@ import { calculateCompatibility, getCompatibilityLevel } from '../lib/matching';
 import { Heart, X } from 'lucide-react';
 import { ProfileDetailView } from './ProfileDetailView';
 import { usePropertyPhotos } from '../lib/usePropertyPhotos';
+import { getCityLabel } from '../lib/cityLabel';
 
 export const TopVibes = ({ currentUserProfile, onLike, onPass }) => {
   const [profiles, setProfiles] = useState([]);
@@ -122,7 +123,7 @@ export const TopVibes = ({ currentUserProfile, onLike, onPass }) => {
         {/* Infos */}
         <div className="px-6 pt-4">
           <h2 className="text-3xl font-bold text-white">{current.name}, {current.age}</h2>
-          <p className="text-gray-400 mt-1">{current.city === 'vancouver' ? 'Vancouver' : 'Montréal'}</p>
+          <p className="text-gray-400 mt-1">{getCityLabel(current.city)}</p>
           {current.bio && <p className="text-gray-300 mt-3">{current.bio}</p>}
 
           <ProfileDetailView

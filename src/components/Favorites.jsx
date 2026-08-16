@@ -5,6 +5,7 @@ import { X, Star, Heart, MessageCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getCompatibilityLevel } from '../lib/matching';
 import { getCreativeTypeKey } from '../lib/creativeType';
+import { getCityLabel } from '../lib/cityLabel';
 
 export const Favorites = ({ currentUser, onClose, onOpenChat, onLike, mutualMatches }) => {
   const { t } = useTranslation();
@@ -67,8 +68,6 @@ export const Favorites = ({ currentUser, onClose, onOpenChat, onLike, mutualMatc
     const labels = { man: 'Homme', woman: 'Femme', non_binary: 'Non-binaire', prefer_not_to_say: 'Non précisé' };
     return labels[gender] || gender;
   };
-
-  const getCityLabel = (city) => city === 'vancouver' ? 'Vancouver' : 'Montréal';
 
   return (
     <div className="fixed inset-0 z-40 overflow-y-auto bg-slate-900 pb-24">
