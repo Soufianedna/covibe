@@ -32,6 +32,7 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
     photo_url: userProfile.photo_url || '',
     smoking: userProfile.smoking || false,
     pets: userProfile.pets || false,
+    pet_type: userProfile.pet_type || null,
     pets_ok: userProfile.pets_ok || true,
     alcohol_ok: userProfile.alcohol_ok || true,
     cannabis_friendly: userProfile.cannabis_friendly || false,
@@ -700,11 +701,26 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
                 <input
                   type="checkbox"
                   checked={profile.pets}
-                  onChange={(e) => setProfile({ ...profile, pets: e.target.checked })}
+                  onChange={(e) => setProfile({ ...profile, pets: e.target.checked, pet_type: e.target.checked ? profile.pet_type : null })}
                   className="w-5 h-5 rounded bg-slate-700 border-gray-600 text-violet-500 focus:ring-2 focus:ring-violet-500"
                 />
                 <span className="text-gray-300">🐾 {t('pets')}</span>
               </label>
+
+              {profile.pets && (
+                <div className="ml-8">
+                  <select
+                    value={profile.pet_type || ''}
+                    onChange={(e) => setProfile({ ...profile, pet_type: e.target.value })}
+                    className="w-full px-4 py-3 bg-slate-700/50 border border-gray-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  >
+                    <option value="">Quel type ?</option>
+                    <option value="dog">🐶 J'ai un chien</option>
+                    <option value="cat">🐱 J'ai un chat</option>
+                    <option value="other">🐾 Autre</option>
+                  </select>
+                </div>
+              )}
 
               <label className="flex items-center gap-3 cursor-pointer bg-slate-700/50 p-3 rounded-xl hover:bg-slate-700 transition-all">
                 <input
@@ -745,6 +761,54 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
                 />
                 <span className="text-gray-300">✨ {t('soberLifestyle')}</span>
               </label>
+            </div>
+          </div>
+
+          {/* PRATIQUES RELIGIEUSES OU ALIMENTAIRES */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-300 mb-3">🙏 Pratiques religieuses ou alimentaires</label>
+            <select
+              value={profile.religious_practice || 'none'}
+              onChange={(e) => setProfile({ ...profile, religious_practice: e.target.value })}
+              className="w-full px-4 py-3 bg-slate-700/50 border border-gray-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+            >
+              <option value="none">🤷 Aucune préférence</option>
+              <option value="muslim">☪️ Halal</option>
+              <option value="jewish">✡️ Kasher</option>
+              <option value="vegetarian_vegan">🌱 Végétarien/Végan</option>
+              <option value="spiritual">🕉️ Spirituel</option>
+              <option value="secular">🔬 Laïc</option>
+            </select>
+          </div>
+
+          {/* ESPACE SÉCURITAIRE */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-300 mb-3">💜 Espace sécuritaire</label>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { value: 'lgbtq_friendly', label: '🏳️‍🌈 LGBTQ+ friendly' },
+                { value: 'trans_affirming', label: '🏳️‍⚧️ Trans-affirming' },
+                { value: 'women_only', label: '♀️ Women-only' },
+                { value: 'men_only', label: '♂️ Men-only' },
+                { value: 'multicultural', label: '🌍 Multiculturel' },
+                { value: 'open_to_all', label: '🤝 Ouvert à tous' },
+              ].map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => {
+                    const prefs = profile.safe_space_preferences || [];
+                    setProfile({ ...profile, safe_space_preferences: prefs.includes(value) ? prefs.filter(p => p !== value) : [...prefs, value] });
+                  }}
+                  className={`px-3 py-2 rounded-xl font-semibold text-sm transition-all ${
+                    (profile.safe_space_preferences || []).includes(value)
+                      ? 'bg-violet-600 text-white'
+                      : 'bg-slate-700/50 text-gray-300 hover:bg-slate-700'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           </div>
 

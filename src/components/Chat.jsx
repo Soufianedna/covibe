@@ -20,7 +20,9 @@ export const Chat = ({ currentUserProfile, matchedUser, onClose, onUnmatch, onMe
   const [lightboxPhoto, setLightboxPhoto] = useState(null);
   const messagesEndRef = useRef(null);
   const typingChannelRef = useRef(null);
-  const typingTimeoutRef = useRef(null);
+  // Dernier typing:true/false effectivement diffusé, pour éviter de re-track()
+  // à chaque frappe quand l'état n'a pas changé (null = rien envoyé encore).
+  const lastTypingSentRef = useRef(null);
 
   useEffect(() => {
     loadConversation();
@@ -43,29 +45,55 @@ export const Chat = ({ currentUserProfile, matchedUser, onClose, onUnmatch, onMe
   useEffect(() => {
     if (!conversationId) return;
 
-    const channel = supabase.channel(`typing:${conversationId}`, {
-      config: { presence: { key: currentUserProfile.user_id } },
-    });
+    const topic = `typing:${conversationId}`;
+    let cancelled = false;
+    let reconnectTimeout = null;
+    let reconnectDelay = 2000;
 
-    channel
-      .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
-        const otherTyping = Object.entries(state)
-          .filter(([key]) => key !== currentUserProfile.user_id)
-          .some(([, presences]) => presences.some((p) => p.typing));
-        setIsOtherTyping(otherTyping);
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          await channel.track({ typing: false });
-        }
+    const connect = () => {
+      if (cancelled) return;
+
+      const channel = supabase.channel(topic, {
+        config: { presence: { key: currentUserProfile.user_id } },
       });
 
-    typingChannelRef.current = channel;
+      channel
+        .on('presence', { event: 'sync' }, () => {
+          const state = channel.presenceState();
+          const otherTyping = Object.entries(state)
+            .filter(([key]) => key !== currentUserProfile.user_id)
+            .some(([, presences]) => presences.some((p) => p.typing));
+          setIsOtherTyping(otherTyping);
+        })
+        .subscribe(async (status) => {
+          if (status === 'SUBSCRIBED') {
+            reconnectDelay = 2000;
+            await channel.track({ typing: false });
+            return;
+          }
+          if (status === 'CLOSED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            if (cancelled) return;
+            if (typingChannelRef.current === channel) typingChannelRef.current = null;
+            clearTimeout(reconnectTimeout);
+            reconnectTimeout = setTimeout(() => {
+              reconnectDelay = Math.min(reconnectDelay * 2, 16000);
+              connect();
+            }, reconnectDelay);
+          }
+        });
+
+      typingChannelRef.current = channel;
+    };
+
+    connect();
 
     return () => {
-      clearTimeout(typingTimeoutRef.current);
-      channel.unsubscribe();
+      cancelled = true;
+      clearTimeout(reconnectTimeout);
+      // Quitter le canal notifie l'autre participant (l'entrée presence de
+      // cet utilisateur disparaît de son presenceState), ce qui éteint
+      // l'indicateur chez lui même si on n'a pas envoyé de message.
+      typingChannelRef.current?.unsubscribe();
       typingChannelRef.current = null;
     };
   }, [conversationId]);
@@ -242,12 +270,11 @@ export const Chat = ({ currentUserProfile, matchedUser, onClose, onUnmatch, onMe
   const handleTyping = (value) => {
     setNewMessage(value);
     const channel = typingChannelRef.current;
-    if (!channel) return;
-    channel.track({ typing: true });
-    clearTimeout(typingTimeoutRef.current);
-    typingTimeoutRef.current = setTimeout(() => {
-      channel.track({ typing: false });
-    }, 2000);
+    const isTyping = value !== '';
+    if (!channel || channel.state !== 'joined') return;
+    if (lastTypingSentRef.current === isTyping) return;
+    lastTypingSentRef.current = isTyping;
+    channel.track({ typing: isTyping });
   };
 
   const sendMessage = async (e) => {
@@ -255,7 +282,7 @@ export const Chat = ({ currentUserProfile, matchedUser, onClose, onUnmatch, onMe
     if (!newMessage.trim() || !conversationId) return;
     const messageContent = newMessage.trim();
     setNewMessage('');
-    clearTimeout(typingTimeoutRef.current);
+    lastTypingSentRef.current = false;
     typingChannelRef.current?.track({ typing: false });
     try {
       console.log('📤 Envoi message:', messageContent);
@@ -322,7 +349,7 @@ export const Chat = ({ currentUserProfile, matchedUser, onClose, onUnmatch, onMe
         <div className="fixed -bottom-20 -right-20 w-96 h-96 bg-cyan-500 rounded-full blur-3xl opacity-[0.18] pointer-events-none z-0" />
         <div className="fixed top-1/3 right-0 w-80 h-80 bg-violet-600 rounded-full blur-3xl opacity-[0.18] pointer-events-none z-0" />
 
-        <div className="shrink-0 relative z-10 bg-white/5 backdrop-blur-xl border-b border-white/10" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 12px)' }}>
+        <div className={`shrink-0 relative bg-white/5 backdrop-blur-xl border-b border-white/10 ${showMenu ? 'z-30' : 'z-10'}`} style={{ paddingTop: 'calc(env(safe-area-inset-top) + 12px)' }}>
           <div className="px-4 pb-3 flex items-center justify-between gap-2">
             <button
               onClick={() => setShowProfile(true)}
@@ -422,17 +449,17 @@ export const Chat = ({ currentUserProfile, matchedUser, onClose, onUnmatch, onMe
                   </div>
                 );
               })}
-
-              {isOtherTyping && (
-                <div className="flex justify-start mb-3">
-                  <div className="bg-slate-700/80 backdrop-blur-sm rounded-2xl rounded-bl-md px-4 py-3 flex items-center gap-1.5">
-                    <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                  </div>
-                </div>
-              )}
             </>
+          )}
+
+          {!loading && isOtherTyping && (
+            <div className="flex justify-start mb-3">
+              <div className="bg-slate-700/80 backdrop-blur-sm rounded-2xl rounded-bl-md px-4 py-3 flex items-center gap-1.5">
+                <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+            </div>
           )}
           <div ref={messagesEndRef} />
         </div>

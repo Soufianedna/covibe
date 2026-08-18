@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Heart, X, MapPin } from 'lucide-react';
 import { getCompatibilityLevel } from '../lib/matching';
@@ -13,13 +13,34 @@ export default function SwipeView({ profiles, onSwipe, onViewProfile, currentUse
   const startX = useRef(0);
   const startY = useRef(0);
   const isHorizontal = useRef(false);
+  // Nombre de décréments locaux déjà programmés (via handleSwipe) mais pas
+  // encore appliqués — sert à ne compter, dans l'effet ci-dessous, que le
+  // rétrécissement de `profiles` non déjà pris en compte localement (ex: un
+  // like/pass fait depuis "Voir le profil", en dehors de ce composant).
+  const pendingLocalDecrements = useRef(0);
+  const prevProfilesLength = useRef(profiles.length);
 
   const canSwipe = currentIndex >= 0;
+
+  // Resynchronise currentIndex quand `profiles` rétrécit pour une raison
+  // externe à ce composant (like/pass déclenché depuis la modale "Voir le
+  // profil"), sans dérégler le décrément normal programmé par handleSwipe.
+  useEffect(() => {
+    const shrink = prevProfilesLength.current - profiles.length;
+    prevProfilesLength.current = profiles.length;
+    if (shrink <= 0) return;
+    const externalShrink = shrink - pendingLocalDecrements.current;
+    pendingLocalDecrements.current = Math.max(0, pendingLocalDecrements.current - shrink);
+    if (externalShrink > 0) {
+      setCurrentIndex(prev => Math.max(-1, prev - externalShrink));
+    }
+  }, [profiles.length]);
 
   const handleSwipe = async (dir) => {
     if (currentIndex < 0) return;
     const profile = profiles[currentIndex];
     setDragX(dir === 'right' ? 400 : -400);
+    pendingLocalDecrements.current += 1;
     setTimeout(() => {
       setCurrentIndex(prev => prev - 1);
       setDragX(0);
@@ -166,7 +187,7 @@ export default function SwipeView({ profiles, onSwipe, onViewProfile, currentUse
       )}
 
       <div className="text-center">
-        <p className="text-gray-400 text-lg">{profiles.length - currentIndex - 1} / {profiles.length} {t('profilesRemaining')}</p>
+        <p className="text-gray-400 text-lg">{Math.max(0, currentIndex + 1)} / {profiles.length} {t('profilesRemaining')}</p>
       </div>
     </div>
   );

@@ -337,25 +337,42 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
           filter: `swiped_user_id=eq.${user.id}`
         },
         async (payload) => {
-          if (payload.new.is_like) {
-            const { data: likerProfile } = await supabase
-              .from('profiles')
-              .select('name, photo_url')
-              .eq('user_id', payload.new.user_id)
-              .single();
-            
-            if (likerProfile) {
-              const notifId = Date.now();
-              setNotifications(prev => [...prev, {
-                id: notifId,
-                sender: likerProfile.name,
-                message: `${likerProfile.name} t'a liké ! 💖`,
-                senderId: payload.new.user_id
-              }]);
-            }
-            
-            setUnviewedLikesCount(prev => prev + 1);
+          if (!payload.new.is_like) return;
+
+          const { data: iAlreadyLikedThem } = await supabase
+            .from('swipes')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('swiped_user_id', payload.new.user_id)
+            .eq('is_like', true)
+            .maybeSingle();
+
+          const { data: likerProfile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('user_id', payload.new.user_id)
+            .single();
+
+          if (!likerProfile) return;
+
+          if (iAlreadyLikedThem) {
+            // Match mutuel détecté côté de celui qui a liké en premier :
+            // handleLike ne peut le détecter que pour celui qui like en second,
+            // c'est donc ici qu'on notifie l'autre.
+            setMatchModalData({ currentUser: currentUserProfile, matchedUser: likerProfile });
+            setMutualMatches(prev => [...prev, payload.new.user_id]);
+            return;
           }
+
+          const notifId = Date.now();
+          setNotifications(prev => [...prev, {
+            id: notifId,
+            sender: likerProfile.name,
+            message: `${likerProfile.name} t'a liké ! 💖`,
+            senderId: payload.new.user_id
+          }]);
+
+          setUnviewedLikesCount(prev => prev + 1);
         }
       )
       .subscribe();
