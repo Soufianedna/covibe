@@ -59,33 +59,37 @@ const calculateBudgetCompatibility = (user1, user2) => {
     
     // Le room_price doit être dans le budget de user2
     if (user1.room_price >= budget2Min && user1.room_price <= budget2Max) {
-      // Bonus si seeking_studio ET has_creative_space
+      // Base réduite à 20 pour laisser la place aux bonus ci-dessous sans
+      // dépasser le poids de 30 points de cette catégorie : un simple prix
+      // compatible sans synergie créative vaut 20/30, une synergie complète
+      // (studio recherché + espace créatif disponible + type correspondant)
+      // permet d'atteindre les 30/30.
       let bonus = (user2.seeking_studio && user1.has_creative_space) ? 5 : 0;
       // Bonus supplémentaire si les types d'espace correspondent
       if (user2.seeking_creative_space_type?.length > 0 && user1.creative_space_type?.length > 0) {
         const match = user2.seeking_creative_space_type.some(t => user1.creative_space_type.includes(t));
         if (match) bonus += 5;
       }
-      return 30 + bonus; // Score parfait + bonus éventuel
+      return 20 + bonus;
     }
     return 0; // Prix incompatible
   }
-  
+
   // CAS B : user2 a un espace, user1 cherche une chambre
   if (user2.has_space && user2.room_price && !user1.has_space) {
     const budget1Min = user1.budget_min || 0;
     const budget1Max = user1.budget_max || 5000;
-    
+
     // Le room_price doit être dans le budget de user1
     if (user2.room_price >= budget1Min && user2.room_price <= budget1Max) {
-      // Bonus si seeking_studio ET has_creative_space
+      // Même rééquilibrage que le CAS A ci-dessus.
       let bonus = (user1.seeking_studio && user2.has_creative_space) ? 5 : 0;
       // Bonus supplémentaire si les types d'espace correspondent
       if (user1.seeking_creative_space_type?.length > 0 && user2.creative_space_type?.length > 0) {
         const match = user1.seeking_creative_space_type.some(t => user2.creative_space_type.includes(t));
         if (match) bonus += 5;
       }
-      return 30 + bonus;
+      return 20 + bonus;
     }
     return 0;
   }
@@ -363,6 +367,7 @@ export const getTopMatches = (currentUser, allUsers, limit = 20) => {
  * Retourne le niveau de compatibilité avec couleur et emoji
  */
 export const getCompatibilityLevel = (score) => {
+  if (score >= 100) return { levelKey: 'perfectVibe', color: 'text-fuchsia-400', emoji: '⚡' };
   if (score >= 90) return { levelKey: 'excellentMatch', color: 'text-green-400', emoji: '🔥' };
   if (score >= 80) return { levelKey: 'veryCompatible', color: 'text-cyan-400', emoji: '✨' };
   if (score >= 70) return { levelKey: 'goodMatch', color: 'text-blue-400', emoji: '👍' };

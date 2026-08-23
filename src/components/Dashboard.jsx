@@ -561,7 +561,6 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
       if (filters.budgetMax && match.budget_max > parseInt(filters.budgetMax)) return false;
       if (filters.ageMin && match.age < parseInt(filters.ageMin)) return false;
       if (filters.ageMax && match.age > parseInt(filters.ageMax)) return false;
-      console.log("🔍 FILTRE GENDER:", filters.gender, "MATCH GENDER:", match.gender);
       if (filters.gender?.length > 0 && !filters.gender.includes(match.gender)) return false;
       if (filters.languages?.length > 0 && !filters.languages.some(lang => match.languages?.includes(lang))) return false;
       if (filters.creativeTypes?.length > 0 && !filters.creativeTypes.includes(match.creative_type)) return false;

@@ -20,29 +20,43 @@ export default function SwipeView({ profiles, onSwipe, onViewProfile, currentUse
   const pendingLocalDecrements = useRef(0);
   const prevProfilesLength = useRef(profiles.length);
 
-  const canSwipe = currentIndex >= 0;
-
-  // Resynchronise currentIndex quand `profiles` rétrécit pour une raison
-  // externe à ce composant (like/pass déclenché depuis la modale "Voir le
-  // profil"), sans dérégler le décrément normal programmé par handleSwipe.
+  // Resynchronise currentIndex chaque fois que `profiles` change de longueur
+  // pour une raison externe à ce composant (changement de filtre, like/pass
+  // déclenché depuis "Voir le profil"...). Un changement de filtre peut
+  // recomposer ENTIÈREMENT la liste (contenu ET longueur, pas juste retirer
+  // la carte du dessus) : on ne peut donc plus supposer que l'ancien
+  // currentIndex pointe encore sur une carte cohérente en soustrayant le
+  // nombre de cartes disparues — on le replace directement au sommet du
+  // nouveau tableau.
   useEffect(() => {
-    const shrink = prevProfilesLength.current - profiles.length;
+    const prevLength = prevProfilesLength.current;
     prevProfilesLength.current = profiles.length;
-    if (shrink <= 0) return;
-    const externalShrink = shrink - pendingLocalDecrements.current;
-    pendingLocalDecrements.current = Math.max(0, pendingLocalDecrements.current - shrink);
-    if (externalShrink > 0) {
-      setCurrentIndex(prev => Math.max(-1, prev - externalShrink));
+    const delta = prevLength - profiles.length; // > 0 rétrécit, < 0 grandit
+    if (delta === 0) return;
+    if (delta > 0) {
+      const externalShrink = delta - pendingLocalDecrements.current;
+      pendingLocalDecrements.current = Math.max(0, pendingLocalDecrements.current - delta);
+      if (externalShrink > 0) setCurrentIndex(profiles.length - 1);
+    } else {
+      // Le tableau a grandi (ex: filtre élargi) : si l'index était devenu
+      // invalide (liste vidée puis re-remplie), on le replace au sommet.
+      setCurrentIndex(prev => (prev < 0 ? profiles.length - 1 : prev));
     }
   }, [profiles.length]);
 
+  // Filet de sécurité au rendu : quelle que soit la valeur de currentIndex,
+  // ne jamais utiliser un index hors bornes — évite un écran vide si une
+  // resynchronisation venait à être manquée.
+  const safeIndex = Math.min(currentIndex, profiles.length - 1);
+  const canSwipe = safeIndex >= 0;
+
   const handleSwipe = async (dir) => {
-    if (currentIndex < 0) return;
-    const profile = profiles[currentIndex];
+    if (safeIndex < 0) return;
+    const profile = profiles[safeIndex];
     setDragX(dir === 'right' ? 400 : -400);
     pendingLocalDecrements.current += 1;
     setTimeout(() => {
-      setCurrentIndex(prev => prev - 1);
+      setCurrentIndex(prev => Math.min(prev, profiles.length - 1) - 1);
       setDragX(0);
     }, 200);
     if (dir === 'right') await onSwipe(profile, 'like');
@@ -99,8 +113,8 @@ export default function SwipeView({ profiles, onSwipe, onViewProfile, currentUse
       <div className="relative h-[540px] mb-4">
         {profiles.map((profile, index) => {
           const { levelKey, color, emoji } = getCompatibilityLevel(profile.compatibility);
-          const isTop = index === currentIndex;
-          const isNext = index === currentIndex - 1;
+          const isTop = index === safeIndex;
+          const isNext = index === safeIndex - 1;
           if (!isTop && !isNext) return null;
 
           const rotation = isTop ? dragX * 0.05 : 0;
@@ -171,8 +185,8 @@ export default function SwipeView({ profiles, onSwipe, onViewProfile, currentUse
         })}
       </div>
 
-      {canSwipe && currentIndex >= 0 && (
-        <button onClick={() => onViewProfile(profiles[currentIndex])}
+      {canSwipe && (
+        <button onClick={() => onViewProfile(profiles[safeIndex])}
           className="w-full mb-4 bg-gradient-to-r from-violet-600 to-indigo-500 text-white py-4 rounded-xl font-bold text-lg shadow-lg"
           style={{touchAction:'manipulation'}}>
           {t('viewProfile')}
@@ -187,7 +201,7 @@ export default function SwipeView({ profiles, onSwipe, onViewProfile, currentUse
       )}
 
       <div className="text-center">
-        <p className="text-gray-400 text-lg">{Math.max(0, currentIndex + 1)} / {profiles.length} {t('profilesRemaining')}</p>
+        <p className="text-gray-400 text-lg">{Math.max(0, safeIndex + 1)} / {profiles.length} {t('profilesRemaining')}</p>
       </div>
     </div>
   );
