@@ -565,25 +565,27 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
       if (filters.gender?.length > 0 && !filters.gender.includes(match.gender)) return false;
       if (filters.languages?.length > 0 && !filters.languages.some(lang => match.languages?.includes(lang))) return false;
       if (filters.creativeTypes?.length > 0 && !filters.creativeTypes.includes(match.creative_type)) return false;
-      // seeking_roommate / seeking_studio / has_space sont des booléens séparés sur
-      // le profil, pas les valeurs d'un champ unique "seeking" (qui n'existe pas) :
-      // le profil passe si au moins un des booléens sélectionnés est vrai.
-      if (filters.seeking?.length > 0 && !filters.seeking.some(key => match[key])) return false;
       // 'flexible' = pas de rythme de vie particulier, pas une catégorie exclusive :
       // ces profils restent visibles quel que soit le filtre sélectionné.
       const matchProductiveTime = match.productive_time || 'flexible';
       if (filters.productiveTimes?.length > 0 && matchProductiveTime !== 'flexible' && !filters.productiveTimes.includes(matchProductiveTime)) return false;
-      if (filters.workLocation?.length > 0 && !filters.workLocation.includes(match.work_location)) return false;
       // 'none'/'secular' = pas de contrainte religieuse/alimentaire, pas une catégorie
       // exclusive : ces profils restent visibles quel que soit le filtre sélectionné.
       const matchReligion = match.religious_practice || 'none';
       if (filters.religion?.length > 0 && matchReligion !== 'none' && matchReligion !== 'secular' && !filters.religion.includes(matchReligion)) return false;
       if (filters.creative_space_type?.length > 0 && !filters.creative_space_type.some(t => match.creative_space_type?.includes(t))) return false;
       if (match.cleanliness < filters.minCleanliness) return false;
+      if (filters.minNoiseTolerance && match.noise_tolerance < filters.minNoiseTolerance) return false;
+      if (filters.minGuestsFrequency && match.guests_frequency < filters.minGuestsFrequency) return false;
+      // alcohol_ok / cannabis_friendly / no_substances sont des booléens séparés :
+      // le profil passe si au moins une des préférences sélectionnées est vraie.
+      if (filters.lifestyle?.length > 0 && !filters.lifestyle.some(key => match[key])) return false;
       if (filters.smoking !== null && match.smoking !== filters.smoking) return false;
       if (filters.pets !== null && match.pets !== filters.pets) return false;
       // Filtre par ville
       if (filters.city && match.city !== filters.city) return false;
+      // move_in_date non renseigné = disponibilité inconnue, pas une contrainte : reste visible.
+      if (filters.moveInBefore && match.move_in_date && new Date(match.move_in_date) > new Date(filters.moveInBefore)) return false;
       // Filtre de distance
       if (filters.searchRadius && currentUserProfile?.latitude && match.latitude) {
         const distance = calculateDistance(currentUserProfile.latitude, currentUserProfile.longitude, match.latitude, match.longitude);
