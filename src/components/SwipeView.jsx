@@ -46,8 +46,12 @@ export default function SwipeView({ profiles, onSwipe, onViewProfile, currentUse
 
   // Filet de sécurité au rendu : quelle que soit la valeur de currentIndex,
   // ne jamais utiliser un index hors bornes — évite un écran vide si une
-  // resynchronisation venait à être manquée.
-  const safeIndex = Math.min(currentIndex, profiles.length - 1);
+  // resynchronisation venait à être manquée. Le plancher à 0 (pas seulement
+  // le plafond) est nécessaire : le décrément optimiste de handleSwipe (200ms)
+  // peut faire passer currentIndex à -1 avant même que `profiles` n'ait
+  // réellement rétréci (ex: réseau lent sur la toute dernière carte) — sans
+  // ce plancher, on se retrouve avec profiles.length > 0 mais rien à l'écran.
+  const safeIndex = profiles.length > 0 ? Math.max(0, Math.min(currentIndex, profiles.length - 1)) : -1;
   const canSwipe = safeIndex >= 0;
 
   const handleSwipe = async (dir) => {
@@ -99,14 +103,6 @@ export default function SwipeView({ profiles, onSwipe, onViewProfile, currentUse
     setIsDragging(false);
     isHorizontal.current = false;
   };
-
-  if (profiles.length === 0) return (
-    <div className="text-center py-20 bg-slate-800/50 rounded-2xl border border-violet-500/30">
-      <div className="text-6xl mb-4">🎉</div>
-      <h3 className="text-2xl font-bold text-white mb-2">{t('noMoreProfiles')}</h3>
-      <p className="text-gray-300">{t('checkBackLater')}</p>
-    </div>
-  );
 
   return (
     <div className="relative w-full max-w-lg mx-auto select-none">

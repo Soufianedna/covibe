@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { SlidersHorizontal, X } from 'lucide-react';
 import { SafeAreaTop } from './SafeAreaTop';
 
@@ -10,7 +10,7 @@ const DEFAULT_FILTERS = {
   minCleanliness: 0, minNoiseTolerance: 0, minGuestsFrequency: 0,
 };
 
-export const FilterPills = ({ onFilterChange, hasSpace }) => {
+export const FilterPills = ({ onFilterChange, hasSpace, openSignal }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [activeFilters, setActiveFilters] = useState({});
   const [tempFilters, setTempFilters] = useState(DEFAULT_FILTERS);
@@ -99,6 +99,17 @@ export const FilterPills = ({ onFilterChange, hasSpace }) => {
     setTempFilters({ ...DEFAULT_FILTERS, ...activeFilters });
     setShowAdvanced(true);
   };
+
+  // Permet d'ouvrir le panneau depuis l'extérieur (ex: bouton "Élargir mes
+  // filtres" de l'état vide de Discover) : le parent incrémente openSignal,
+  // on ignore la valeur initiale (0/undefined) pour ne pas ouvrir au montage.
+  const openSignalRef = useRef(openSignal);
+  useEffect(() => {
+    if (openSignal !== undefined && openSignal !== openSignalRef.current) {
+      openSignalRef.current = openSignal;
+      openAdvanced();
+    }
+  }, [openSignal]);
 
   const applyAndClose = () => {
     setActiveFilters(tempFilters);

@@ -49,6 +49,9 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
   const [unviewedLikesCount, setUnviewedLikesCount] = useState(0);
   const [likerProfiles, setLikerProfiles] = useState([]);
   const [filters, setFilters] = useState({});
+  // Incrémenté pour demander à FilterPills d'ouvrir son panneau depuis
+  // l'extérieur (ex: bouton "Élargir mes filtres" de l'état vide de Discover).
+  const [openFiltersSignal, setOpenFiltersSignal] = useState(0);
   const [favorites, setFavorites] = useState([]);
   const [searchPartnerships, setSearchPartnerships] = useState([]);
   const [selectedMatchPartner, setSelectedMatchPartner] = useState(null);
@@ -442,15 +445,24 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
       console.log('🐛 DEBUG unswipedProfiles:', unswipedProfiles.map(p => ({ name: p.name, city: p.city })));
 
 
-      // Charger les photos pour chaque profil
-      for (let profile of unswipedProfiles) {
-        const { data: photos } = await supabase
-          .from('profile_photos')
-          .select('*')
-          .eq('user_id', profile.user_id)
-          .order('position');
-        
-        profile.photos = photos || [];
+      // Charger les photos de tous les profils en une seule requête groupée
+      // (plutôt qu'une requête séquentielle par profil, qui pouvait prendre
+      // plusieurs secondes avec un pool de profils important).
+      const unswipedIds = unswipedProfiles.map(profile => profile.user_id);
+      const { data: allPhotos } = unswipedIds.length > 0
+        ? await supabase
+            .from('profile_photos')
+            .select('*')
+            .in('user_id', unswipedIds)
+            .order('position')
+        : { data: [] };
+
+      const photosByUserId = {};
+      for (const photo of allPhotos || []) {
+        (photosByUserId[photo.user_id] ??= []).push(photo);
+      }
+      for (const profile of unswipedProfiles) {
+        profile.photos = photosByUserId[profile.user_id] || [];
       }
       
       // Pour le mode swipe : tous les profils avec scores
@@ -470,9 +482,16 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
 
   const handleLike = async (likedUserId) => {
     try {
+      // upsert plutôt qu'insert : la contrainte unique porte sur
+      // (user_id, swiped_user_id) sans distinction sur is_like — un second
+      // swipe sur la même personne (double-tap, réapparition optimiste
+      // d'une carte...) doit écraser le précédent plutôt qu'échouer.
       const { error } = await supabase
         .from('swipes')
-        .insert({ user_id: user.id, swiped_user_id: likedUserId, is_like: true });
+        .upsert(
+          { user_id: user.id, swiped_user_id: likedUserId, is_like: true },
+          { onConflict: 'user_id,swiped_user_id' }
+        );
 
       if (error) throw error;
 
@@ -503,14 +522,19 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
       setSelectedMatch(null);
     } catch (error) {
       console.error('Error liking user:', error);
+      alert('Erreur lors du like: ' + error.message);
     }
   };
 
   const handlePass = async (passedUserId) => {
     try {
+      // upsert : voir commentaire équivalent dans handleLike ci-dessus.
       const { error } = await supabase
         .from('swipes')
-        .insert({ user_id: user.id, swiped_user_id: passedUserId, is_like: false });
+        .upsert(
+          { user_id: user.id, swiped_user_id: passedUserId, is_like: false },
+          { onConflict: 'user_id,swiped_user_id' }
+        );
 
       if (error) throw error;
 
@@ -518,6 +542,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
       setSelectedMatch(null);
     } catch (error) {
       console.error('Error passing user:', error);
+      alert('Erreur lors du pass: ' + error.message);
     }
   };
 
@@ -741,6 +766,23 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
     }
   };
 
+  const handleResetPasses = async () => {
+    if (!confirm('Revoir tous les profils passés ? Tu les reverras dans ta liste de découverte.')) return;
+    try {
+      const { error } = await supabase
+        .from('swipes')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('is_like', false)
+        .select();
+      if (error) throw error;
+      await loadMatches();
+    } catch (error) {
+      console.error('Error resetting passes:', error);
+      alert('Erreur: ' + error.message);
+    }
+  };
+
   const handleLeavePartnership = async (partnership) => {
     if (!confirm('Es-tu sûr de vouloir quitter ce binôme de recherche ?')) return;
     try {
@@ -889,17 +931,33 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
 
       <main className="max-w-7xl mx-auto px-6 pt-safe-screen pb-24">
         {/* {t('filters')} */}
-        <FilterPills onFilterChange={setFilters} hasSpace={currentUserProfile?.has_space} />
+        <FilterPills onFilterChange={setFilters} hasSpace={currentUserProfile?.has_space} openSignal={openFiltersSignal} />
                 {loading ? (
           <div className="text-center py-20">
             <div className="text-6xl mb-4">⏳</div>
             <p className="text-white text-xl font-semibold">{ t('searchingMatches') }</p>
           </div>
         ) : filteredMatches.length === 0 ? (
-          <div className="text-center py-20 bg-slate-800/50 rounded-3xl border border-violet-500/30">
+          <div className="text-center py-20 bg-slate-800/50 rounded-3xl border border-violet-500/30 px-6">
             <div className="text-6xl mb-4">🎉</div>
             <h3 className="text-2xl font-bold text-white mb-2">{ t('allProfilesSeen') }</h3>
-            <p className="text-gray-300">{ t('checkBackLater') }</p>
+            <p className="text-gray-300 mb-6">{ t('checkBackLater') }</p>
+            <div className="max-w-xs mx-auto space-y-3">
+              {Object.keys(filters).length > 0 && (
+                <button
+                  onClick={() => setOpenFiltersSignal(s => s + 1)}
+                  className="w-full py-3 bg-gradient-to-r from-violet-600 to-indigo-500 text-white rounded-xl font-bold transition-all"
+                >
+                  Élargir mes filtres
+                </button>
+              )}
+              <button
+                onClick={handleResetPasses}
+                className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-semibold transition-all"
+              >
+                Revoir les profils passés
+              </button>
+            </div>
           </div>
         ) : viewMode === "swipe" ? (
           <SwipeView
