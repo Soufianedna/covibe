@@ -34,7 +34,11 @@ export const ProfileDetailView = ({
     return labels[religion] || religion;
   };
   const getWorkLocationLabel = (w) => ({ remote: 'remote', office: 'office', hybrid: 'hybrid', freelance: 'freelance', student: 'student', other: 'other' }[w] || w);
-  const getRelationshipLabel = (r) => ({ single: 'single', couple: 'couple', married: 'married' }[r] || r);
+  const getRelationshipLabel = (r) => ({
+    single: 'single', couple: 'couple', married: 'married',
+    domestic_partnership: 'domesticPartnership', polyamorous: 'polyamorous',
+    open_relationship: 'openRelationship', prefer_not_to_say: 'preferNotToSay',
+  }[r] || r);
   const getLeaseDurationLabel = (d) => ({ monthly: 'monthToMonth', '3months': 'threeMonths', '6months': 'sixMonths', '1year': 'oneYear' }[d] || d);
   const getLanguageLabel = (l) => ({ french: 'Français', english: 'Anglais', spanish: 'Espagnol', arabic: 'Arabe', portuguese: 'Portugais', mandarin: 'Mandarin', hindi: 'Hindi', farsi: 'Farsi', cantonese: 'Cantonais', other: 'Autre' }[l] || l);
   const getProfilePhotoUrls = (p) => {
@@ -54,6 +58,11 @@ export const ProfileDetailView = ({
     ((p.requester_id === profile.user_id && p.partner_id === currentUserProfile?.user_id) ||
      (p.requester_id === currentUserProfile?.user_id && p.partner_id === profile.user_id))
   );
+  // Sur mon propre profil (profile === currentUserProfile), myPartnershipWithProfile
+  // ne peut jamais matcher (il faudrait requester === partner) : on utilise alors
+  // acceptedPartnership, qui est déjà "mon" partnership dans ce cas précis.
+  const isOwnProfile = currentUserProfile?.user_id === profile.user_id;
+  const togglablePartnership = isOwnProfile ? acceptedPartnership : myPartnershipWithProfile;
 
   const body = (
     <div className={isPreview ? 'space-y-6' : 'px-6 pb-4 space-y-6'}>
@@ -116,15 +125,15 @@ export const ProfileDetailView = ({
               </div>
             )}
           </div>
-          {myPartnershipWithProfile && onToggleFlexible ? (
+          {togglablePartnership && onToggleFlexible ? (
             <button
-              onClick={() => onToggleFlexible(myPartnershipWithProfile)}
+              onClick={() => onToggleFlexible(togglablePartnership)}
               className="flex items-center gap-2 mt-1 text-xs text-gray-400 hover:text-gray-300 transition-all"
             >
-              <div className={`w-8 h-4 rounded-full transition-all ${myPartnershipWithProfile.is_flexible ? 'bg-cyan-500/40' : 'bg-slate-600'}`}>
-                <div className={`w-3.5 h-3.5 bg-white rounded-full shadow transition-all mt-0.5 ${myPartnershipWithProfile.is_flexible ? 'translate-x-4' : 'translate-x-0.5'}`} />
+              <div className={`w-8 h-4 rounded-full transition-all ${togglablePartnership.is_flexible ? 'bg-cyan-500/40' : 'bg-slate-600'}`}>
+                <div className={`w-3.5 h-3.5 bg-white rounded-full shadow transition-all mt-0.5 ${togglablePartnership.is_flexible ? 'translate-x-4' : 'translate-x-0.5'}`} />
               </div>
-              <span>{myPartnershipWithProfile.is_flexible ? 'Ouverts aussi à une place seule' : 'Cherchent ensemble · 2 chambres'}</span>
+              <span>{togglablePartnership.is_flexible ? 'Ouverts aussi à une place seule' : 'Cherchent ensemble · 2 chambres'}</span>
             </button>
           ) : (
             <p className="text-xs text-gray-500">

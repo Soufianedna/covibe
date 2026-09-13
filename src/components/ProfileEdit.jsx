@@ -824,6 +824,10 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
               <option value="single">{t('single')}</option>
               <option value="couple">{t('couple')}</option>
               <option value="married">{t('married')}</option>
+              <option value="domestic_partnership">{t('domesticPartnership')}</option>
+              <option value="polyamorous">{t('polyamorous')}</option>
+              <option value="open_relationship">{t('openRelationship')}</option>
+              <option value="prefer_not_to_say">{t('preferNotToSay')}</option>
             </select>
           </div>
           {/* SLIDERS */}

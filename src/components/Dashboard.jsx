@@ -1124,6 +1124,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
           onSave={(updatedProfile) => setCurrentUserProfile(updatedProfile)}
           onLogout={onLogout}
           searchPartnerships={searchPartnerships}
+          onToggleFlexible={handleToggleFlexible}
         />
       )}
 

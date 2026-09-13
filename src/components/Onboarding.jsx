@@ -77,7 +77,7 @@ export const Onboarding = ({ user, onComplete }) => {
         { value: 'developer', label: '💻 Développeur·se' },
         { value: 'writer', label: '✍️ Écrivain·e' },
         { value: 'entrepreneur', label: '🚀 Entrepreneur·e' },
-        { value: 'other', label: '✨ Autre' },
+        { value: 'other', label: '✨ Non concerné' },
       ]}
     },
     { id: 'languages', title: 'Langues parlées', subtitle: 'Sélectionne toutes les langues que tu parles', motivation: '🌍 Partager une langue facilite la vie en colocation !', type: 'buttons',
@@ -603,6 +603,10 @@ export const Onboarding = ({ user, onComplete }) => {
                   <option value="single">Célibataire</option>
                   <option value="couple">En couple</option>
                   <option value="married">Marié·e</option>
+                  <option value="domestic_partnership">Conjoint·e de fait</option>
+                  <option value="polyamorous">Polyamoureux·se</option>
+                  <option value="open_relationship">Relation ouverte</option>
+                  <option value="prefer_not_to_say">Préfère ne pas dire</option>
                 </select>
               </div>
 

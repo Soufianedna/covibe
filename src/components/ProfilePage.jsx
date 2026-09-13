@@ -8,7 +8,7 @@ import { LanguageSwitcher } from './LanguageSwitcher';
 import { SafeAreaTop } from './SafeAreaTop';
 import { useTranslation } from 'react-i18next';
 
-export const ProfilePage = ({ currentUser, onSave, onLogout, onDeleteAccount, searchPartnerships = [] }) => {
+export const ProfilePage = ({ currentUser, onSave, onLogout, onDeleteAccount, searchPartnerships = [], onToggleFlexible }) => {
   const { t } = useTranslation();
   const [showSettings, setShowSettings] = useState(false);
   const [isPaused, setIsPaused] = useState(currentUser?.is_paused || false);
@@ -191,6 +191,7 @@ export const ProfilePage = ({ currentUser, onSave, onLogout, onDeleteAccount, se
           currentUserProfile={currentUser}
           searchPartnerships={searchPartnerships}
           partnerProfile={partnerProfile}
+          onToggleFlexible={onToggleFlexible}
           propertyPhotos={propertyPhotos}
           onPropertyPhotoClick={(url) => setLightboxPhoto(url)}
         />
