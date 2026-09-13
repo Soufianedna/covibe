@@ -1,16 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
 import { SlidersHorizontal, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { SafeAreaTop } from './SafeAreaTop';
 
 const DEFAULT_FILTERS = {
   budgetMin: '', budgetMax: '', ageMin: '', ageMax: '',
   gender: [], smoking: null, pets: null, searchRadius: 25,
   creativeTypes: [], productiveTimes: [], languages: [],
-  city: '', moveInBefore: '', lifestyle: [], religion: [],
+  city: '', moveInUrgency: [], lifestyle: [], religion: [],
   minCleanliness: 0, minNoiseTolerance: 0, minGuestsFrequency: 0,
 };
 
 export const FilterPills = ({ onFilterChange, hasSpace, openSignal }) => {
+  const { t } = useTranslation();
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [activeFilters, setActiveFilters] = useState({});
   const [tempFilters, setTempFilters] = useState(DEFAULT_FILTERS);
@@ -61,6 +63,13 @@ export const FilterPills = ({ onFilterChange, hasSpace, openSignal }) => {
     { value: 'early', label: '🌅 Lève-tôt' },
     { value: 'late', label: '🌙 Couche-tard' },
     { value: 'flexible', label: '🔄 Flexible' },
+  ];
+
+  const moveInUrgencyOptions = [
+    { value: 'asap', label: t('moveInUrgencyAsap') },
+    { value: '1to3', label: t('moveInUrgency1to3') },
+    { value: '3to6', label: t('moveInUrgency3to6') },
+    { value: 'later', label: t('moveInUrgencyLater') },
   ];
 
   const creativeOptions = [
@@ -224,15 +233,21 @@ export const FilterPills = ({ onFilterChange, hasSpace, openSignal }) => {
 
           {/* ===================== LOGEMENT ===================== */}
           <div className="mb-4 bg-slate-800/50 rounded-2xl px-4">
-            <GroupHeader title="🏠 Logement" groupKey="logement" keys={['moveInBefore', 'creativeTypes']} />
+            <GroupHeader title="🏠 Logement" groupKey="logement" keys={['moveInUrgency', 'creativeTypes']} />
             {expandedGroups.logement && (
               <div className="pb-4">
-                {/* Date d'emménagement */}
+                {/* Urgence d'emménagement */}
                 <div className="mb-6">
-                  <p className="text-white font-bold mb-3">Emménagement souhaité avant le</p>
-                  <input type="date" value={tempFilters.moveInBefore}
-                    onChange={e => setTempFilters({...tempFilters, moveInBefore: e.target.value})}
-                    className="w-full bg-slate-700 text-white rounded-xl px-3 py-2 outline-none text-base" />
+                  <p className="text-white font-bold mb-3">{t('moveInUrgencyLabel')}</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {moveInUrgencyOptions.map(u => (
+                      <button key={u.value}
+                        onClick={() => toggleArrayFilter('moveInUrgency', u.value, tempFilters, setTempFilters)}
+                        className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${(tempFilters.moveInUrgency || []).includes(u.value) ? 'bg-violet-600 text-white' : 'bg-slate-700 text-gray-300'}`}>
+                        {u.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Type créatif */}

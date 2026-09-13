@@ -579,6 +579,20 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
   const getProductiveTimeLabel = (time) => time;
   const isMutualMatch = (matchId) => mutualMatches.includes(matchId);
 
+  // Tranche d'urgence d'emménagement, en mois calendaires par rapport à
+  // aujourd'hui. Bornes disjointes pour éviter tout chevauchement 1-3/3-6 :
+  // ce mois-ci ou en retard = asap, puis 1-3, puis 4-6, au-delà = later.
+  const getMoveInUrgencyBucket = (moveInDate) => {
+    if (!moveInDate) return 'later';
+    const date = new Date(moveInDate);
+    const now = new Date();
+    const monthsDiff = (date.getFullYear() - now.getFullYear()) * 12 + (date.getMonth() - now.getMonth());
+    if (monthsDiff <= 0) return 'asap';
+    if (monthsDiff <= 3) return '1to3';
+    if (monthsDiff <= 6) return '3to6';
+    return 'later';
+  };
+
   const applyFilters = (matchesList) => {
     if (Object.keys(filters).length === 0) return matchesList;
     return matchesList.filter(match => {
@@ -608,8 +622,9 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
       if (filters.pets !== null && match.pets !== filters.pets) return false;
       // Filtre par ville
       if (filters.city && match.city !== filters.city) return false;
-      // move_in_date non renseigné = disponibilité inconnue, pas une contrainte : reste visible.
-      if (filters.moveInBefore && match.move_in_date && new Date(match.move_in_date) > new Date(filters.moveInBefore)) return false;
+      // Logique OR entre tranches sélectionnées, comme pour les langues.
+      // Un profil sans move_in_date tombe dans "later" (flexible), jamais exclu.
+      if (filters.moveInUrgency?.length > 0 && !filters.moveInUrgency.includes(getMoveInUrgencyBucket(match.move_in_date))) return false;
       // Filtre de distance
       if (filters.searchRadius && currentUserProfile?.latitude && match.latitude) {
         const distance = calculateDistance(currentUserProfile.latitude, currentUserProfile.longitude, match.latitude, match.longitude);
