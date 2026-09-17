@@ -1,6 +1,8 @@
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { App as CapApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
+import OneSignal from '@onesignal/capacitor-plugin';
 import { Privacy } from './components/legal/Privacy';
 import { Terms } from './components/legal/Terms';
 import { Cookies } from './components/legal/Cookies';
@@ -14,6 +16,8 @@ import { Auth } from './components/Auth';
 import { Onboarding } from './components/Onboarding';
 import { Dashboard } from "./components/Dashboard";
 import { Verify } from './components/Verify';
+
+const ONESIGNAL_APP_ID = '27743df3-b5c4-4c30-8d1c-80a33e1b7b66';
 
 function App() {
   return (
@@ -42,6 +46,7 @@ function AppContent() {
         scopes: ['profile', 'email'],
         grantOfflineAccess: true,
       });
+      OneSignal.initialize(ONESIGNAL_APP_ID);
     }
     CapApp.addListener('appUrlOpen', async ({ url }) => {
       if (url.includes('covibe://verify')) {
@@ -86,6 +91,29 @@ function AppContent() {
     });
     return () => CapApp.removeAllListeners();
   }, []);
+
+  // Lie le device OneSignal au compte Supabase (external_id = user_id) dès
+  // qu'une session existe, et persiste l'onesignal_id pour permettre l'envoi
+  // de push depuis une Edge Function (match/message/like). getOnesignalId()
+  // peut renvoyer null juste après login le temps que OneSignal crée
+  // l'utilisateur côté serveur — le listener 'change' rattrape ce cas.
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    const userId = session?.user?.id;
+    if (!userId) {
+      OneSignal.logout();
+      return;
+    }
+    const persistOnesignalId = (onesignalId) => {
+      if (onesignalId) {
+        supabase.from('profiles').update({ onesignal_id: onesignalId }).eq('user_id', userId);
+      }
+    };
+    OneSignal.login(userId).then(() => OneSignal.User.getOnesignalId().then(persistOnesignalId));
+    const onUserChange = ({ current }) => persistOnesignalId(current.onesignalId);
+    OneSignal.User.addEventListener('change', onUserChange);
+    return () => OneSignal.User.removeEventListener('change', onUserChange);
+  }, [session?.user?.id]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {

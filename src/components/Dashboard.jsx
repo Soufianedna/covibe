@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { getTopMatches, getCompatibilityLevel, calculateCompatibility } from '../lib/matching';
 import { calculateDistance, formatDistance } from '../lib/distance';
 import { getCreativeTypeKey } from '../lib/creativeType';
+import { requestPushPermission } from '../lib/onesignal';
 import { Logo } from './Logo';
 import { SafeAreaTop } from './SafeAreaTop';
 import { MessageNotification } from './MessageNotification';
@@ -1278,8 +1279,8 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
         <MatchModal
           currentUser={matchModalData.currentUser}
           matchedUser={matchModalData.matchedUser}
-          onClose={() => setMatchModalData(null)}
-          onOpenChat={() => openChatWithMatch(matchModalData.matchedUser)}
+          onClose={() => { setMatchModalData(null); requestPushPermission(); }}
+          onOpenChat={() => { requestPushPermission(); openChatWithMatch(matchModalData.matchedUser); }}
         />
       )}
 
