@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
+import { getCityLabel } from '../lib/cityLabel';
 import { Logo } from './Logo';
 import { PropertyPhotosUploader } from './PropertyPhotosUploader';
 import { getNeighborhoodCoordinates, neighborhoodGroups } from '../lib/neighborhoods';
@@ -523,7 +524,7 @@ export const Onboarding = ({ user, onComplete }) => {
               {profile.latitude && profile.longitude && (
                 <div className="text-center p-4 bg-green-500/20 border border-green-500/30 rounded-xl">
                   <p className="text-green-400 font-semibold">✅ Position enregistrée !</p>
-                  <p className="text-sm text-gray-400 mt-1">📍 {profile.city || 'Localisation détectée'}</p>
+                  <p className="text-sm text-gray-400 mt-1">📍 {profile.city ? getCityLabel(profile.city) : 'Localisation détectée'}</p>
                 </div>
               )}
             </div>

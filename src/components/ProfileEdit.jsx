@@ -2,6 +2,7 @@ import { PhotoUploader } from './PhotoUploader';
 import { PropertyPhotosUploader } from './PropertyPhotosUploader';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { getCityLabel } from '../lib/cityLabel';
 import { Geolocation } from '@capacitor/geolocation';
 import { Camera, X } from 'lucide-react';
 import { getNeighborhoodsForCity, getNeighborhoodCoordinates, neighborhoodGroups } from '../lib/neighborhoods';
@@ -380,7 +381,7 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
                             longitude: lng,
                             city: cityName,
                           });
-                          showToast('📍 ' + cityName, 'success');
+                          showToast('📍 ' + getCityLabel(cityName), 'success');
                         },
                         (error) => {
                           showToast('❌ Impossible d\'obtenir ta position', 'error');

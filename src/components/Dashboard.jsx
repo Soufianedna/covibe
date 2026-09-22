@@ -643,7 +643,6 @@ export const Dashboard = ({ user, userProfile, onLogout, deepLink, onDeepLinkCon
   }, [deepLink]);
 
   const getGenderLabel = (gender) => gender;
-  const getCityLabel = (city) => city;
   const getProductiveTimeLabel = (time) => time;
   const isMutualMatch = (matchId) => mutualMatches.includes(matchId);
 

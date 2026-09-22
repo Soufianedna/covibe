@@ -4,6 +4,7 @@ import { getCompatibilityLevel } from '../lib/matching';
 import { calculateDistance, formatDistance } from '../lib/distance';
 import { getDisplayAmenities } from '../lib/amenities';
 import { getCreativeTypeKey } from '../lib/creativeType';
+import { getCityLabel } from '../lib/cityLabel';
 
 export const ProfileDetailView = ({
   profile,
@@ -23,7 +24,6 @@ export const ProfileDetailView = ({
   const { t } = useTranslation();
 
   const getGenderLabel = (gender) => gender;
-  const getCityLabel = (city) => city;
   const getProductiveTimeLabel = (time) => time;
   const getReligionLabel = (religion) => {
     const labels = {
@@ -143,7 +143,7 @@ export const ProfileDetailView = ({
         </div>
       )}
 
-      {!profile.has_space && profile.open_to_group_search && (
+      {!profile.has_space && !acceptedPartnership && profile.open_to_group_search && (
         <div className="p-3 bg-cyan-500/20 border border-cyan-500/50 rounded-xl text-center">
           <p className="text-cyan-400 font-semibold">🤝 {t('openToGroupSearch')}</p>
           <p className="text-xs text-gray-400 mt-1">{t('groupSearchDescription')}</p>
