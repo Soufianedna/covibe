@@ -43,7 +43,7 @@ serve(async (req) => {
   }
 
   try {
-    const { type, swipeId, messageId } = await req.json()
+    const { type, swipeId, messageId, partnershipId } = await req.json()
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
@@ -121,6 +121,36 @@ serve(async (req) => {
       title = { fr: firstName, en: firstName }
       body = { fr: preview, en: preview }
       pushData = { type: 'message', otherUserId: callerId, conversationId: message.conversation_id }
+    } else if (type === 'partnership_invite' || type === 'partnership_accepted') {
+      if (!partnershipId) throw new Error('partnershipId required')
+      const { data: partnership, error } = await admin
+        .from('search_partnerships')
+        .select('id, requester_id, partner_id, status')
+        .eq('id', partnershipId)
+        .single()
+      if (error || !partnership) throw new Error('Invalid partnership')
+
+      const { data: me } = await admin.from('profiles').select('name').eq('user_id', callerId).single()
+      const firstName = me?.name?.split(' ')[0] || 'Quelqu\'un'
+
+      if (type === 'partnership_invite') {
+        // Seul le requester (celui qui vient de créer la ligne) peut
+        // déclencher cette notif vers le partner invité.
+        if (partnership.requester_id !== callerId) throw new Error('Not your invite')
+        recipientId = partnership.partner_id
+        title = { fr: '🤝 Nouvelle invitation', en: '🤝 New invitation' }
+        body = { fr: `${firstName} veut chercher une coloc avec toi`, en: `${firstName} wants to search for a roommate with you` }
+        pushData = { type: 'partnership_invite' }
+      } else {
+        // Seul le partner (celui qui vient d'accepter) peut déclencher cette
+        // notif vers le requester d'origine.
+        if (partnership.partner_id !== callerId) throw new Error('Not your acceptance')
+        if (partnership.status !== 'accepted') throw new Error('Not accepted yet')
+        recipientId = partnership.requester_id
+        title = { fr: '🤝 Invitation acceptée', en: '🤝 Invitation accepted' }
+        body = { fr: `${firstName} a accepté de chercher avec toi`, en: `${firstName} accepted to search together with you` }
+        pushData = { type: 'partnership_accepted' }
+      }
     } else {
       throw new Error('Unknown type')
     }

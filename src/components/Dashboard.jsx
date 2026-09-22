@@ -80,7 +80,8 @@ export const Dashboard = ({ user, userProfile, onLogout, deepLink, onDeepLinkCon
     const unsubscribe = subscribeToNewMessages();
     const unsubscribeLikes = subscribeToNewLikes();
     const unsubscribeConvDelete = subscribeToConversationDeletes();
-  return () => { if (unsubscribe) unsubscribe(); if (unsubscribeLikes) unsubscribeLikes(); if (unsubscribeConvDelete) unsubscribeConvDelete(); };
+    const unsubscribePartnerships = subscribeToPartnerships();
+  return () => { if (unsubscribe) unsubscribe(); if (unsubscribeLikes) unsubscribeLikes(); if (unsubscribeConvDelete) unsubscribeConvDelete(); if (unsubscribePartnerships) unsubscribePartnerships(); };
   }, []);
 
   // Charger les photos du user actuel
@@ -326,6 +327,19 @@ export const Dashboard = ({ user, userProfile, onLogout, deepLink, onDeepLinkCon
           loadUnreadCount();
           setChatUser(null);
         }
+      )
+      .subscribe();
+    return () => channel.unsubscribe();
+  };
+
+  // RLS filtre déjà côté serveur (mes pending + tout accepted) : un simple
+  // recalcul complet suffit, pas besoin de distinguer insert/update/delete.
+  const subscribeToPartnerships = () => {
+    const channel = supabase
+      .channel('partnerships-changes')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'search_partnerships' },
+        () => { loadSearchPartnerships(); }
       )
       .subscribe();
     return () => channel.unsubscribe();
@@ -617,6 +631,12 @@ export const Dashboard = ({ user, userProfile, onLogout, deepLink, onDeepLinkCon
           .eq('user_id', deepLink.otherUserId)
           .single();
         if (otherProfile) await openChatWithMatch(otherProfile);
+      } else if (deepLink.type === 'partnership_invite' || deepLink.type === 'partnership_accepted') {
+        setActiveTab('vibes');
+        setShowConversations(true);
+        setShowFavorites(false);
+        setShowLikesReceived(false);
+        setShowProfile(false);
       }
       onDeepLinkConsumed?.();
     })();
@@ -790,11 +810,15 @@ export const Dashboard = ({ user, userProfile, onLogout, deepLink, onDeepLinkCon
 
   const handleSendPartnershipInvite = async (partnerId) => {
     try {
-      const { error } = await supabase
+      const { data: invite, error } = await supabase
         .from('search_partnerships')
-        .insert({ requester_id: user.id, partner_id: partnerId, status: 'pending' });
+        .insert({ requester_id: user.id, partner_id: partnerId, status: 'pending' })
+        .select()
+        .single();
       if (error) throw error;
       await loadSearchPartnerships();
+      supabase.functions.invoke('send-push', { body: { type: 'partnership_invite', partnershipId: invite.id } })
+        .catch(err => console.error('Push partnership_invite error:', err));
     } catch (error) {
       console.error('Error sending search partnership invite:', error);
       alert('Erreur: ' + error.message);
@@ -808,6 +832,8 @@ export const Dashboard = ({ user, userProfile, onLogout, deepLink, onDeepLinkCon
         .update({ status: 'accepted' })
         .eq('id', partnership.id);
       if (error) throw error;
+      supabase.functions.invoke('send-push', { body: { type: 'partnership_accepted', partnershipId: partnership.id } })
+        .catch(err => console.error('Push partnership_accepted error:', err));
 
       const otherId = partnership.requester_id === user.id ? partnership.partner_id : partnership.requester_id;
 
