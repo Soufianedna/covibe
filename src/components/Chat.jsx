@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
+import OneSignal from '@onesignal/capacitor-plugin';
+import { Capacitor } from '@capacitor/core';
 import { X, Send, XCircle, MoreVertical, Check, CheckCheck } from 'lucide-react';
 import { ProfileDetailView } from './ProfileDetailView';
 import { ProfileMatchActions } from './ProfileMatchActions';
@@ -27,6 +29,22 @@ export const Chat = ({ currentUserProfile, matchedUser, onClose, onUnmatch, onMe
   useEffect(() => {
     loadConversation();
   }, []);
+
+  // Si la notification push concerne la conversation qu'on a déjà sous les
+  // yeux, on l'annule côté client plutôt que de deviner côté serveur si
+  // l'autre est "en train de regarder" — impossible à savoir de manière
+  // fiable depuis l'Edge Function.
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform() || !conversationId) return;
+    const onForegroundNotification = (event) => {
+      const data = event.getNotification().additionalData;
+      if (data?.type === 'message' && data?.conversationId === conversationId) {
+        event.preventDefault(true);
+      }
+    };
+    OneSignal.Notifications.addEventListener('foregroundWillDisplay', onForegroundNotification);
+    return () => OneSignal.Notifications.removeEventListener('foregroundWillDisplay', onForegroundNotification);
+  }, [conversationId]);
 
   useEffect(() => {
     if (conversationId) {
@@ -298,6 +316,8 @@ export const Chat = ({ currentUserProfile, matchedUser, onClose, onUnmatch, onMe
         .single();
       if (error) throw error;
       console.log('✅ Message envoyé:', data);
+      supabase.functions.invoke('send-push', { body: { type: 'message', messageId: data.id } })
+        .catch(err => console.error('Push message error:', err));
     } catch (error) {
       console.error('Error sending message:', error);
       alert('Erreur envoi message. Réessaie.');

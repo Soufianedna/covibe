@@ -487,12 +487,14 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
       // (user_id, swiped_user_id) sans distinction sur is_like — un second
       // swipe sur la même personne (double-tap, réapparition optimiste
       // d'une carte...) doit écraser le précédent plutôt qu'échouer.
-      const { error } = await supabase
+      const { data: myUpsertedSwipe, error } = await supabase
         .from('swipes')
         .upsert(
           { user_id: user.id, swiped_user_id: likedUserId, is_like: true },
           { onConflict: 'user_id,swiped_user_id' }
-        );
+        )
+        .select()
+        .single();
 
       if (error) throw error;
 
@@ -517,6 +519,12 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
           matchedUser: matchedUser
         });
         setMutualMatches([...mutualMatches, likedUserId]);
+        // Fire-and-forget : un échec de push ne doit jamais casser le match lui-même.
+        supabase.functions.invoke('send-push', { body: { type: 'match', swipeId: theyLikedMe.id } })
+          .catch(err => console.error('Push match error:', err));
+      } else {
+        supabase.functions.invoke('send-push', { body: { type: 'like', swipeId: myUpsertedSwipe.id } })
+          .catch(err => console.error('Push like error:', err));
       }
 
       setMatches(matches.filter(m => m.user_id !== likedUserId));
