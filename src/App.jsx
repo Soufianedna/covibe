@@ -8,7 +8,7 @@ import { Terms } from './components/legal/Terms';
 import { Cookies } from './components/legal/Cookies';
 import { Mentions } from './components/legal/Mentions';
 import '@fontsource/pacifico';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import 'react-lazy-load-image-component/src/effects/blur.css';
 import { supabase } from './lib/supabase';
 import { Landing } from './components/Landing';
@@ -38,6 +38,13 @@ function AppContent() {
   const [showAuth, setShowAuth] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
+  const [pendingDeepLink, setPendingDeepLink] = useState(null);
+  // Lu dans le listener 'click' (enregistré une seule fois) pour éviter de
+  // buffériser un deep link tapé alors que personne n'est connecté sur
+  // l'appareil — sinon il traverserait une connexion ultérieure et
+  // atterrirait potentiellement sur le mauvais compte.
+  const sessionRef = useRef(null);
+  useEffect(() => { sessionRef.current = session; }, [session]);
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
@@ -47,6 +54,10 @@ function AppContent() {
         grantOfflineAccess: true,
       });
       OneSignal.initialize(ONESIGNAL_APP_ID);
+      OneSignal.Notifications.addEventListener('click', (event) => {
+        const data = event.notification?.additionalData;
+        if (data?.type && sessionRef.current) setPendingDeepLink(data);
+      });
     }
     CapApp.addListener('appUrlOpen', async ({ url }) => {
       if (url.includes('covibe://verify')) {
@@ -114,6 +125,13 @@ function AppContent() {
     OneSignal.User.addEventListener('change', onUserChange);
     return () => OneSignal.User.removeEventListener('change', onUserChange);
   }, [session?.user?.id]);
+
+  // Un deep link bufferisé ne doit jamais survivre à une déconnexion : si un
+  // autre compte se connecte ensuite sur ce même appareil, il ne doit pas
+  // hériter du clic de quelqu'un d'autre.
+  useEffect(() => {
+    if (!session) setPendingDeepLink(null);
+  }, [session]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -245,6 +263,8 @@ function AppContent() {
       user={session.user}
       userProfile={userProfile}
       onLogout={handleLogout}
+      deepLink={pendingDeepLink}
+      onDeepLinkConsumed={() => setPendingDeepLink(null)}
     />
   );
 }

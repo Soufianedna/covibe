@@ -86,7 +86,7 @@ serve(async (req) => {
         recipientId = swipe.user_id
         title = { fr: '🤝 Nouvelle Vibe !', en: '🤝 New Vibe!' }
         body = { fr: `${firstName} et toi avez matché`, en: `You and ${firstName} matched` }
-        pushData = { type: 'match' }
+        pushData = { type: 'match', otherUserId: callerId }
       } else {
         // swipeId = MON like ; je dois en être l'auteur.
         if (swipe.user_id !== callerId) throw new Error('Not your swipe')
@@ -120,7 +120,7 @@ serve(async (req) => {
 
       title = { fr: firstName, en: firstName }
       body = { fr: preview, en: preview }
-      pushData = { type: 'message', conversationId: message.conversation_id }
+      pushData = { type: 'message', otherUserId: callerId, conversationId: message.conversation_id }
     } else {
       throw new Error('Unknown type')
     }

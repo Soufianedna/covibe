@@ -23,7 +23,7 @@ import { ProfileScore } from './ProfileScore';
 import { ProfileDetailView } from './ProfileDetailView';
 import { ProfileMatchActions } from './ProfileMatchActions';
 import SwipeView from "./SwipeView";
-export const Dashboard = ({ user, userProfile, onLogout }) => {
+export const Dashboard = ({ user, userProfile, onLogout, deepLink, onDeepLinkConsumed }) => {
   const { t } = useTranslation();
   const [matches, setMatches] = useState([]);
   const [allProfilesForSwipe, setAllProfilesForSwipe] = useState([]);
@@ -596,6 +596,31 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
     loadFavoritesCount();
     }
   };
+
+  // Consomme le deep link d'une notification push tapée par l'utilisateur.
+  // openChatWithMatch() ne dépend d'aucune donnée déjà chargée par Dashboard
+  // (matches, etc.) — donc ça marche même si ce deep link était déjà présent
+  // au tout premier rendu (cold start).
+  useEffect(() => {
+    if (!deepLink) return;
+    (async () => {
+      if (deepLink.type === 'like') {
+        setActiveTab('likes');
+        setShowLikesReceived(true);
+        setShowFavorites(false);
+        setShowConversations(false);
+        setShowProfile(false);
+      } else if ((deepLink.type === 'match' || deepLink.type === 'message') && deepLink.otherUserId) {
+        const { data: otherProfile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', deepLink.otherUserId)
+          .single();
+        if (otherProfile) await openChatWithMatch(otherProfile);
+      }
+      onDeepLinkConsumed?.();
+    })();
+  }, [deepLink]);
 
   const getGenderLabel = (gender) => gender;
   const getCityLabel = (city) => city;
