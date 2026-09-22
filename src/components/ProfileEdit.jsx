@@ -737,7 +737,7 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
                 <input
                   type="checkbox"
                   checked={profile.alcohol_ok}
-                  onChange={(e) => setProfile({ ...profile, alcohol_ok: e.target.checked })}
+                  onChange={(e) => setProfile({ ...profile, alcohol_ok: e.target.checked, ...(e.target.checked ? { no_substances: false } : {}) })}
                   className="w-5 h-5 rounded bg-slate-700 border-gray-600 text-violet-500 focus:ring-2 focus:ring-violet-500"
                 />
                 <span className="text-gray-300">🍷 {t('alcoholOk')}</span>
@@ -747,7 +747,7 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
                 <input
                   type="checkbox"
                   checked={profile.cannabis_friendly}
-                  onChange={(e) => setProfile({ ...profile, cannabis_friendly: e.target.checked })}
+                  onChange={(e) => setProfile({ ...profile, cannabis_friendly: e.target.checked, ...(e.target.checked ? { no_substances: false } : {}) })}
                   className="w-5 h-5 rounded bg-slate-700 border-gray-600 text-violet-500 focus:ring-2 focus:ring-violet-500"
                 />
                 <span className="text-gray-300">🌿 420 friendly</span>
@@ -757,10 +757,10 @@ export const ProfileEdit = ({ userProfile, onSave, onCancel }) => {
                 <input
                   type="checkbox"
                   checked={profile.no_substances}
-                  onChange={(e) => setProfile({ ...profile, no_substances: e.target.checked })}
+                  onChange={(e) => setProfile({ ...profile, no_substances: e.target.checked, ...(e.target.checked ? { alcohol_ok: false, cannabis_friendly: false } : {}) })}
                   className="w-5 h-5 rounded bg-slate-700 border-gray-600 text-violet-500 focus:ring-2 focus:ring-violet-500"
                 />
-                <span className="text-gray-300">✨ {t('soberLifestyle')}</span>
+                <span className="text-gray-300">🚫 {t('soberLifestyle')}</span>
               </label>
             </div>
           </div>

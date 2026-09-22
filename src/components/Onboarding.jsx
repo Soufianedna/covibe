@@ -146,6 +146,19 @@ export const Onboarding = ({ user, onComplete }) => {
     setProfile(newProfile);
   };
 
+  const handleLifestyleToggle = (field, checked) => {
+    const update = { [field]: checked };
+    // no_substances est exclusif avec alcohol_ok/cannabis_friendly : cocher
+    // l'un décoche l'autre, plutôt que de laisser des combinaisons incohérentes.
+    if (checked && field === 'no_substances') {
+      update.alcohol_ok = false;
+      update.cannabis_friendly = false;
+    } else if (checked && (field === 'alcohol_ok' || field === 'cannabis_friendly')) {
+      update.no_substances = false;
+    }
+    setProfile({ ...profile, ...update });
+  };
+
   const handlePhotoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -564,9 +577,9 @@ export const Onboarding = ({ user, onComplete }) => {
               <div>
                 <h3 className="text-xl font-bold text-white mb-4">Préférences de vie</h3>
                 <div className="space-y-3">
-                  {[['smoking','🚬 Je fume'],['alcohol_ok','🍷 Alcool OK'],['cannabis_friendly','🌿 420 friendly'],['no_substances','✨ Mode de vie sobre']].map(([field, label]) => (
+                  {[['smoking','🚬 Je fume'],['alcohol_ok','🍷 Alcool OK'],['cannabis_friendly','🌿 420 friendly'],['no_substances','🚫 Sans alcool ni drogue']].map(([field, label]) => (
                     <label key={field} className="flex items-center gap-3 cursor-pointer bg-slate-700/50 p-3 rounded-xl hover:bg-slate-700 transition-all">
-                      <input type="checkbox" checked={profile[field]} onChange={(e) => setProfile({ ...profile, [field]: e.target.checked })} className={checkboxClass} />
+                      <input type="checkbox" checked={profile[field]} onChange={(e) => handleLifestyleToggle(field, e.target.checked)} className={checkboxClass} />
                       <span className="text-gray-300">{label}</span>
                     </label>
                   ))}

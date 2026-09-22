@@ -84,7 +84,7 @@ export const FilterPills = ({ onFilterChange, hasSpace, openSignal }) => {
   const lifestyleOptions = [
     { value: 'alcohol_ok', label: '🍷 Alcool OK' },
     { value: 'cannabis_friendly', label: '🌿 420 friendly' },
-    { value: 'no_substances', label: '✨ Sobre' },
+    { value: 'no_substances', label: '🚫 Sans alcool ni drogue' },
   ];
 
   const religionOptions = [

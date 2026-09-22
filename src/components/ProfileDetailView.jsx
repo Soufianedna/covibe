@@ -210,7 +210,7 @@ export const ProfileDetailView = ({
           <span className="px-3 py-1.5 bg-slate-700/50 rounded-full text-sm text-gray-200">🙏 {t(getReligionLabel(profile.religious_practice))}</span>
           {profile.alcohol_ok && <span className="px-3 py-1.5 bg-slate-700/50 rounded-full text-sm text-gray-200">🍷 Alcool OK</span>}
           {profile.cannabis_friendly && <span className="px-3 py-1.5 bg-slate-700/50 rounded-full text-sm text-gray-200">🌿 420 friendly</span>}
-          {profile.no_substances && <span className="px-3 py-1.5 bg-slate-700/50 rounded-full text-sm text-gray-200">✨ Mode de vie sobre</span>}
+          {profile.no_substances && <span className="px-3 py-1.5 bg-slate-700/50 rounded-full text-sm text-gray-200">🚫 Sans alcool ni drogue</span>}
           {!profile.alcohol_ok && !profile.cannabis_friendly && !profile.no_substances && <span className="text-gray-500 text-xs">{t('notSpecified')}</span>}
         </div>
       </div>
