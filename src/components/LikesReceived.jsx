@@ -8,7 +8,7 @@ import { usePropertyPhotos } from '../lib/usePropertyPhotos';
 import { getCreativeTypeKey } from '../lib/creativeType';
 import { getCityLabel } from '../lib/cityLabel';
 
-export const LikesReceived = ({ currentUserProfile, onClose, onLike, onViewLikes, initialLikes = [] }) => {
+export const LikesReceived = ({ currentUserProfile, onClose, onLike, onLikesCountChange, initialLikes = [] }) => {
   const { t } = useTranslation();
   const [likes, setLikes] = useState(initialLikes);
   const [loading, setLoading] = useState(true);
@@ -33,7 +33,7 @@ export const LikesReceived = ({ currentUserProfile, onClose, onLike, onViewLikes
         .eq('is_like', true)
         .eq('viewed', false);
 
-      if (!receivedLikes || receivedLikes.length === 0) { setLoading(false); return; }
+      if (!receivedLikes || receivedLikes.length === 0) { onLikesCountChange?.(0); setLoading(false); return; }
 
       const { data: myLikes } = await supabase
         .from('swipes')
@@ -43,7 +43,7 @@ export const LikesReceived = ({ currentUserProfile, onClose, onLike, onViewLikes
       const myLikedIds = (myLikes || []).map(l => l.swiped_user_id);
       const pending = receivedLikes.filter(l => !myLikedIds.includes(l.user_id)).map(l => l.user_id);
 
-      if (pending.length === 0) { setLoading(false); return; }
+      if (pending.length === 0) { onLikesCountChange?.(0); setLoading(false); return; }
 
       const { data: profiles } = await supabase
         .from('profiles')
@@ -55,6 +55,9 @@ export const LikesReceived = ({ currentUserProfile, onClose, onLike, onViewLikes
         return { ...p, photos: photos || [] };
       }));
 
+      // LikesReceived vient de recalculer l'état réel — on le remonte à
+      // Dashboard pour resynchroniser le badge (source de vérité unique).
+      onLikesCountChange?.(withPhotos.length);
       setLikes(withPhotos);
     } catch (e) {
       console.error(e);
@@ -68,6 +71,7 @@ export const LikesReceived = ({ currentUserProfile, onClose, onLike, onViewLikes
     const next = likes.filter(l => l.user_id !== profile.user_id);
     setLikes(next);
     setCurrentIndex(Math.min(currentIndex, next.length - 1));
+    onLikesCountChange?.(next.length);
   };
 
   const current = likes[currentIndex];

@@ -343,12 +343,11 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
         async (payload) => {
           if (!payload.new.is_like) return;
 
-          const { data: iAlreadyLikedThem } = await supabase
+          const { data: myPriorSwipe } = await supabase
             .from('swipes')
-            .select('id')
+            .select('is_like')
             .eq('user_id', user.id)
             .eq('swiped_user_id', payload.new.user_id)
-            .eq('is_like', true)
             .maybeSingle();
 
           const { data: likerProfile } = await supabase
@@ -359,12 +358,19 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
 
           if (!likerProfile) return;
 
-          if (iAlreadyLikedThem) {
+          if (myPriorSwipe?.is_like) {
             // Match mutuel détecté côté de celui qui a liké en premier :
             // handleLike ne peut le détecter que pour celui qui like en second,
             // c'est donc ici qu'on notifie l'autre.
             setMatchModalData({ currentUser: currentUserProfile, matchedUser: likerProfile });
             setMutualMatches(prev => [...prev, payload.new.user_id]);
+            return;
+          }
+
+          if (myPriorSwipe && !myPriorSwipe.is_like) {
+            // Déjà passé sur cette personne : ce like ne compte pas comme
+            // "en attente" pour moi (LikesReceived l'exclurait aussi) —
+            // pas de badge, sinon nouveau décalage compteur/liste.
             return;
           }
 
@@ -506,6 +512,14 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
         .eq('is_like', true)
         .single();
 
+      // PGRST116 = "aucune ligne trouvée", le cas normal quand ce n'est pas
+      // (encore) un match. Toute autre erreur signifie qu'on ne sait pas
+      // vraiment si c'est un match — on n'envoie alors aucune notif plutôt
+      // que d'en envoyer une fausse.
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Error checking mutual match:', checkError);
+      }
+
       if (theyLikedMe) {
         // Récupérer le profil complet depuis la DB au lieu de chercher dans matches
         const { data: matchedUserData } = await supabase
@@ -522,7 +536,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
         // Fire-and-forget : un échec de push ne doit jamais casser le match lui-même.
         supabase.functions.invoke('send-push', { body: { type: 'match', swipeId: theyLikedMe.id } })
           .catch(err => console.error('Push match error:', err));
-      } else {
+      } else if (!checkError || checkError.code === 'PGRST116') {
         supabase.functions.invoke('send-push', { body: { type: 'like', swipeId: myUpsertedSwipe.id } })
           .catch(err => console.error('Push like error:', err));
       }
@@ -1310,7 +1324,7 @@ export const Dashboard = ({ user, userProfile, onLogout }) => {
         <LikesReceived
           currentUserProfile={currentUserProfile}
           onClose={() => { setShowLikesReceived(false); setActiveTab("discover"); }}
-          onViewLikes={() => { setUnviewedLikesCount(0); }}
+          onLikesCountChange={setUnviewedLikesCount}
           initialLikes={likerProfiles}
           onLike={async (profile) => {
             await handleLike(profile.user_id);
