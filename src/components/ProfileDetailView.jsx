@@ -97,12 +97,12 @@ export const ProfileDetailView = ({
       )}
 
       {/* Bloc identité */}
-      <div className="text-center space-y-1">
+      <div className="space-y-1">
         <p className="text-gray-300">{t(getGenderLabel(profile.gender))} · <span className="text-violet-400 font-semibold">{t(getCreativeTypeKey(profile.creative_type, profile.gender))}</span></p>
       </div>
 
       {partnerProfile && (
-        <div className="flex flex-col items-center gap-1 text-sm text-gray-300">
+        <div className="flex flex-col items-start gap-1 text-sm text-gray-300">
           <div className="flex items-center gap-2">
             <span>🤝 cherche une coloc avec</span>
             {onViewPartner ? (

@@ -5,7 +5,6 @@ import { calculateCompatibility, getCompatibilityLevel } from '../lib/matching';
 import { ProfileDetailView } from './ProfileDetailView';
 import { useTranslation } from 'react-i18next';
 import { usePropertyPhotos } from '../lib/usePropertyPhotos';
-import { getCreativeTypeKey } from '../lib/creativeType';
 import { getCityLabel } from '../lib/cityLabel';
 
 export const LikesReceived = ({ currentUserProfile, onClose, onLike, onLikesCountChange, initialLikes = [] }) => {
@@ -143,7 +142,7 @@ export const LikesReceived = ({ currentUserProfile, onClose, onLike, onLikesCoun
       {/* Infos profil */}
       <div className="px-6 pt-4">
         <h2 className="text-3xl font-bold text-white">{current.name}, {current.age}</h2>
-        <p className="text-gray-400 mt-1">{getCityLabel(current.city)} • {t(getCreativeTypeKey(current.creative_type, current.gender))}</p>
+        <p className="text-gray-400 mt-1">{getCityLabel(current.city)}</p>
         <ProfileDetailView
           profile={{ ...current, compatibility }}
           isPreview={true}

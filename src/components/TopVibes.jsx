@@ -124,7 +124,6 @@ export const TopVibes = ({ currentUserProfile, onLike, onPass }) => {
         <div className="px-6 pt-4">
           <h2 className="text-3xl font-bold text-white">{current.name}, {current.age}</h2>
           <p className="text-gray-400 mt-1">{getCityLabel(current.city)}</p>
-          {current.bio && <p className="text-gray-300 mt-3">{current.bio}</p>}
 
           <ProfileDetailView
             profile={current}
